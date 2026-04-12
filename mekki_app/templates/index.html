@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>めっき受注管理</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: sans-serif; background: #f0f2f5; }
+
+    /* ナビ */
+    nav {
+      background: #1a3a5c; color: #fff;
+      padding: 0 24px; display: flex; align-items: center;
+      height: 52px; gap: 24px;
+    }
+    nav .nav-brand { font-size: 1rem; font-weight: 700; letter-spacing: 1px; }
+    nav a { color: #cbd5e1; text-decoration: none; font-size: 0.88rem; }
+    nav a:hover, nav a.active { color: #fff; border-bottom: 2px solid #60a5fa; padding-bottom: 2px; }
+
+    .page { padding: 32px 16px; }
+    .container { max-width: 960px; margin: 0 auto; }
+    h1 { font-size: 1.5rem; color: #1a3a5c; margin-bottom: 20px; }
+
+    .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .toolbar-right { display: flex; gap: 10px; }
+
+    .btn {
+      padding: 9px 18px; border: none; border-radius: 7px;
+      font-size: 0.9rem; cursor: pointer; text-decoration: none;
+      display: inline-flex; align-items: center; gap: 6px;
+    }
+    .btn-primary { background: #2563eb; color: #fff; }
+    .btn-primary:hover { background: #1d4ed8; }
+    .btn-success { background: #16a34a; color: #fff; }
+    .btn-success:hover { background: #15803d; }
+
+    table { width: 100%; border-collapse: collapse; background: #fff;
+            border-radius: 12px; overflow: hidden;
+            box-shadow: 0 2px 12px rgba(0,0,0,.08); }
+    thead { background: #1a3a5c; color: #fff; }
+    th { padding: 12px 14px; text-align: left; font-size: 0.85rem; font-weight: 600; }
+    td { padding: 12px 14px; font-size: 0.9rem; border-bottom: 1px solid #f0f0f0; color: #333; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #f8faff; }
+
+    .badge {
+      display: inline-block; padding: 3px 10px; border-radius: 20px;
+      font-size: 0.78rem; background: #dbeafe; color: #1d4ed8;
+    }
+    .btn-detail {
+      padding: 5px 12px; background: #e0f2fe; color: #0369a1;
+      border: none; border-radius: 6px; font-size: 0.82rem;
+      cursor: pointer; text-decoration: none;
+    }
+    .btn-detail:hover { background: #bae6fd; }
+    .btn-edit-sm {
+      padding: 5px 12px; background: #eff6ff; color: #2563eb;
+      border: 1px solid #bfdbfe; border-radius: 6px; font-size: 0.82rem;
+      cursor: pointer; text-decoration: none;
+    }
+    .btn-edit-sm:hover { background: #dbeafe; }
+    .empty { text-align: center; padding: 48px; color: #aaa; font-size: 0.95rem; }
+  </style>
+</head>
+<body>
+  <nav>
+    <span class="nav-brand">めっき受注管理</span>
+    <a href="/" class="active">受注一覧</a>
+    <a href="/customers">顧客マスタ</a>
+  </nav>
+
+  <div class="page">
+    <div class="container">
+      <h1>受注一覧</h1>
+      <div class="toolbar">
+        <span style="color:#666; font-size:0.9rem;">{{ orders|length }} 件</span>
+        <div class="toolbar-right">
+          <a href="/export/excel" class="btn btn-success">⬇ Excelダウンロード</a>
+          <a href="/new" class="btn btn-primary">＋ 新規受注登録</a>
+        </div>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>受注番号</th>
+            <th>顧客名</th>
+            <th>品名</th>
+            <th>数量</th>
+            <th>めっき種類</th>
+            <th>納期</th>
+            <th>登録日時</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for order in orders %}
+          <tr>
+            <td>{{ order.order_no }}</td>
+            <td>{{ order.customer }}</td>
+            <td>{{ order.product }}</td>
+            <td>{{ order.quantity }}</td>
+            <td><span class="badge">{{ order.mekki_type }}</span></td>
+            <td>{{ order.due_date }}</td>
+            <td>{{ order.created_at }}</td>
+            <td style="white-space:nowrap;">
+              <a href="/edit/{{ order.id }}" class="btn-edit-sm">編集</a>
+              <a href="/detail/{{ order.id }}" class="btn-detail" style="margin-left:4px;">詳細</a>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="8" class="empty">受注データがありません</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</body>
+</html>

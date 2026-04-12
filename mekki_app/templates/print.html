@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>伝票印刷 {{ order.order_no }}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Noto Sans JP', sans-serif;
+      background: #e8e8e8;
+      padding: 20px;
+    }
+
+    /* 画面表示用コントロールバー */
+    .screen-only {
+      max-width: 860px;
+      margin: 0 auto 20px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+    .btn-print {
+      background: #1a1d24;
+      color: #e8a020;
+      border: 2px solid #e8a020;
+      padding: 10px 28px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: 'Noto Sans JP', sans-serif;
+      letter-spacing: 1px;
+      border-radius: 4px;
+    }
+    .btn-back {
+      background: #fff;
+      color: #333;
+      border: 1px solid #ccc;
+      padding: 10px 20px;
+      font-size: 14px;
+      cursor: pointer;
+      font-family: 'Noto Sans JP', sans-serif;
+      text-decoration: none;
+      border-radius: 4px;
+      display: inline-flex;
+      align-items: center;
+    }
+    .hint { font-size: 12px; color: #666; }
+
+    /* B5横向きシート (257mm × 182mm) */
+    .sheet {
+      width: 257mm;
+      height: 182mm;
+      background: white;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
+      gap: 0;
+      border: 1px solid #ccc;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    }
+
+    /* 各伝票セル */
+    .slip {
+      border: 1px solid #888;
+      padding: 6px 8px 5px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+    }
+    .slip:nth-child(1) { border-color: #1a1d24; border-width: 2px; }
+    .slip:nth-child(2) { border-color: #1a4a8a; border-width: 2px; }
+    .slip:nth-child(3) { border-color: #1a6a2a; border-width: 2px; }
+    .slip:nth-child(4) { border-color: #8a1a1a; border-width: 2px; }
+
+    /* 伝票タイトル帯 */
+    .slip-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 3px 8px;
+      margin: -6px -8px 5px;
+      color: white;
+      position: relative;
+    }
+    .slip:nth-child(1) .slip-header { background: #1a1d24; }
+    .slip:nth-child(2) .slip-header { background: #1a4a8a; }
+    .slip:nth-child(3) .slip-header { background: #1a6a2a; }
+    .slip:nth-child(4) .slip-header { background: #8a1a1a; }
+
+    .slip-title {
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 2px;
+    }
+    .slip-sub {
+      font-size: 7px;
+      opacity: 0.75;
+      letter-spacing: 1px;
+    }
+    .order-no-badge {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 8px;
+      background: rgba(255,255,255,0.2);
+      padding: 1px 5px;
+      border-radius: 2px;
+      letter-spacing: 0.5px;
+    }
+
+    /* 顧客・品名エリア */
+    .main-info {
+      background: #f8f8f8;
+      border: 1px solid #ddd;
+      border-radius: 3px;
+      padding: 4px 8px;
+      margin-bottom: 4px;
+    }
+    .customer-name {
+      font-size: 12px;
+      font-weight: 700;
+      color: #111;
+      margin-bottom: 1px;
+    }
+    .product-name {
+      font-size: 10px;
+      color: #333;
+    }
+
+    /* フィールドグリッド */
+    .fields {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 3px;
+      margin-bottom: 3px;
+      flex: 1;
+    }
+    .field {
+      border: 1px solid #ddd;
+      border-radius: 2px;
+      padding: 2px 5px;
+    }
+    .field-label {
+      font-size: 7px;
+      color: #888;
+      letter-spacing: 0.5px;
+      margin-bottom: 1px;
+    }
+    .field-value {
+      font-size: 10px;
+      font-weight: 700;
+      color: #111;
+    }
+
+    /* メッキ種類は目立つように */
+    .field-mekki {
+      grid-column: 1 / -1;
+      border-width: 2px;
+    }
+    .slip:nth-child(1) .field-mekki { border-color: #1a1d24; }
+    .slip:nth-child(2) .field-mekki { border-color: #1a4a8a; }
+    .slip:nth-child(3) .field-mekki { border-color: #1a6a2a; }
+    .slip:nth-child(4) .field-mekki { border-color: #8a1a1a; }
+    .field-mekki .field-value { font-size: 11px; }
+
+    /* 確認欄 */
+    .check-row {
+      display: grid;
+      gap: 3px;
+      margin-bottom: 3px;
+    }
+    .check-row-2 { grid-template-columns: 1fr 1fr; }
+    .check-row-3 { grid-template-columns: 1fr 1fr 1fr; }
+    .check-box {
+      border: 1px solid #ccc;
+      border-radius: 2px;
+      padding: 2px 4px;
+      text-align: center;
+    }
+    .check-label {
+      font-size: 7px;
+      color: #888;
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    /* 備考欄 */
+    .note-box {
+      border: 1px solid #ddd;
+      border-radius: 2px;
+      padding: 2px 5px;
+      min-height: 18px;
+    }
+    .note-box .field-label { margin-bottom: 2px; }
+    .note-text { font-size: 9px; color: #333; }
+
+    /* 切り取り線 */
+    .cut-h {
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
+      border-top: 1px dashed #aaa;
+      pointer-events: none;
+    }
+    .cut-v {
+      position: absolute;
+      left: 50%;
+      top: 0;
+      bottom: 0;
+      border-left: 1px dashed #aaa;
+      pointer-events: none;
+    }
+
+    /* ── 印刷スタイル ── */
+    @media print {
+      @page {
+        size: B5 landscape;
+        margin: 0;
+      }
+      body {
+        background: white;
+        padding: 0;
+        margin: 0;
+      }
+      .screen-only { display: none !important; }
+      .sheet {
+        width: 257mm;
+        height: 182mm;
+        border: none;
+        box-shadow: none;
+        margin: 0;
+        transform: scale(0.99);
+        transform-origin: top left;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<!-- 画面表示時のみ表示するボタン -->
+<div class="screen-only">
+  <button class="btn-print" onclick="window.print()">🖨 印刷 / PDF保存</button>
+  <a class="btn-back" href="/detail/{{ order.id }}">← 詳細に戻る</a>
+  <span class="hint">※ 印刷設定：用紙サイズ B5・横向き・余白なし　／　PDF保存はダイアログで「PDFに保存」を選択</span>
+</div>
+
+<div class="sheet">
+
+  <!-- ① 注文伝票 -->
+  <div class="slip">
+    <div class="slip-header">
+      <div>
+        <div class="slip-title">注 文 伝 票</div>
+        <div class="slip-sub">ORDER SLIP</div>
+      </div>
+      <div class="order-no-badge">{{ order.order_no }}</div>
+    </div>
+
+    <div class="main-info">
+      <div class="customer-name">{{ order.customer }}</div>
+      <div class="product-name">{{ order.product }}</div>
+    </div>
+
+    <div class="fields">
+      <div class="field field-mekki">
+        <div class="field-label">メッキ種類</div>
+        <div class="field-value">{{ order.mekki_type }}</div>
+      </div>
+      <div class="field">
+        <div class="field-label">数　　量</div>
+        <div class="field-value">{{ order.quantity }} 個</div>
+      </div>
+      <div class="field">
+        <div class="field-label">納　　期</div>
+        <div class="field-value">{{ order.due_date }}</div>
+      </div>
+      <div class="field">
+        <div class="field-label">受注日</div>
+        <div class="field-value">{{ order.created_at[:10] }}</div>
+      </div>
+      <div class="field">
+        <div class="field-label">担当者</div>
+        <div class="field-value">&nbsp;</div>
+      </div>
+    </div>
+
+    <div class="note-box">
+      <div class="field-label">備　考</div>
+      <div class="note-text">{{ order.note if order.note else '' }}</div>
+    </div>
+
+    <div style="margin-top:6px;">
+      <div class="check-row check-row-2">
+        <div class="check-box"><span class="check-label">受注確認</span></div>
+        <div class="check-box"><span class="check-label">顧客承認</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ② 作業指示書 -->
+  <div class="slip">
+    <div class="slip-header">
+      <div>
+        <div class="slip-title">作 業 指 示 書</div>
+        <div class="slip-sub">WORK ORDER</div>
+      </div>
+      <div class="order-no-badge">{{ order.order_no }}</div>
+    </div>
+
+    <div class="main-info">
+      <div class="customer-name">{{ order.customer }}</div>
+      <div class="product-name">{{ order.product }}</div>
+    </div>
+
+    <div class="fields">
+      <div class="field field-mekki">
+        <div class="field-label">処理内容（メッキ種類）</div>
+        <div class="field-value">{{ order.mekki_type }}</div>
+      </div>
+      <div class="field">
+        <div class="field-label">加工数量</div>
+        <div class="field-value">{{ order.quantity }} 個</div>
+      </div>
+      <div class="field">
+        <div class="field-label">完了期限</div>
+        <div class="field-value">{{ order.due_date }}</div>
+      </div>
+      <div class="field">
+        <div class="field-label">前処理</div>
+        <div class="field-value">&nbsp;</div>
+      </div>
+      <div class="field">
+        <div class="field-label">後処理</div>
+        <div class="field-value">&nbsp;</div>
+      </div>
+    </div>
+
+    <div class="note-box" style="margin-bottom:5px;">
+      <div class="field-label">作業指示・特記事項</div>
+      <div class="note-text">{{ order.note if order.note else '' }}</div>
+    </div>
+
+    <div class="check-row check-row-3">
+      <div class="check-box"><span class="check-label">作業開始</span></div>
+      <div class="check-box"><span class="check-label">作業完了</span></div>
+      <div class="check-box"><span class="check-label">担当者印</span></div>
+    </div>
+  </div>
+
+  <!-- ③ 検査指示書 -->
+  <div class="slip">
+    <div class="slip-header">
+      <div>
+        <div class="slip-title">検 査 指 示 書</div>
+        <div class="slip-sub">INSPECTION ORDER</div>
+      </div>
+      <div class="order-no-badge">{{ order.order_no }}</div>
+    </div>
+
+    <div class="main-info">
+      <div class="customer-name">{{ order.customer }}</div>
+      <div class="product-name">{{ order.product }}</div>
+    </div>
+
+    <div class="fields">
+      <div class="field field-mekki">
+        <div class="field-label">メッキ種類</div>
+        <div class="field-value">{{ order.mekki_type }}</div>
+      </div>
+      <div class="field">
+        <div class="field-label">検査数量</div>
+        <div class="field-value">{{ order.quantity }} 個</div>
+      </div>
+      <div class="field">
+        <div class="field-label">出荷期限</div>
+        <div class="field-value">{{ order.due_date }}</div>
+      </div>
+    </div>
+
+    <div style="margin-bottom:5px;">
+      <div class="check-row check-row-2" style="margin-bottom:4px;">
+        <div class="check-box">
+          <span class="check-label">外観検査</span>
+        </div>
+        <div class="check-box">
+          <span class="check-label">膜厚測定</span>
+        </div>
+      </div>
+      <div class="check-row check-row-2">
+        <div class="check-box">
+          <span class="check-label">密着性確認</span>
+        </div>
+        <div class="check-box">
+          <span class="check-label">数量確認</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="note-box" style="margin-bottom:5px;">
+      <div class="field-label">検査結果・特記事項</div>
+      <div class="note-text">{{ order.note if order.note else '' }}</div>
+    </div>
+
+    <div class="check-row check-row-2">
+      <div class="check-box"><span class="check-label">検査合否　　合格 ／ 不合格</span></div>
+      <div class="check-box"><span class="check-label">検査員印</span></div>
+    </div>
+  </div>
+
+  <!-- ④ 現品荷札 -->
+  <div class="slip">
+    <div class="slip-header">
+      <div>
+        <div class="slip-title">現 品 荷 札</div>
+        <div class="slip-sub">PRODUCT TAG</div>
+      </div>
+      <div class="order-no-badge">{{ order.order_no }}</div>
+    </div>
+
+    <!-- 荷札は大きく見やすく -->
+    <div style="flex:1; display:flex; flex-direction:column; justify-content:center; gap:5px; padding:3px 0;">
+      <div style="text-align:center; background:#f0f0f0; border:2px solid #8a1a1a; border-radius:3px; padding:5px;">
+        <div style="font-size:7px; color:#888; letter-spacing:2px; margin-bottom:2px;">お届け先</div>
+        <div style="font-size:14px; font-weight:900; color:#111; letter-spacing:1px;">{{ order.customer }}</div>
+      </div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:4px;">
+        <div style="text-align:center; border:1px solid #ccc; border-radius:3px; padding:4px;">
+          <div style="font-size:7px; color:#888; margin-bottom:2px;">品　名</div>
+          <div style="font-size:10px; font-weight:700;">{{ order.product }}</div>
+        </div>
+        <div style="text-align:center; border:1px solid #ccc; border-radius:3px; padding:4px;">
+          <div style="font-size:7px; color:#888; margin-bottom:2px;">数　量</div>
+          <div style="font-size:14px; font-weight:900; color:#8a1a1a;">{{ order.quantity }}<span style="font-size:9px; font-weight:400;"> 個</span></div>
+        </div>
+      </div>
+
+      <div style="text-align:center; background:#1a1d24; border-radius:3px; padding:5px;">
+        <div style="font-size:7px; color:#aaa; margin-bottom:1px;">処理内容</div>
+        <div style="font-size:12px; font-weight:700; color:#e8a020; letter-spacing:2px;">{{ order.mekki_type }}</div>
+      </div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:4px;">
+        <div style="text-align:center; border:1px solid #ccc; border-radius:3px; padding:4px;">
+          <div style="font-size:7px; color:#888; margin-bottom:1px;">納　期</div>
+          <div style="font-size:10px; font-weight:700;">{{ order.due_date }}</div>
+        </div>
+        <div style="text-align:center; border:1px solid #ccc; border-radius:3px; padding:4px;">
+          <div style="font-size:7px; color:#888; margin-bottom:1px;">伝票番号</div>
+          <div style="font-size:8px; font-family:'Share Tech Mono',monospace; color:#555;">{{ order.order_no }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /sheet -->
+
+</body>
+</html>

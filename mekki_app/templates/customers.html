@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="めっき受注">
+  <link rel="apple-touch-icon" href="/static/icon-180.png">
+  <link rel="manifest" href="/static/manifest.json">
+  <title>顧客マスタ | めっき受注管理</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: sans-serif; background: #f0f2f5; }
+
+    /* ナビ */
+    nav {
+      background: #1a3a5c; color: #fff;
+      padding: 0 24px; display: flex; align-items: center;
+      height: 52px; gap: 24px;
+    }
+    nav .nav-brand { font-size: 1rem; font-weight: 700; letter-spacing: 1px; }
+    nav a { color: #cbd5e1; text-decoration: none; font-size: 0.88rem; }
+    nav a:hover, nav a.active { color: #fff; border-bottom: 2px solid #60a5fa; padding-bottom: 2px; }
+
+    .page { padding: 32px 16px; }
+    .container { max-width: 760px; margin: 0 auto; }
+    h1 { font-size: 1.5rem; color: #1a3a5c; margin-bottom: 24px; }
+
+    /* フラッシュメッセージ */
+    .flash {
+      padding: 12px 16px; border-radius: 8px; margin-bottom: 20px;
+      font-size: 0.9rem; display: flex; align-items: center; gap: 8px;
+    }
+    .flash.success { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+    .flash.error   { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+
+    /* アップロードカード */
+    .card {
+      background: #fff; border-radius: 12px; padding: 28px;
+      box-shadow: 0 2px 12px rgba(0,0,0,.08); margin-bottom: 28px;
+    }
+    .card h2 { font-size: 1rem; color: #1a3a5c; margin-bottom: 16px; }
+
+    .upload-area {
+      border: 2px dashed #cbd5e1; border-radius: 8px;
+      padding: 28px; text-align: center; background: #f8faff;
+      transition: border-color 0.2s;
+    }
+    .upload-area:hover { border-color: #2563eb; }
+    .upload-area p { color: #64748b; font-size: 0.9rem; margin-bottom: 14px; }
+    .upload-area .hint { font-size: 0.8rem; color: #94a3b8; margin-top: 8px; }
+
+    input[type="file"] { display: none; }
+    .file-label {
+      display: inline-block; padding: 9px 22px;
+      background: #f1f5f9; border: 1px solid #cbd5e1;
+      border-radius: 7px; cursor: pointer; font-size: 0.88rem; color: #334155;
+    }
+    .file-label:hover { background: #e2e8f0; }
+    #file-name { font-size: 0.85rem; color: #475569; margin-top: 10px; }
+
+    .btn-upload {
+      margin-top: 16px; padding: 10px 28px;
+      background: #2563eb; color: #fff; border: none;
+      border-radius: 7px; font-size: 0.95rem; cursor: pointer; font-weight: 600;
+    }
+    .btn-upload:hover { background: #1d4ed8; }
+
+    /* 顧客一覧テーブル */
+    .table-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 12px;
+    }
+    .table-header h2 { font-size: 1rem; color: #1a3a5c; }
+    .count { font-size: 0.85rem; color: #64748b; }
+
+    table { width: 100%; border-collapse: collapse; background: #fff;
+            border-radius: 12px; overflow: hidden;
+            box-shadow: 0 2px 12px rgba(0,0,0,.08); }
+    thead { background: #1a3a5c; color: #fff; }
+    th { padding: 11px 16px; text-align: left; font-size: 0.85rem; font-weight: 600; }
+    td { padding: 11px 16px; font-size: 0.9rem; border-bottom: 1px solid #f0f0f0; color: #333; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #f8faff; }
+
+    .btn-edit {
+      padding: 4px 12px; background: #eff6ff; color: #2563eb;
+      border: 1px solid #bfdbfe; border-radius: 5px;
+      font-size: 0.8rem; cursor: pointer;
+    }
+    .btn-edit:hover { background: #dbeafe; }
+    .btn-del {
+      padding: 4px 12px; background: #fef2f2; color: #dc2626;
+      border: 1px solid #fecaca; border-radius: 5px;
+      font-size: 0.8rem; cursor: pointer;
+    }
+    .btn-del:hover { background: #fee2e2; }
+    .empty { text-align: center; padding: 40px; color: #aaa; font-size: 0.9rem; }
+
+    /* モーダル */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.45); z-index: 100;
+      align-items: center; justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: #fff; border-radius: 12px; padding: 28px;
+      width: 90%; max-width: 400px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+    }
+    .modal h3 { font-size: 1rem; color: #1a3a5c; margin-bottom: 16px; }
+    .modal input[type="text"] {
+      width: 100%; padding: 10px 12px; border: 1px solid #ddd;
+      border-radius: 8px; font-size: 0.95rem; color: #333;
+      background: #fafafa; margin-bottom: 16px;
+    }
+    .modal input[type="text"]:focus { outline: none; border-color: #2563eb; background: #fff; }
+    .modal-actions { display: flex; gap: 10px; }
+    .btn-save {
+      flex: 1; padding: 10px; background: #2563eb; color: #fff;
+      border: none; border-radius: 7px; font-size: 0.95rem;
+      cursor: pointer; font-weight: 600;
+    }
+    .btn-save:hover { background: #1d4ed8; }
+    .btn-cancel-modal {
+      flex: 1; padding: 10px; background: #f1f5f9; color: #555;
+      border: none; border-radius: 7px; font-size: 0.95rem; cursor: pointer;
+    }
+    .btn-cancel-modal:hover { background: #e2e8f0; }
+  </style>
+</head>
+<body>
+  <nav>
+    <span class="nav-brand">めっき受注管理</span>
+    <a href="/">受注一覧</a>
+    <a href="/customers" class="active">顧客マスタ</a>
+  </nav>
+
+  <div class="page">
+    <div class="container">
+      <h1>顧客マスタ</h1>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+        <div class="flash {{ category }}">
+          {% if category == 'success' %}✓{% else %}✕{% endif %} {{ message }}
+        </div>
+        {% endfor %}
+      {% endwith %}
+
+      <!-- アップロードフォーム -->
+      <div class="card">
+        <h2>Excelファイルからインポート</h2>
+        <form method="post" action="/customers" enctype="multipart/form-data">
+          <div class="upload-area">
+            <p>顧客名一覧の Excel ファイル（.xlsx）をアップロード</p>
+            <label class="file-label" for="file-input">📂 ファイルを選択</label>
+            <input type="file" id="file-input" name="file" accept=".xlsx"
+                   onchange="document.getElementById('file-name').textContent = this.files[0]?.name || ''">
+            <div id="file-name"></div>
+            <p class="hint">※ 1列目に顧客名、1行目はヘッダー行「顧客名」の形式</p>
+          </div>
+          <div style="text-align:center;">
+            <button type="submit" class="btn-upload">インポート実行</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- 顧客一覧 -->
+      <div class="table-header">
+        <h2>登録済み顧客</h2>
+        <div style="display:flex; align-items:center; gap:12px;">
+          <span class="count">{{ customers|length }} 件</span>
+          {% if customers %}
+          <form method="post" action="/customers/delete-all"
+                onsubmit="return confirm('顧客マスタを全件削除します。よろしいですか？')">
+            <button type="submit" class="btn-del" style="padding:5px 14px;">全件削除</button>
+          </form>
+          {% endif %}
+        </div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>顧客名</th>
+            <th>登録日時</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for c in customers %}
+          <tr>
+            <td style="color:#94a3b8; width:48px;">{{ loop.index }}</td>
+            <td>{{ c.name }}</td>
+            <td style="color:#94a3b8; font-size:0.85rem;">{{ c.created_at }}</td>
+            <td style="width:120px;">
+              <div style="display:flex; gap:6px;">
+                <button type="button" class="btn-edit"
+                        onclick="openEdit({{ c.id }}, '{{ c.name|e }}')">編集</button>
+                <form method="post" action="/customers/delete/{{ c.id }}"
+                      onsubmit="return confirm('「{{ c.name }}」を削除しますか？')">
+                  <button type="submit" class="btn-del">削除</button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="4" class="empty">顧客が登録されていません</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 編集モーダル -->
+  <div class="modal-overlay" id="editModal">
+    <div class="modal">
+      <h3>顧客名を編集</h3>
+      <form id="editForm" method="post">
+        <input type="text" name="name" id="editName" required>
+        <div class="modal-actions">
+          <button type="button" class="btn-cancel-modal" onclick="closeEdit()">キャンセル</button>
+          <button type="submit" class="btn-save">保存</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    function openEdit(id, name) {
+      document.getElementById('editForm').action = '/customers/edit/' + id;
+      document.getElementById('editName').value = name;
+      document.getElementById('editModal').classList.add('open');
+      setTimeout(() => document.getElementById('editName').focus(), 50);
+    }
+    function closeEdit() {
+      document.getElementById('editModal').classList.remove('open');
+    }
+    // オーバーレイ外クリックで閉じる
+    document.getElementById('editModal').addEventListener('click', function(e) {
+      if (e.target === this) closeEdit();
+    });
+  </script>
+</body>
+</html>
