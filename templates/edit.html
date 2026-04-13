@@ -108,6 +108,11 @@
         </div>
 
         <div class="form-group">
+          <label>材質</label>
+          <input type="text" name="material" value="{{ order.material if order.material else '' }}" placeholder="例：SUS304、S45C、アルミ">
+        </div>
+
+        <div class="form-group">
           <label>数量 <span class="required">*</span></label>
           <input type="number" name="quantity" required min="1" value="{{ order.quantity }}">
         </div>

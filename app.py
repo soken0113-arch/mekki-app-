@@ -1,16 +1,17 @@
 from flask import Flask, render_template, request, redirect, url_for, send_file, flash, session
 from functools import wraps
-import sqlite3
 import os
 from datetime import datetime
 from io import BytesIO
 import openpyxl
 from openpyxl.styles import Font, PatternFill, Alignment
 from werkzeug.security import generate_password_hash, check_password_hash
+import psycopg2
+import psycopg2.extras
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "mekki-secret-key")
-DB_PATH = os.environ.get("DB_PATH", "orders.db")
+DATABASE_URL = os.environ.get("DATABASE_URL")
 
 MEKKI_TYPES = [
     "ニッケルメッキ",
@@ -28,20 +29,41 @@ MEKKI_TYPES = [
     "その他",
 ]
 
+class _Conn:
+    """psycopg2接続をSQLite風インターフェースでラップするクラス"""
+    def __init__(self):
+        self._conn = psycopg2.connect(DATABASE_URL)
+
+    def execute(self, sql, params=()):
+        # SQLiteの ? プレースホルダーをPostgreSQLの %s に変換
+        sql = sql.replace("?", "%s")
+        cur = self._conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute(sql, params)
+        return cur
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, *_):
+        if exc_type:
+            self._conn.rollback()
+        else:
+            self._conn.commit()
+        self._conn.close()
+
 def get_db():
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    return conn
+    return _Conn()
 
 def init_db():
     with get_db() as conn:
         conn.execute("""
             CREATE TABLE IF NOT EXISTS orders (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                id SERIAL PRIMARY KEY,
                 order_no TEXT NOT NULL,
                 customer TEXT NOT NULL,
                 product TEXT NOT NULL,
                 part_no TEXT NOT NULL DEFAULT '',
+                material TEXT NOT NULL DEFAULT '',
                 quantity INTEGER NOT NULL,
                 mekki_type TEXT NOT NULL,
                 due_date TEXT NOT NULL,
@@ -51,21 +73,21 @@ def init_db():
         """)
         conn.execute("""
             CREATE TABLE IF NOT EXISTS customers (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                id SERIAL PRIMARY KEY,
                 name TEXT NOT NULL UNIQUE,
                 created_at TEXT NOT NULL
             )
         """)
         conn.execute("""
             CREATE TABLE IF NOT EXISTS products (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                id SERIAL PRIMARY KEY,
                 name TEXT NOT NULL UNIQUE,
                 created_at TEXT NOT NULL
             )
         """)
         conn.execute("""
             CREATE TABLE IF NOT EXISTS users (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                id SERIAL PRIMARY KEY,
                 username TEXT NOT NULL UNIQUE,
                 password_hash TEXT NOT NULL,
                 created_at TEXT NOT NULL
@@ -155,13 +177,14 @@ def new_order():
         order_no = f"ORD-{now.strftime('%Y%m%d%H%M%S')}"
         with get_db() as conn:
             conn.execute("""
-                INSERT INTO orders (order_no, customer, product, part_no, quantity, mekki_type, due_date, note, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO orders (order_no, customer, product, part_no, material, quantity, mekki_type, due_date, note, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
                 order_no,
                 request.form["customer"],
                 request.form["product"],
                 request.form.get("part_no", ""),
+                request.form.get("material", ""),
                 request.form["quantity"],
                 request.form["mekki_type"],
                 request.form["due_date"],
@@ -184,12 +207,13 @@ def edit_order(order_id):
     if request.method == "POST":
         with get_db() as conn:
             conn.execute("""
-                UPDATE orders SET customer=?, product=?, part_no=?, quantity=?,
+                UPDATE orders SET customer=?, product=?, part_no=?, material=?, quantity=?,
                 mekki_type=?, due_date=?, note=? WHERE id=?
             """, (
                 request.form["customer"],
                 request.form["product"],
                 request.form.get("part_no", ""),
+                request.form.get("material", ""),
                 request.form["quantity"],
                 request.form["mekki_type"],
                 request.form["due_date"],
@@ -405,7 +429,7 @@ def export_excel():
     ws = wb.active
     ws.title = "受注データ"
 
-    headers = ["伝票番号", "顧客名", "品名", "品番", "数量", "メッキ種類", "納期", "備考", "登録日時"]
+    headers = ["伝票番号", "顧客名", "品名", "品番", "材質", "数量", "メッキ種類", "納期", "備考", "登録日時"]
     ws.append(headers)
 
     # ヘッダー行のスタイル
@@ -423,6 +447,7 @@ def export_excel():
             order["customer"],
             order["product"],
             order["part_no"] or "",
+            order["material"] or "",
             order["quantity"],
             order["mekki_type"],
             order["due_date"],
@@ -431,7 +456,7 @@ def export_excel():
         ])
 
     # 列幅の自動調整
-    col_widths = [22, 20, 20, 16, 8, 16, 14, 30, 20]
+    col_widths = [22, 20, 20, 16, 16, 8, 16, 14, 30, 20]
     for i, width in enumerate(col_widths, start=1):
         ws.column_dimensions[openpyxl.utils.get_column_letter(i)].width = width
 

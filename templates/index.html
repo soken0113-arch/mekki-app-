@@ -60,6 +60,12 @@
       cursor: pointer; text-decoration: none;
     }
     .btn-edit-sm:hover { background: #dbeafe; }
+    .btn-delete-sm {
+      padding: 5px 12px; background: #fef2f2; color: #dc2626;
+      border: 1px solid #fecaca; border-radius: 6px; font-size: 0.82rem;
+      cursor: pointer;
+    }
+    .btn-delete-sm:hover { background: #fee2e2; }
     .empty { text-align: center; padding: 48px; color: #aaa; font-size: 0.95rem; }
   </style>
 </head>
@@ -110,6 +116,10 @@
             <td style="white-space:nowrap;">
               <a href="/edit/{{ order.id }}" class="btn-edit-sm">編集</a>
               <a href="/detail/{{ order.id }}" class="btn-detail" style="margin-left:4px;">詳細</a>
+              <form method="post" action="/delete/{{ order.id }}" style="display:inline; margin-left:4px;"
+                    onsubmit="return confirm('受注番号「{{ order.order_no }}」を削除しますか？');">
+                <button type="submit" class="btn-delete-sm">削除</button>
+              </form>
             </td>
           </tr>
           {% else %}
