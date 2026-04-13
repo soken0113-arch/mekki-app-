@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, send_file, flash, session
 from functools import wraps
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 from io import BytesIO
 import openpyxl
 from openpyxl.styles import Font, PatternFill, Alignment
@@ -11,7 +11,9 @@ import psycopg2.extras
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "mekki-secret-key")
+app.permanent_session_lifetime = timedelta(minutes=30)
 DATABASE_URL = os.environ.get("DATABASE_URL")
+SESSION_TIMEOUT = 30  # 分
 
 MEKKI_TYPES = [
     "ニッケルメッキ",
@@ -100,6 +102,18 @@ def init_db():
                 ("admin", generate_password_hash("admin1234", method="pbkdf2:sha256"), datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
             )
 
+@app.before_request
+def check_session_timeout():
+    if session.get("user_id"):
+        last_active = session.get("last_active")
+        if last_active:
+            elapsed = datetime.now() - datetime.fromisoformat(last_active)
+            if elapsed > timedelta(minutes=SESSION_TIMEOUT):
+                session.clear()
+                flash(f"{SESSION_TIMEOUT}分間操作がなかったため自動ログアウトしました。", "info")
+                return redirect(url_for("login"))
+        session["last_active"] = datetime.now().isoformat()
+
 def login_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
@@ -123,8 +137,10 @@ def login():
                 "SELECT * FROM users WHERE username=?", (username,)
             ).fetchone()
         if user and check_password_hash(user["password_hash"], password):
+            session.permanent = True
             session["user_id"] = user["id"]
             session["username"] = user["username"]
+            session["last_active"] = datetime.now().isoformat()
             return redirect(url_for("index"))
         error = "ユーザー名またはパスワードが正しくありません。"
     return render_template("login.html", error=error)
