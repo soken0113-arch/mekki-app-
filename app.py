@@ -105,10 +105,12 @@ def init_db():
             ("mekki_line",      "TEXT NOT NULL DEFAULT ''"),
             ("process_note",    "TEXT NOT NULL DEFAULT ''"),
         ]:
-            try:
+            exists = conn.execute(
+                "SELECT 1 FROM information_schema.columns WHERE table_name='orders' AND column_name=?",
+                (col,)
+            ).fetchone()
+            if not exists:
                 conn.execute(f"ALTER TABLE orders ADD COLUMN {col} {definition}")
-            except Exception:
-                pass  # カラムが既に存在する場合はスキップ
 
         # デフォルトユーザーが未登録なら作成
         if not conn.execute("SELECT id FROM users WHERE username='admin'").fetchone():
