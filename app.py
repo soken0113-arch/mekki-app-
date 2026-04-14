@@ -31,6 +31,8 @@ MEKKI_TYPES = [
     "その他",
 ]
 
+MEKKI_LINES = ["銅", "２号機", "無Ⅰ", "無Ⅱ", "特殊", "アルマイト", "化成処理", "亜鉛", "Ni自動バレル", "外注"]
+
 class _Conn:
     """psycopg2接続をSQLite風インターフェースでラップするクラス"""
     def __init__(self):
@@ -95,6 +97,19 @@ def init_db():
                 created_at TEXT NOT NULL
             )
         """)
+        # 新カラムのマイグレーション（既存テーブルへの追加）
+        for col, definition in [
+            ("mekki_thickness", "TEXT NOT NULL DEFAULT ''"),
+            ("thickness_data",  "TEXT NOT NULL DEFAULT '不要'"),
+            ("unit_price",      "TEXT NOT NULL DEFAULT ''"),
+            ("mekki_line",      "TEXT NOT NULL DEFAULT ''"),
+            ("process_note",    "TEXT NOT NULL DEFAULT ''"),
+        ]:
+            try:
+                conn.execute(f"ALTER TABLE orders ADD COLUMN {col} {definition}")
+            except Exception:
+                pass  # カラムが既に存在する場合はスキップ
+
         # デフォルトユーザーが未登録なら作成
         if not conn.execute("SELECT id FROM users WHERE username='admin'").fetchone():
             conn.execute(
@@ -193,8 +208,10 @@ def new_order():
         order_no = f"ORD-{now.strftime('%Y%m%d%H%M%S')}"
         with get_db() as conn:
             conn.execute("""
-                INSERT INTO orders (order_no, customer, product, part_no, material, quantity, mekki_type, due_date, note, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO orders (order_no, customer, product, part_no, material, quantity,
+                    mekki_type, mekki_thickness, thickness_data, due_date,
+                    unit_price, mekki_line, process_note, note, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
                 order_no,
                 request.form["customer"],
@@ -203,7 +220,12 @@ def new_order():
                 request.form.get("material", ""),
                 request.form["quantity"],
                 request.form["mekki_type"],
+                request.form.get("mekki_thickness", ""),
+                request.form.get("thickness_data", "不要"),
                 request.form["due_date"],
+                request.form.get("unit_price", ""),
+                request.form.get("mekki_line", ""),
+                request.form.get("process_note", ""),
                 request.form.get("note", ""),
                 now.strftime("%Y-%m-%d %H:%M:%S"),
             ))
@@ -211,7 +233,8 @@ def new_order():
     with get_db() as conn:
         customers = conn.execute("SELECT name FROM customers ORDER BY name").fetchall()
         products = conn.execute("SELECT name FROM products ORDER BY name").fetchall()
-    return render_template("new.html", mekki_types=MEKKI_TYPES, customers=customers, products=products)
+    return render_template("new.html", mekki_types=MEKKI_TYPES, mekki_lines=MEKKI_LINES,
+                           customers=customers, products=products)
 
 @app.route("/edit/<int:order_id>", methods=["GET", "POST"])
 @login_required
@@ -224,7 +247,8 @@ def edit_order(order_id):
         with get_db() as conn:
             conn.execute("""
                 UPDATE orders SET customer=?, product=?, part_no=?, material=?, quantity=?,
-                mekki_type=?, due_date=?, note=? WHERE id=?
+                mekki_type=?, mekki_thickness=?, thickness_data=?, due_date=?,
+                unit_price=?, mekki_line=?, process_note=?, note=? WHERE id=?
             """, (
                 request.form["customer"],
                 request.form["product"],
@@ -232,7 +256,12 @@ def edit_order(order_id):
                 request.form.get("material", ""),
                 request.form["quantity"],
                 request.form["mekki_type"],
+                request.form.get("mekki_thickness", ""),
+                request.form.get("thickness_data", "不要"),
                 request.form["due_date"],
+                request.form.get("unit_price", ""),
+                request.form.get("mekki_line", ""),
+                request.form.get("process_note", ""),
                 request.form.get("note", ""),
                 order_id,
             ))
@@ -240,7 +269,8 @@ def edit_order(order_id):
     with get_db() as conn:
         customers = conn.execute("SELECT name FROM customers ORDER BY name").fetchall()
         products = conn.execute("SELECT name FROM products ORDER BY name").fetchall()
-    return render_template("edit.html", order=order, mekki_types=MEKKI_TYPES, customers=customers, products=products)
+    return render_template("edit.html", order=order, mekki_types=MEKKI_TYPES, mekki_lines=MEKKI_LINES,
+                           customers=customers, products=products)
 
 @app.route("/detail/<int:order_id>")
 @login_required

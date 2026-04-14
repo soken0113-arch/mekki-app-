@@ -35,6 +35,10 @@
       display: inline-block; padding: 4px 12px; border-radius: 20px;
       font-size: 0.82rem; background: #dbeafe; color: #1d4ed8;
     }
+    .badge-req {
+      display: inline-block; padding: 4px 12px; border-radius: 20px;
+      font-size: 0.82rem; background: #fef3c7; color: #92400e;
+    }
     .note { white-space: pre-wrap; color: #555; }
 
     .actions { display: flex; gap: 12px; margin-top: 28px; flex-wrap: wrap; }
@@ -73,28 +77,54 @@
         <span class="field-value">{{ order.customer }}</span>
       </div>
       <div class="field">
-        <span class="field-label">品名</span>
-        <span class="field-value">{{ order.product }}</span>
+        <span class="field-label">めっき種類</span>
+        <span class="field-value"><span class="badge">{{ order.mekki_type }}</span></span>
+      </div>
+      <div class="field">
+        <span class="field-label">めっき膜厚</span>
+        <span class="field-value">{{ order.mekki_thickness if order.mekki_thickness else "—" }}</span>
+      </div>
+      <div class="field">
+        <span class="field-label">材質（番手）</span>
+        <span class="field-value">{{ order.material if order.material else "—" }}</span>
+      </div>
+      <div class="field">
+        <span class="field-label">納期</span>
+        <span class="field-value">{{ order.due_date }}</span>
+      </div>
+      <div class="field">
+        <span class="field-label">膜厚データ</span>
+        <span class="field-value">
+          {% if order.thickness_data == '要' %}
+          <span class="badge-req">要</span>
+          {% else %}
+          不要
+          {% endif %}
+        </span>
       </div>
       <div class="field">
         <span class="field-label">品番</span>
         <span class="field-value">{{ order.part_no if order.part_no else "—" }}</span>
       </div>
       <div class="field">
-        <span class="field-label">材質</span>
-        <span class="field-value">{{ order.material if order.material else "—" }}</span>
+        <span class="field-label">品名</span>
+        <span class="field-value">{{ order.product }}</span>
       </div>
       <div class="field">
         <span class="field-label">数量</span>
-        <span class="field-value">{{ order.quantity }}</span>
+        <span class="field-value">{{ order.quantity }} 個</span>
       </div>
       <div class="field">
-        <span class="field-label">めっき種類</span>
-        <span class="field-value"><span class="badge">{{ order.mekki_type }}</span></span>
+        <span class="field-label">単価</span>
+        <span class="field-value">{{ order.unit_price if order.unit_price else "—" }}</span>
       </div>
       <div class="field">
-        <span class="field-label">納期</span>
-        <span class="field-value">{{ order.due_date }}</span>
+        <span class="field-label">めっきライン</span>
+        <span class="field-value">{{ order.mekki_line if order.mekki_line else "—" }}</span>
+      </div>
+      <div class="field">
+        <span class="field-label">工程</span>
+        <span class="field-value">{{ order.process_note if order.process_note else "—" }}</span>
       </div>
       <div class="field">
         <span class="field-label">備考</span>
