@@ -158,7 +158,8 @@
         size: A4 portrait;
         margin: 0;
       }
-      body {
+      html, body {
+        height: 100%;
         background: white;
         padding: 0;
         margin: 0;
@@ -166,13 +167,10 @@
       .screen-only { display: none !important; }
       .sheet {
         width: 210mm;
-        height: 296mm;
+        height: 100vh;
         border: none;
         margin: 0;
-      }
-      .slip-header {
-        print-color-adjust: exact;
-        -webkit-print-color-adjust: exact;
+        overflow: hidden;
       }
     }
   </style>
