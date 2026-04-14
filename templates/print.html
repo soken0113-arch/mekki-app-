@@ -47,15 +47,15 @@
     }
     .hint { font-size: 11px; color: #555; }
 
-    /* B5横向きシート (257mm × 182mm) — 2×2 グリッド */
+    /* A4縦向きシート (210mm × 297mm) — 1×4 グリッド (各7.35cm) */
     .sheet {
-      width: 257mm;
-      height: 182mm;
+      width: 210mm;
+      height: 297mm;
       background: white;
       margin: 0 auto;
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      grid-template-rows: 1fr 1fr;
+      grid-template-columns: 1fr;
+      grid-template-rows: repeat(4, 73.5mm);
       border: 2px solid #000;
     }
 
@@ -184,7 +184,7 @@
     /* ── 印刷スタイル ── */
     @media print {
       @page {
-        size: B5 landscape;
+        size: A4 portrait;
         margin: 0;
       }
       body {
@@ -194,8 +194,8 @@
       }
       .screen-only { display: none !important; }
       .sheet {
-        width: 257mm;
-        height: 182mm;
+        width: 210mm;
+        height: 297mm;
         border: none;
         margin: 0;
       }
@@ -211,7 +211,7 @@
 <div class="screen-only">
   <button class="btn-print" onclick="window.print()">🖨 印刷 / PDF保存</button>
   <a class="btn-back" href="/detail/{{ order.id }}">← 詳細に戻る</a>
-  <span class="hint">※ 用紙サイズ：B5・横向き・余白なし</span>
+  <span class="hint">※ 用紙サイズ：A4・縦向き・余白なし（各伝票 7.35cm）</span>
 </div>
 
 <div class="sheet">
