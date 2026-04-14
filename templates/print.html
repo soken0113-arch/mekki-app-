@@ -170,11 +170,9 @@
         margin: 0;
       }
       html, body {
-        height: 297mm;
-        background: white;
-        padding: 0;
         margin: 0;
-        overflow: hidden;
+        padding: 0;
+        background: white;
       }
       .screen-only { display: none !important; }
       .sheet {
@@ -183,11 +181,11 @@
         border: none;
         margin: 0;
         overflow: hidden;
+        page-break-inside: avoid;
+        break-inside: avoid;
       }
       .slip {
         overflow: hidden;
-        page-break-inside: avoid;
-        break-inside: avoid;
       }
     }
   </style>
@@ -410,71 +408,70 @@
       <div class="order-no">{{ order.order_no }}</div>
     </div>
 
-    <div style="flex:1; display:flex; flex-direction:column; gap:1px;">
+    <div style="flex:1; display:flex; flex-direction:column; gap:0; overflow:hidden; min-height:0;">
 
-      <div style="border:2px solid #000; padding:2px 6px; text-align:center;">
-        <div class="field-label" style="font-size:7px; letter-spacing:2px;">お 届 け 先</div>
-        <div style="font-size:14px; font-weight:900; letter-spacing:1px;">{{ order.customer }}</div>
+      <div style="flex:1; border-bottom:1px solid #000; padding:0 3px; text-align:center; overflow:hidden;">
+        <div class="field-label" style="font-size:6px; letter-spacing:2px;">お 届 け 先</div>
+        <div style="font-size:13px; font-weight:900; letter-spacing:1px; line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ order.customer }}</div>
       </div>
 
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:1px;">
-        <div style="border:1px solid #000; padding:1px 4px;">
+      <div style="flex:1; display:grid; grid-template-columns:1fr 1fr; min-height:0; overflow:hidden;">
+        <div style="border-bottom:1px solid #000; border-right:1px solid #000; padding:0 2px; overflow:hidden;">
           <div class="field-label">品名</div>
-          <div style="font-size:10px; font-weight:700;">{{ order.product }}</div>
+          <div style="font-size:10px; font-weight:700; line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ order.product }}</div>
         </div>
-        <div style="border:1px solid #000; padding:1px 4px; text-align:center;">
+        <div style="border-bottom:1px solid #000; padding:0 2px; text-align:center; overflow:hidden;">
           <div class="field-label">数量</div>
-          <div style="font-size:15px; font-weight:900;">{{ order.quantity }}<span style="font-size:10px; font-weight:400;"> 個</span></div>
+          <div style="font-size:13px; font-weight:900; line-height:1.2;">{{ order.quantity }}<span style="font-size:9px; font-weight:400;"> 個</span></div>
         </div>
       </div>
 
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:1px;">
-        <div style="border:1px solid #000; padding:1px 4px;">
+      <div style="flex:1; display:grid; grid-template-columns:1fr 1fr; min-height:0; overflow:hidden;">
+        <div style="border-bottom:1px solid #000; border-right:1px solid #000; padding:0 2px; overflow:hidden;">
           <div class="field-label">品番</div>
-          <div style="font-size:10px; font-weight:700;">{{ order.part_no if order.part_no else '—' }}</div>
+          <div style="font-size:10px; font-weight:700; line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ order.part_no if order.part_no else '—' }}</div>
         </div>
-        <div style="border:1px solid #000; padding:1px 4px;">
+        <div style="border-bottom:1px solid #000; padding:0 2px; overflow:hidden;">
           <div class="field-label">材質（番手）</div>
-          <div style="font-size:10px; font-weight:700;">{{ order.material if order.material else '—' }}</div>
+          <div style="font-size:10px; font-weight:700; line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ order.material if order.material else '—' }}</div>
         </div>
       </div>
 
-      <div style="border:2px solid #000; padding:2px 6px; text-align:center;
-                  background:#fff; color:#000;">
-        <div style="font-size:7px; letter-spacing:1px; margin-bottom:1px;">処 理 内 容</div>
-        <div style="font-size:13px; font-weight:900; letter-spacing:2px;">{{ order.mekki_type }}</div>
+      <div style="flex:1; border-bottom:1px solid #000; padding:0 3px; text-align:center; overflow:hidden;">
+        <div style="font-size:6px; letter-spacing:1px;">処 理 内 容</div>
+        <div style="font-size:12px; font-weight:900; letter-spacing:2px; line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ order.mekki_type }}</div>
       </div>
 
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:1px;">
-        <div style="border:1px solid #000; padding:1px 4px;">
+      <div style="flex:1; display:grid; grid-template-columns:1fr 1fr; min-height:0; overflow:hidden;">
+        <div style="border-bottom:1px solid #000; border-right:1px solid #000; padding:0 2px; overflow:hidden;">
           <div class="field-label">めっき膜厚</div>
-          <div style="font-size:10px; font-weight:700;">{{ order.mekki_thickness if order.mekki_thickness else '—' }}</div>
+          <div style="font-size:10px; font-weight:700; line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ order.mekki_thickness if order.mekki_thickness else '—' }}</div>
         </div>
-        <div style="border:1px solid #000; padding:1px 4px;">
+        <div style="border-bottom:1px solid #000; padding:0 2px; overflow:hidden;">
           <div class="field-label">膜厚データ</div>
-          <div style="font-size:10px; font-weight:700;">{{ order.thickness_data if order.thickness_data else '不要' }}</div>
+          <div style="font-size:10px; font-weight:700; line-height:1.2;">{{ order.thickness_data if order.thickness_data else '不要' }}</div>
         </div>
       </div>
 
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:1px;">
-        <div style="border:1px solid #000; padding:1px 4px;">
+      <div style="flex:1; display:grid; grid-template-columns:1fr 1fr; min-height:0; overflow:hidden;">
+        <div style="border-bottom:1px solid #000; border-right:1px solid #000; padding:0 2px; overflow:hidden;">
           <div class="field-label">納期</div>
-          <div style="font-size:10px; font-weight:700;">{{ order.due_date }}</div>
+          <div style="font-size:10px; font-weight:700; line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ order.due_date }}</div>
         </div>
-        <div style="border:1px solid #000; padding:1px 4px;">
+        <div style="border-bottom:1px solid #000; padding:0 2px; overflow:hidden;">
           <div class="field-label">めっきライン</div>
-          <div style="font-size:10px; font-weight:700;">{{ order.mekki_line if order.mekki_line else '—' }}</div>
+          <div style="font-size:10px; font-weight:700; line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ order.mekki_line if order.mekki_line else '—' }}</div>
         </div>
       </div>
 
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:1px;">
-        <div style="border:1px solid #000; padding:1px 4px;">
+      <div style="flex:1; display:grid; grid-template-columns:1fr 1fr; min-height:0; overflow:hidden;">
+        <div style="border-right:1px solid #000; padding:0 2px; overflow:hidden;">
           <div class="field-label">工程</div>
-          <div style="font-size:9px; font-weight:700;">{{ order.process_note if order.process_note else '—' }}</div>
+          <div style="font-size:9px; font-weight:700; line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ order.process_note if order.process_note else '—' }}</div>
         </div>
-        <div style="border:1px solid #000; padding:1px 4px;">
+        <div style="padding:0 2px; overflow:hidden;">
           <div class="field-label">伝票番号</div>
-          <div style="font-size:9px; font-weight:700;">{{ order.order_no }}</div>
+          <div style="font-size:9px; font-weight:700; line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ order.order_no }}</div>
         </div>
       </div>
 
