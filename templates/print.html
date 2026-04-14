@@ -47,15 +47,15 @@
     }
     .hint { font-size: 11px; color: #555; }
 
-    /* A4縦向きシート (210mm × 297mm) — 1×4 グリッド */
+    /* A4縦向きシート — 1×4 グリッド (各7.3cm) */
     .sheet {
       width: 210mm;
-      height: 297mm;
+      height: 292mm;
       background: white;
       margin: 0 auto;
       display: grid;
       grid-template-columns: 1fr;
-      grid-template-rows: repeat(4, minmax(0, 1fr));
+      grid-template-rows: repeat(4, 73mm);
       border: 2px solid #000;
       overflow: hidden;
     }
@@ -177,11 +177,10 @@
       .screen-only { display: none !important; }
       .sheet {
         width: 210mm;
-        height: 297mm;
+        height: 292mm;
         border: none;
         margin: 0;
         overflow: hidden;
-        zoom: 0.95;
       }
       .slip {
         overflow: hidden;
