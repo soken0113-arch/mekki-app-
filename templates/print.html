@@ -159,18 +159,25 @@
         margin: 0;
       }
       html, body {
-        height: 100%;
+        height: 297mm;
         background: white;
         padding: 0;
         margin: 0;
+        overflow: hidden;
       }
       .screen-only { display: none !important; }
       .sheet {
         width: 210mm;
-        height: 100vh;
+        height: 297mm;
         border: none;
         margin: 0;
+        page-break-after: avoid;
+        break-after: avoid;
+      }
+      .slip {
         overflow: hidden;
+        page-break-inside: avoid;
+        break-inside: avoid;
       }
     }
   </style>
