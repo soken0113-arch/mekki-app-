@@ -1,149 +1,171 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>受注詳細 | めっき受注管理</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: sans-serif; background: #f0f2f5; padding: 20px 12px; }
-    .container { max-width: 560px; margin: 0 auto; }
+{% extends "base.html" %}
 
-    .header { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; }
-    .btn-back {
-      padding: 7px 14px; background: #f1f5f9; color: #555;
-      border: none; border-radius: 6px; font-size: 0.88rem;
-      cursor: pointer; text-decoration: none;
-    }
-    .btn-back:hover { background: #e2e8f0; }
-    h1 { font-size: 1.4rem; color: #1a3a5c; }
+{% block title %}受注詳細{% endblock %}
 
-    .card { background: #fff; border-radius: 12px; padding: 32px;
-            box-shadow: 0 2px 12px rgba(0,0,0,.08); }
+{% block extra_css %}
+<style>
+  .detail-wrap {
+    max-width: 720px;
+  }
+  .order-no-label {
+    font-size: 12px;
+    color: var(--text-mute);
+    margin-bottom: 20px;
+    letter-spacing: 0.05em;
+  }
+  .detail-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  .detail-table tr {
+    border-bottom: 1px solid var(--border-light);
+  }
+  .detail-table tr:last-child {
+    border-bottom: none;
+  }
+  .detail-table th {
+    width: 140px;
+    padding: 11px 12px;
+    text-align: left;
+    font-weight: 600;
+    color: var(--text-sub);
+    background: #f8f9fb;
+    border-right: 1px solid var(--border-light);
+    vertical-align: top;
+    white-space: nowrap;
+  }
+  .detail-table td {
+    padding: 11px 16px;
+    color: var(--text);
+  }
+  .mekki-badge {
+    display: inline-block;
+    padding: 3px 12px;
+    background: #eef1f6;
+    color: var(--navy-700);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .req-badge {
+    display: inline-block;
+    padding: 3px 12px;
+    background: #fef3c7;
+    color: #92400e;
+    border: 1px solid #fde68a;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .note-text {
+    white-space: pre-wrap;
+    color: var(--text-sub);
+  }
+  .action-bar {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 20px;
+  }
+  .btn-print {
+    background: var(--navy-900);
+    color: var(--gold);
+    border-color: var(--gold);
+  }
+  .btn-print:hover {
+    background: var(--navy-700);
+    color: var(--gold);
+  }
+</style>
+{% endblock %}
 
-    .order-no { font-size: 0.82rem; color: #888; margin-bottom: 20px; }
+{% block content %}
+<div class="detail-wrap">
+  <h1 class="page-title">受注詳細</h1>
 
-    .field { display: flex; padding: 12px 0; border-bottom: 1px solid #f0f0f0; }
-    .field:last-of-type { border-bottom: none; }
-    .field-label {
-      width: 130px; flex-shrink: 0; font-size: 0.85rem;
-      font-weight: 600; color: #666;
-    }
-    .field-value { font-size: 0.95rem; color: #222; }
+  <div class="card">
+    <div class="order-no-label">受注番号：{{ order.order_no }}</div>
 
-    .badge {
-      display: inline-block; padding: 4px 12px; border-radius: 20px;
-      font-size: 0.82rem; background: #dbeafe; color: #1d4ed8;
-    }
-    .badge-req {
-      display: inline-block; padding: 4px 12px; border-radius: 20px;
-      font-size: 0.82rem; background: #fef3c7; color: #92400e;
-    }
-    .note { white-space: pre-wrap; color: #555; }
-
-    .actions { display: flex; gap: 12px; margin-top: 28px; flex-wrap: wrap; }
-    .btn-edit {
-      padding: 11px 20px; background: #eff6ff; color: #2563eb;
-      border: 1px solid #bfdbfe; border-radius: 8px; font-size: 0.9rem;
-      cursor: pointer; text-decoration: none; font-weight: 600;
-    }
-    .btn-edit:hover { background: #dbeafe; }
-    .btn-print {
-      padding: 11px 20px; background: #1a1d24; color: #e8a020;
-      border: 2px solid #e8a020; border-radius: 8px; font-size: 0.9rem;
-      cursor: pointer; text-decoration: none; font-weight: 700;
-    }
-    .btn-print:hover { background: #2d3142; }
-    .btn-delete {
-      padding: 11px 20px; background: #fef2f2; color: #dc2626;
-      border: 1px solid #fecaca; border-radius: 8px; font-size: 0.9rem;
-      cursor: pointer;
-    }
-    .btn-delete:hover { background: #fee2e2; }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="header">
-      <a href="/" class="btn-back">← 一覧へ戻る</a>
-      <h1>受注詳細</h1>
-    </div>
-
-    <div class="card">
-      <div class="order-no">受注番号：{{ order.order_no }}</div>
-
-      <div class="field">
-        <span class="field-label">顧客名</span>
-        <span class="field-value">{{ order.customer }}</span>
-      </div>
-      <div class="field">
-        <span class="field-label">めっき種類</span>
-        <span class="field-value"><span class="badge">{{ order.mekki_type }}</span></span>
-      </div>
-      <div class="field">
-        <span class="field-label">めっき膜厚</span>
-        <span class="field-value">{{ order.mekki_thickness if order.mekki_thickness else "—" }}</span>
-      </div>
-      <div class="field">
-        <span class="field-label">材質（番手）</span>
-        <span class="field-value">{{ order.material if order.material else "—" }}</span>
-      </div>
-      <div class="field">
-        <span class="field-label">納期</span>
-        <span class="field-value">{{ order.due_date }}</span>
-      </div>
-      <div class="field">
-        <span class="field-label">膜厚データ</span>
-        <span class="field-value">
+    <table class="detail-table">
+      <tr>
+        <th>顧客名</th>
+        <td>{{ order.customer }}</td>
+      </tr>
+      <tr>
+        <th>めっき種類</th>
+        <td><span class="mekki-badge">{{ order.mekki_type }}</span></td>
+      </tr>
+      <tr>
+        <th>めっき膜厚</th>
+        <td>{{ order.mekki_thickness if order.mekki_thickness else "—" }}</td>
+      </tr>
+      <tr>
+        <th>材質（番手）</th>
+        <td>{{ order.material if order.material else "—" }}</td>
+      </tr>
+      <tr>
+        <th>納期</th>
+        <td>{{ order.due_date }}</td>
+      </tr>
+      <tr>
+        <th>膜厚データ</th>
+        <td>
           {% if order.thickness_data == '要' %}
-          <span class="badge-req">要</span>
+            <span class="req-badge">要</span>
           {% else %}
-          不要
+            不要
           {% endif %}
-        </span>
-      </div>
-      <div class="field">
-        <span class="field-label">品番</span>
-        <span class="field-value">{{ order.part_no if order.part_no else "—" }}</span>
-      </div>
-      <div class="field">
-        <span class="field-label">品名</span>
-        <span class="field-value">{{ order.product }}</span>
-      </div>
-      <div class="field">
-        <span class="field-label">数量</span>
-        <span class="field-value">{{ order.quantity }} 個</span>
-      </div>
-      <div class="field">
-        <span class="field-label">単価</span>
-        <span class="field-value">{{ order.unit_price if order.unit_price else "—" }}</span>
-      </div>
-      <div class="field">
-        <span class="field-label">めっきライン</span>
-        <span class="field-value">{{ order.mekki_line if order.mekki_line else "—" }}</span>
-      </div>
-      <div class="field">
-        <span class="field-label">工程</span>
-        <span class="field-value">{{ order.process_note if order.process_note else "—" }}</span>
-      </div>
-      <div class="field">
-        <span class="field-label">備考</span>
-        <span class="field-value note">{{ order.note if order.note else "—" }}</span>
-      </div>
-      <div class="field">
-        <span class="field-label">登録日時</span>
-        <span class="field-value">{{ order.created_at }}</span>
-      </div>
+        </td>
+      </tr>
+      <tr>
+        <th>品番</th>
+        <td>{{ order.part_no if order.part_no else "—" }}</td>
+      </tr>
+      <tr>
+        <th>品名</th>
+        <td>{{ order.product }}</td>
+      </tr>
+      <tr>
+        <th>数量</th>
+        <td>{{ order.quantity }} 個</td>
+      </tr>
+      <tr>
+        <th>単価</th>
+        <td>{{ order.unit_price if order.unit_price else "—" }}</td>
+      </tr>
+      <tr>
+        <th>めっきライン</th>
+        <td>{{ order.mekki_line if order.mekki_line else "—" }}</td>
+      </tr>
+      <tr>
+        <th>工程</th>
+        <td>{{ order.process_note if order.process_note else "—" }}</td>
+      </tr>
+      <tr>
+        <th>出荷方法</th>
+        <td>{{ order.shipping_method if order.shipping_method else "—" }}</td>
+      </tr>
+      <tr>
+        <th>備考</th>
+        <td><span class="note-text">{{ order.note if order.note else "—" }}</span></td>
+      </tr>
+      <tr>
+        <th>登録日時</th>
+        <td>{{ order.created_at }}</td>
+      </tr>
+    </table>
 
-      <div class="actions">
-        <a href="/edit/{{ order.id }}" class="btn-edit">✏ 編集</a>
-        <a href="/print/{{ order.id }}" class="btn-print" target="_blank">🖨 伝票印刷</a>
-        <form method="post" action="/delete/{{ order.id }}"
-              onsubmit="return confirm('この受注を削除してもよいですか？')">
-          <button type="submit" class="btn-delete">削除する</button>
-        </form>
-      </div>
+    <div class="action-bar">
+      <a href="{{ url_for('edit_order', order_id=order.id) }}" class="btn btn-secondary">✏ 編集</a>
+      <a href="{{ url_for('print_order', order_id=order.id) }}" class="btn btn-print" target="_blank">🖨 伝票印刷</a>
+      <a href="{{ url_for('print_order2', order_id=order.id) }}" class="btn btn-print" target="_blank">🖨 伝票印刷2</a>
+      <form method="post" action="{{ url_for('delete', order_id=order.id) }}"
+            onsubmit="return confirm('この受注を削除してもよいですか？')">
+        <button type="submit" class="btn btn-danger">削除する</button>
+      </form>
     </div>
   </div>
-</body>
-</html>
+</div>
+{% endblock %}

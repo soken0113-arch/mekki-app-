@@ -1,186 +1,165 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>めっき受注管理</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: sans-serif; background: #f0f2f5; }
+{% extends "base.html" %}
 
-    /* ナビ */
-    nav {
-      background: #1a3a5c; color: #fff;
-      padding: 0 16px; display: flex; align-items: center;
-      height: 52px; position: relative;
-    }
-    .nav-brand { font-size: 1rem; font-weight: 700; letter-spacing: 1px; flex: 1; }
-    .nav-links { display: flex; align-items: center; gap: 16px; }
-    .nav-links a { color: #cbd5e1; text-decoration: none; font-size: 0.88rem; }
-    .nav-links a:hover, .nav-links a.active { color: #fff; border-bottom: 2px solid #60a5fa; padding-bottom: 2px; }
-    .nav-user { font-size: 0.82rem; color: #94a3b8; text-decoration: none; }
+{% block title %}受注一覧{% endblock %}
 
-    /* ハンバーガーメニュー */
-    .hamburger {
-      display: none; flex-direction: column; gap: 5px;
-      cursor: pointer; padding: 4px;
-    }
-    .hamburger span {
-      display: block; width: 24px; height: 2px; background: #fff; border-radius: 2px;
-    }
+{% block extra_css %}
+<style>
+  .toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .toolbar-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .count-badge {
+    font-size: 13px;
+    color: var(--text-sub);
+    background: #fff;
+    border: 1px solid var(--border);
+    padding: 6px 14px;
+    border-radius: 3px;
+  }
+  .count-badge strong {
+    color: var(--navy-700);
+    font-size: 15px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    margin: 0 4px;
+  }
+  .toolbar-right {
+    display: flex;
+    gap: 8px;
+  }
+  .btn-excel {
+    background: #fff;
+    color: var(--success);
+    border-color: var(--success);
+  }
+  .btn-excel:hover {
+    background: var(--success);
+    color: #fff;
+  }
+  .btn-excel::before {
+    content: "▼ ";
+    font-size: 10px;
+  }
+  .table-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow-x: auto;
+  }
+  .table-wrap .data-table {
+    min-width: 900px;
+  }
+  .mekki-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    background: #eef1f6;
+    color: var(--navy-700);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+  }
+  .row-actions {
+    display: flex;
+    gap: 6px;
+    white-space: nowrap;
+  }
+  .row-actions form {
+    display: inline;
+  }
+  .empty-state {
+    padding: 60px 20px;
+    text-align: center;
+    color: var(--text-mute);
+    font-size: 14px;
+  }
+  .empty-state::before {
+    content: "";
+    display: block;
+    width: 40px;
+    height: 4px;
+    background: var(--gold);
+    margin: 0 auto 16px;
+    opacity: 0.5;
+  }
+  @media (max-width: 640px) {
+    .toolbar { flex-direction: column; align-items: stretch; }
+    .toolbar-left, .toolbar-right { justify-content: space-between; }
+  }
+</style>
+{% endblock %}
 
-    /* モバイルメニュー */
-    @media (max-width: 640px) {
-      .hamburger { display: flex; }
-      .nav-links {
-        display: none; position: absolute; top: 52px; left: 0; right: 0;
-        background: #1a3a5c; flex-direction: column; align-items: flex-start;
-        padding: 16px; gap: 0; z-index: 100;
-        border-top: 1px solid #2d5a8c;
-      }
-      .nav-links.open { display: flex; }
-      .nav-links a {
-        padding: 12px 8px; width: 100%; font-size: 1rem;
-        border-bottom: 1px solid #2d5a8c;
-      }
-      .nav-links a:last-child { border-bottom: none; }
-      .nav-links a:hover, .nav-links a.active {
-        border-bottom: 1px solid #2d5a8c; padding-bottom: 12px;
-      }
-    }
+{% block content %}
+<h1 class="page-title">受注一覧</h1>
 
-    .page { padding: 20px 12px; }
-    .container { max-width: 960px; margin: 0 auto; }
-    h1 { font-size: 1.3rem; color: #1a3a5c; margin-bottom: 16px; }
-
-    .toolbar {
-      display: flex; justify-content: space-between; align-items: center;
-      margin-bottom: 12px; flex-wrap: wrap; gap: 8px;
-    }
-    .toolbar-right { display: flex; gap: 8px; flex-wrap: wrap; }
-
-    .btn {
-      padding: 9px 16px; border: none; border-radius: 7px;
-      font-size: 0.88rem; cursor: pointer; text-decoration: none;
-      display: inline-flex; align-items: center; gap: 6px;
-    }
-    .btn-primary { background: #2563eb; color: #fff; }
-    .btn-primary:hover { background: #1d4ed8; }
-    .btn-success { background: #16a34a; color: #fff; }
-    .btn-success:hover { background: #15803d; }
-
-    /* テーブル */
-    .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,.08); }
-    table { width: 100%; border-collapse: collapse; background: #fff; min-width: 700px; }
-    thead { background: #1a3a5c; color: #fff; }
-    th { padding: 12px 14px; text-align: left; font-size: 0.85rem; font-weight: 600; white-space: nowrap; }
-    td { padding: 12px 14px; font-size: 0.9rem; border-bottom: 1px solid #f0f0f0; color: #333; }
-    tr:last-child td { border-bottom: none; }
-    tr:hover td { background: #f8faff; }
-
-    .badge {
-      display: inline-block; padding: 3px 10px; border-radius: 20px;
-      font-size: 0.78rem; background: #dbeafe; color: #1d4ed8; white-space: nowrap;
-    }
-    .btn-detail {
-      padding: 6px 12px; background: #e0f2fe; color: #0369a1;
-      border: none; border-radius: 6px; font-size: 0.82rem;
-      cursor: pointer; text-decoration: none; white-space: nowrap;
-    }
-    .btn-detail:hover { background: #bae6fd; }
-    .btn-edit-sm {
-      padding: 6px 12px; background: #eff6ff; color: #2563eb;
-      border: 1px solid #bfdbfe; border-radius: 6px; font-size: 0.82rem;
-      cursor: pointer; text-decoration: none; white-space: nowrap;
-    }
-    .btn-edit-sm:hover { background: #dbeafe; }
-    .btn-delete-sm {
-      padding: 6px 12px; background: #fef2f2; color: #dc2626;
-      border: 1px solid #fecaca; border-radius: 6px; font-size: 0.82rem;
-      cursor: pointer; white-space: nowrap;
-    }
-    .btn-delete-sm:hover { background: #fee2e2; }
-    .empty { text-align: center; padding: 48px; color: #aaa; font-size: 0.95rem; }
-
-    /* モバイル用ボタン */
-    @media (max-width: 480px) {
-      .btn { padding: 10px 14px; font-size: 0.85rem; }
-      h1 { font-size: 1.1rem; }
-    }
-  </style>
-</head>
-<body>
-  <nav>
-    <span class="nav-brand">めっき受注管理</span>
-    <div class="nav-links" id="navLinks">
-      <a href="/" class="active">受注一覧</a>
-      <a href="/customers">顧客マスタ</a>
-      <a href="/products">品名マスタ</a>
-      <a href="/change-password" class="nav-user">{{ session.username }}</a>
-      <a href="/logout" class="nav-user">ログアウト</a>
-    </div>
-    <div class="hamburger" id="hamburger" onclick="toggleMenu()">
-      <span></span><span></span><span></span>
-    </div>
-  </nav>
-
-  <div class="page">
-    <div class="container">
-      <h1>受注一覧</h1>
-      <div class="toolbar">
-        <span style="color:#666; font-size:0.9rem;">{{ orders|length }} 件</span>
-        <div class="toolbar-right">
-          <a href="/export/excel" class="btn btn-success">⬇ Excel</a>
-          <a href="/new" class="btn btn-primary">＋ 新規登録</a>
-        </div>
-      </div>
-
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>受注番号</th>
-              <th>顧客名</th>
-              <th>品名</th>
-              <th>数量</th>
-              <th>めっき種類</th>
-              <th>納期</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for order in orders %}
-            <tr>
-              <td>{{ order.order_no }}</td>
-              <td>{{ order.customer }}</td>
-              <td>{{ order.product }}</td>
-              <td>{{ order.quantity }}</td>
-              <td><span class="badge">{{ order.mekki_type }}</span></td>
-              <td>{{ order.due_date }}</td>
-              <td style="white-space:nowrap;">
-                <a href="/edit/{{ order.id }}" class="btn-edit-sm">編集</a>
-                <a href="/detail/{{ order.id }}" class="btn-detail" style="margin-left:4px;">詳細</a>
-                <form method="post" action="/delete/{{ order.id }}" style="display:inline; margin-left:4px;"
-                      onsubmit="return confirm('受注番号「{{ order.order_no }}」を削除しますか？');">
-                  <button type="submit" class="btn-delete-sm">削除</button>
-                </form>
-              </td>
-            </tr>
-            {% else %}
-            <tr>
-              <td colspan="7" class="empty">受注データがありません</td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    </div>
+<div class="toolbar">
+  <div class="toolbar-left">
+    <div class="count-badge">全 <strong>{{ orders|length }}</strong> 件</div>
   </div>
+  <div class="toolbar-right">
+    <a href="{{ url_for('export_excel') }}" class="btn btn-excel">Excel出力</a>
+    <a href="{{ url_for('new_order') }}" class="btn btn-primary">＋ 新規登録</a>
+  </div>
+</div>
 
-  <script>
-    function toggleMenu() {
-      document.getElementById('navLinks').classList.toggle('open');
-    }
-  </script>
-</body>
-</html>
+{% if orders %}
+<div class="table-wrap">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>受注番号</th>
+        <th>顧客名</th>
+        <th>品名</th>
+        <th class="num">数量</th>
+        <th>めっき種類</th>
+        <th>納期</th>
+        <th style="width: 1%;">操作</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for order in orders %}
+      <tr>
+        <td><strong>{{ order.order_no }}</strong></td>
+        <td>{{ order.customer }}</td>
+        <td>{{ order.product }}</td>
+        <td class="num">{{ order.quantity }}</td>
+        <td>
+          {% if order.mekki_type %}
+            <span class="mekki-badge">{{ order.mekki_type }}</span>
+          {% endif %}
+        </td>
+        <td>{{ order.due_date }}</td>
+        <td>
+          <div class="row-actions">
+            <a href="{{ url_for('detail', order_id=order.id) }}" class="btn btn-secondary btn-sm">詳細</a>
+            <a href="{{ url_for('edit_order', order_id=order.id) }}" class="btn btn-secondary btn-sm">編集</a>
+            <form method="POST" action="{{ url_for('delete', order_id=order.id) }}"
+                  onsubmit="return confirm('この受注を削除しますか？');">
+              <button type="submit" class="btn btn-danger btn-sm">削除</button>
+            </form>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="card">
+  <div class="empty-state">
+    受注データがまだありません。<br>
+    右上の「新規登録」ボタンから受注を追加してください。
+  </div>
+</div>
+{% endif %}
+{% endblock %}

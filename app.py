@@ -99,11 +99,12 @@ def init_db():
         """)
         # 新カラムのマイグレーション（既存テーブルへの追加）
         for col, definition in [
-            ("mekki_thickness", "TEXT NOT NULL DEFAULT ''"),
-            ("thickness_data",  "TEXT NOT NULL DEFAULT '不要'"),
-            ("unit_price",      "TEXT NOT NULL DEFAULT ''"),
-            ("mekki_line",      "TEXT NOT NULL DEFAULT ''"),
-            ("process_note",    "TEXT NOT NULL DEFAULT ''"),
+            ("mekki_thickness",  "TEXT NOT NULL DEFAULT ''"),
+            ("thickness_data",   "TEXT NOT NULL DEFAULT '不要'"),
+            ("unit_price",       "TEXT NOT NULL DEFAULT ''"),
+            ("mekki_line",       "TEXT NOT NULL DEFAULT ''"),
+            ("process_note",     "TEXT NOT NULL DEFAULT ''"),
+            ("shipping_method",  "TEXT NOT NULL DEFAULT ''"),
         ]:
             exists = conn.execute(
                 "SELECT 1 FROM information_schema.columns WHERE table_name='orders' AND column_name=?",
@@ -212,8 +213,8 @@ def new_order():
             conn.execute("""
                 INSERT INTO orders (order_no, customer, product, part_no, material, quantity,
                     mekki_type, mekki_thickness, thickness_data, due_date,
-                    unit_price, mekki_line, process_note, note, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    unit_price, mekki_line, process_note, shipping_method, note, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
                 order_no,
                 request.form["customer"],
@@ -228,6 +229,7 @@ def new_order():
                 request.form.get("unit_price", ""),
                 request.form.get("mekki_line", ""),
                 request.form.get("process_note", ""),
+                request.form.get("shipping_method", ""),
                 request.form.get("note", ""),
                 now.strftime("%Y-%m-%d %H:%M:%S"),
             ))
@@ -250,7 +252,7 @@ def edit_order(order_id):
             conn.execute("""
                 UPDATE orders SET customer=?, product=?, part_no=?, material=?, quantity=?,
                 mekki_type=?, mekki_thickness=?, thickness_data=?, due_date=?,
-                unit_price=?, mekki_line=?, process_note=?, note=? WHERE id=?
+                unit_price=?, mekki_line=?, process_note=?, shipping_method=?, note=? WHERE id=?
             """, (
                 request.form["customer"],
                 request.form["product"],
@@ -264,6 +266,7 @@ def edit_order(order_id):
                 request.form.get("unit_price", ""),
                 request.form.get("mekki_line", ""),
                 request.form.get("process_note", ""),
+                request.form.get("shipping_method", ""),
                 request.form.get("note", ""),
                 order_id,
             ))
@@ -291,6 +294,15 @@ def print_order(order_id):
     if not order:
         return redirect(url_for("index"))
     return render_template("print.html", order=order)
+
+@app.route("/print2/<int:order_id>")
+@login_required
+def print_order2(order_id):
+    with get_db() as conn:
+        order = conn.execute("SELECT * FROM orders WHERE id=?", (order_id,)).fetchone()
+    if not order:
+        return redirect(url_for("index"))
+    return render_template("print2.html", order=order)
 
 @app.route("/delete/<int:order_id>", methods=["POST"])
 @login_required

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}mekki_app{% endblock %} | 高松電鍾工業</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/mekki.css') }}">
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+  {% block header %}
+  <header class="app-header">
+    <div class="logo">高松電鍾工業　注文伝票システム</div>
+    <div class="user-info">
+      {% if session.get('username') %}
+        {{ session.get('username') }}
+        <a href="{{ url_for('change_password') }}">パスワード変更</a>
+        <a href="{{ url_for('logout') }}">ログアウト</a>
+      {% endif %}
+    </div>
+  </header>
+
+  <nav class="app-nav">
+    <a href="{{ url_for('index') }}" class="{% if request.endpoint == 'index' %}active{% endif %}">受注一覧</a>
+    <a href="{{ url_for('new_order') }}" class="{% if request.endpoint == 'new_order' %}active{% endif %}">新規登録</a>
+    <a href="{{ url_for('customers') }}" class="{% if request.endpoint == 'customers' %}active{% endif %}">顧客マスタ</a>
+    <a href="{{ url_for('products') }}" class="{% if request.endpoint == 'products' %}active{% endif %}">品名マスタ</a>
+  </nav>
+  {% endblock %}
+
+  <main class="app-main">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="flash flash-{{ category }}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>

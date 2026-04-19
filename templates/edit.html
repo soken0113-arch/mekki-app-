@@ -1,97 +1,99 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="めっき受注">
-  <link rel="apple-touch-icon" href="/static/icon-180.png">
-  <link rel="manifest" href="/static/manifest.json">
-  <title>受注編集 | めっき受注管理</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: sans-serif; background: #f0f2f5; padding: 32px 16px; }
-    .container { max-width: 560px; margin: 0 auto; }
+{% extends "base.html" %}
 
-    .header { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; }
-    .btn-back {
-      padding: 7px 14px; background: #f1f5f9; color: #555;
-      border: none; border-radius: 6px; font-size: 0.88rem;
-      cursor: pointer; text-decoration: none;
-    }
-    .btn-back:hover { background: #e2e8f0; }
-    h1 { font-size: 1.4rem; color: #1a3a5c; }
+{% block title %}受注編集{% endblock %}
 
-    .order-no { font-size: 0.82rem; color: #888; margin-bottom: 20px; }
+{% block extra_css %}
+<style>
+  .edit-wrap {
+    max-width: 680px;
+  }
+  .order-no-label {
+    font-size: 12px;
+    color: var(--text-mute);
+    margin-bottom: 20px;
+    letter-spacing: 0.05em;
+  }
+  .form-group {
+    margin-bottom: 16px;
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    gap: 8px 16px;
+    align-items: start;
+  }
+  .form-group label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-sub);
+    padding-top: 9px;
+  }
+  .required {
+    color: var(--danger);
+    margin-left: 2px;
+  }
+  .radio-group {
+    display: flex;
+    gap: 24px;
+    padding: 9px 0;
+  }
+  .radio-group label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--text);
+    padding-top: 0;
+    cursor: pointer;
+  }
+  textarea {
+    resize: vertical;
+    min-height: 80px;
+  }
+  .form-divider {
+    grid-column: 1 / -1;
+    border: none;
+    border-top: 1px solid var(--border-light);
+    margin: 8px 0;
+  }
+  .action-bar {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-light);
+  }
+</style>
+{% endblock %}
 
-    .card { background: #fff; border-radius: 12px; padding: 32px;
-            box-shadow: 0 2px 12px rgba(0,0,0,.08); }
+{% block content %}
+<div class="edit-wrap">
+  <h1 class="page-title">受注編集</h1>
 
-    .form-group { margin-bottom: 18px; }
-    label { display: block; font-size: 0.85rem; font-weight: 600;
-            color: #444; margin-bottom: 6px; }
-    input[type="text"], input[type="number"], input[type="date"],
-    select, textarea {
-      width: 100%; padding: 10px 12px; border: 1px solid #ddd;
-      border-radius: 8px; font-size: 0.95rem; color: #333;
-      background: #fafafa;
-    }
-    input:focus, select:focus, textarea:focus {
-      outline: none; border-color: #2563eb; background: #fff;
-    }
-    textarea { resize: vertical; min-height: 80px; }
-    .required { color: #e53e3e; margin-left: 2px; }
+  <div class="card">
+    <div class="order-no-label">受注番号：{{ order.order_no }}</div>
 
-    .radio-group { display: flex; gap: 20px; padding: 10px 0; }
-    .radio-group label { display: flex; align-items: center; gap: 6px;
-                         font-size: 0.95rem; font-weight: 400; margin-bottom: 0; cursor: pointer; }
+    <form method="post" action="{{ url_for('edit_order', order_id=order.id) }}">
 
-    .actions { display: flex; gap: 12px; margin-top: 24px; }
-    .btn-submit {
-      flex: 1; padding: 12px; background: #2563eb; color: #fff;
-      border: none; border-radius: 8px; font-size: 1rem;
-      cursor: pointer; font-weight: 600;
-    }
-    .btn-submit:hover { background: #1d4ed8; }
-    .btn-cancel {
-      flex: 1; padding: 12px; background: #f1f5f9; color: #555;
-      border: none; border-radius: 8px; font-size: 1rem;
-      cursor: pointer; text-decoration: none; text-align: center;
-    }
-    .btn-cancel:hover { background: #e2e8f0; }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="header">
-      <a href="/detail/{{ order.id }}" class="btn-back">← 詳細に戻る</a>
-      <h1>受注編集</h1>
-    </div>
-
-    <div class="card">
-      <div class="order-no">受注番号：{{ order.order_no }}</div>
-
-      <form method="post" action="/edit/{{ order.id }}">
-
-        <div class="form-group">
-          <label>顧客名 <span class="required">*</span></label>
-          {% if customers %}
-          <select name="customer" required>
-            {% for c in customers %}
-            <option value="{{ c.name }}" {% if c.name == order.customer %}selected{% endif %}>{{ c.name }}</option>
-            {% endfor %}
-            {% if order.customer not in customers | map(attribute='name') | list %}
-            <option value="{{ order.customer }}" selected>{{ order.customer }}</option>
-            {% endif %}
-          </select>
-          {% else %}
-          <input type="text" name="customer" required value="{{ order.customer }}">
+      <div class="form-group">
+        <label>顧客名 <span class="required">*</span></label>
+        {% if customers %}
+        <select name="customer" required>
+          {% for c in customers %}
+          <option value="{{ c.name }}" {% if c.name == order.customer %}selected{% endif %}>{{ c.name }}</option>
+          {% endfor %}
+          {% if order.customer not in customers | map(attribute='name') | list %}
+          <option value="{{ order.customer }}" selected>{{ order.customer }}</option>
           {% endif %}
-        </div>
+        </select>
+        {% else %}
+        <input type="text" name="customer" required value="{{ order.customer }}">
+        {% endif %}
+      </div>
 
-        <div class="form-group">
-          <label>めっき種類 <span class="required">*</span></label>
+      <div class="form-group">
+        <label>めっき種類 <span class="required">*</span></label>
+        <div>
           <input type="text" name="mekki_type" required value="{{ order.mekki_type }}"
                  list="mekki-list" autocomplete="off">
           <datalist id="mekki-list">
@@ -100,105 +102,115 @@
             {% endfor %}
           </datalist>
         </div>
+      </div>
 
-        <div class="form-group">
-          <label>めっき膜厚</label>
-          <input type="text" name="mekki_thickness"
-                 value="{{ order.mekki_thickness if order.mekki_thickness else '' }}"
-                 placeholder="例：5μm、10～15μm">
+      <div class="form-group">
+        <label>めっき膜厚</label>
+        <input type="text" name="mekki_thickness"
+               value="{{ order.mekki_thickness if order.mekki_thickness else '' }}"
+               placeholder="例：5μm、10～15μm">
+      </div>
+
+      <div class="form-group">
+        <label>材質（番手）</label>
+        <input type="text" name="material"
+               value="{{ order.material if order.material else '' }}"
+               placeholder="例：SUS304、S45C、#400">
+      </div>
+
+      <div class="form-group">
+        <label>納期 <span class="required">*</span></label>
+        <input type="date" name="due_date" required value="{{ order.due_date }}">
+      </div>
+
+      <div class="form-group">
+        <label>膜厚データ</label>
+        <div class="radio-group">
+          <label>
+            <input type="radio" name="thickness_data" value="要"
+                   {% if order.thickness_data == '要' %}checked{% endif %}> 要
+          </label>
+          <label>
+            <input type="radio" name="thickness_data" value="不要"
+                   {% if order.thickness_data != '要' %}checked{% endif %}> 不要
+          </label>
         </div>
+      </div>
 
-        <div class="form-group">
-          <label>材質（番手）</label>
-          <input type="text" name="material"
-                 value="{{ order.material if order.material else '' }}"
-                 placeholder="例：SUS304、S45C、#400">
-        </div>
+      <div class="form-group">
+        <label>品番</label>
+        <input type="text" name="part_no" value="{{ order.part_no if order.part_no else '' }}">
+      </div>
 
-        <div class="form-group">
-          <label>納期 <span class="required">*</span></label>
-          <input type="date" name="due_date" required value="{{ order.due_date }}">
-        </div>
-
-        <div class="form-group">
-          <label>膜厚データ</label>
-          <div class="radio-group">
-            <label>
-              <input type="radio" name="thickness_data" value="要"
-                     {% if order.thickness_data == '要' %}checked{% endif %}> 要
-            </label>
-            <label>
-              <input type="radio" name="thickness_data" value="不要"
-                     {% if order.thickness_data != '要' %}checked{% endif %}> 不要
-            </label>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label>品番</label>
-          <input type="text" name="part_no" value="{{ order.part_no if order.part_no else '' }}">
-        </div>
-
-        <div class="form-group">
-          <label>品名 <span class="required">*</span></label>
-          {% if products %}
-          <select name="product" required>
-            {% for p in products %}
-            <option value="{{ p.name }}" {% if p.name == order.product %}selected{% endif %}>{{ p.name }}</option>
-            {% endfor %}
-            {% if order.product not in products | map(attribute='name') | list %}
-            <option value="{{ order.product }}" selected>{{ order.product }}</option>
-            {% endif %}
-          </select>
-          {% else %}
-          <input type="text" name="product" required value="{{ order.product }}">
+      <div class="form-group">
+        <label>品名 <span class="required">*</span></label>
+        {% if products %}
+        <select name="product" required>
+          {% for p in products %}
+          <option value="{{ p.name }}" {% if p.name == order.product %}selected{% endif %}>{{ p.name }}</option>
+          {% endfor %}
+          {% if order.product not in products | map(attribute='name') | list %}
+          <option value="{{ order.product }}" selected>{{ order.product }}</option>
           {% endif %}
-        </div>
+        </select>
+        {% else %}
+        <input type="text" name="product" required value="{{ order.product }}">
+        {% endif %}
+      </div>
 
-        <div class="form-group">
-          <label>数量 <span class="required">*</span></label>
-          <input type="number" name="quantity" required min="1" value="{{ order.quantity }}">
-        </div>
+      <div class="form-group">
+        <label>数量 <span class="required">*</span></label>
+        <input type="number" name="quantity" required min="1" value="{{ order.quantity }}">
+      </div>
 
-        <div class="form-group">
-          <label>単価</label>
-          <input type="text" name="unit_price"
-                 value="{{ order.unit_price if order.unit_price else '' }}"
-                 placeholder="例：150">
-        </div>
+      <div class="form-group">
+        <label>単価</label>
+        <input type="text" name="unit_price"
+               value="{{ order.unit_price if order.unit_price else '' }}"
+               placeholder="例：150">
+      </div>
 
-        <div class="form-group">
-          <label>めっきライン</label>
-          <select name="mekki_line">
-            <option value="">選択してください</option>
-            {% for line in mekki_lines %}
-            <option value="{{ line }}" {% if line == order.mekki_line %}selected{% endif %}>{{ line }}</option>
-            {% endfor %}
-            {% if order.mekki_line and order.mekki_line not in mekki_lines %}
-            <option value="{{ order.mekki_line }}" selected>{{ order.mekki_line }}</option>
-            {% endif %}
-          </select>
-        </div>
+      <div class="form-group">
+        <label>めっきライン</label>
+        <select name="mekki_line">
+          <option value="">選択してください</option>
+          {% for line in mekki_lines %}
+          <option value="{{ line }}" {% if line == order.mekki_line %}selected{% endif %}>{{ line }}</option>
+          {% endfor %}
+          {% if order.mekki_line and order.mekki_line not in mekki_lines %}
+          <option value="{{ order.mekki_line }}" selected>{{ order.mekki_line }}</option>
+          {% endif %}
+        </select>
+      </div>
 
-        <div class="form-group">
-          <label>工程</label>
-          <input type="text" name="process_note"
-                 value="{{ order.process_note if order.process_note else '' }}"
-                 placeholder="例：前処理→めっき→後処理">
-        </div>
+      <div class="form-group">
+        <label>工程</label>
+        <input type="text" name="process_note"
+               value="{{ order.process_note if order.process_note else '' }}"
+               placeholder="例：前処理→めっき→後処理">
+      </div>
 
-        <div class="form-group">
-          <label>備考</label>
-          <textarea name="note">{{ order.note if order.note else '' }}</textarea>
-        </div>
+      <div class="form-group">
+        <label>出荷方法</label>
+        <select name="shipping_method">
+          <option value="" {% if not order.shipping_method %}selected{% endif %}>選択してください</option>
+          <option value="納品" {% if order.shipping_method == '納品' %}selected{% endif %}>納品</option>
+          <option value="発送" {% if order.shipping_method == '発送' %}selected{% endif %}>発送</option>
+          <option value="引取" {% if order.shipping_method == '引取' %}selected{% endif %}>引取</option>
+        </select>
+      </div>
 
-        <div class="actions">
-          <a href="/detail/{{ order.id }}" class="btn-cancel">キャンセル</a>
-          <button type="submit" class="btn-submit">保存する</button>
-        </div>
+      <div class="form-group">
+        <label>備考</label>
+        <textarea name="note">{{ order.note if order.note else '' }}</textarea>
+      </div>
 
-      </form>
-    </div>
+      <div class="action-bar">
+        <a href="{{ url_for('detail', order_id=order.id) }}" class="btn btn-secondary">キャンセル</a>
+        <button type="submit" class="btn btn-primary">保存する</button>
+      </div>
+
+    </form>
   </div>
-</body>
-</html>
+</div>
+{% endblock %}
