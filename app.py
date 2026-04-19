@@ -295,15 +295,6 @@ def print_order(order_id):
         return redirect(url_for("index"))
     return render_template("print.html", order=order)
 
-@app.route("/print2/<int:order_id>")
-@login_required
-def print_order2(order_id):
-    with get_db() as conn:
-        order = conn.execute("SELECT * FROM orders WHERE id=?", (order_id,)).fetchone()
-    if not order:
-        return redirect(url_for("index"))
-    return render_template("print2.html", order=order)
-
 @app.route("/delete/<int:order_id>", methods=["POST"])
 @login_required
 def delete(order_id):

@@ -160,7 +160,6 @@
     <div class="action-bar">
       <a href="{{ url_for('edit_order', order_id=order.id) }}" class="btn btn-secondary">✏ 編集</a>
       <a href="{{ url_for('print_order', order_id=order.id) }}" class="btn btn-print" target="_blank">🖨 伝票印刷</a>
-      <a href="{{ url_for('print_order2', order_id=order.id) }}" class="btn btn-print" target="_blank">🖨 伝票印刷2</a>
       <form method="post" action="{{ url_for('delete', order_id=order.id) }}"
             onsubmit="return confirm('この受注を削除してもよいですか？')">
         <button type="submit" class="btn btn-danger">削除する</button>

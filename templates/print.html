@@ -7,15 +7,12 @@
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-
     body {
       font-family: 'Noto Sans JP', sans-serif;
       background: #ddd;
       padding: 20px;
       color: #000;
     }
-
-    /* 画面表示用コントロールバー */
     .screen-only {
       max-width: 640px;
       margin: 0 auto 20px;
@@ -47,7 +44,6 @@
     }
     .hint { font-size: 11px; color: #555; }
 
-    /* A4縦向きシート — 1×4 グリッド (各7.3cm) */
     .sheet {
       width: 210mm;
       height: 292mm;
@@ -59,111 +55,192 @@
       border: 2px solid #000;
       overflow: hidden;
     }
-
-    /* 各伝票セル */
     .slip {
       border: 1px solid #000;
-      padding: 0;
       display: flex;
       flex-direction: column;
       overflow: hidden;
     }
 
-    /* タイトル帯 */
+    /* スリップヘッダー */
     .slip-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
       background: #fff;
       color: #000;
-      padding: 1px 3px;
-      border-bottom: 1px solid #000;
+      padding: 3px 6px;
+      border-bottom: 2.5px solid #000;
     }
     .slip-title {
-      font-size: 11px;
+      font-size: 13px;
       font-weight: 900;
-      letter-spacing: 2px;
+      letter-spacing: 3px;
       line-height: 1.2;
     }
     .slip-sub {
-      font-size: 7px;
-      opacity: 0.75;
-      letter-spacing: 1px;
+      font-size: 8px;
+      letter-spacing: 1.5px;
       line-height: 1.2;
+      color: #333;
     }
     .order-no {
-      font-size: 9px;
-      letter-spacing: 0.5px;
-      opacity: 0.85;
+      font-size: 11px;
+      font-weight: 700;
       line-height: 1.2;
+      border: 1px solid #000;
+      padding: 1px 6px;
     }
 
-    /* フィールドグリッド */
+    /* フィールド横並び */
     .fields {
       display: grid;
       gap: 0;
       flex: 1;
+      grid-template-columns: 1fr 1fr;
     }
-    .fields-2col { grid-template-columns: 1fr 1fr; }
-    .fields-3col { grid-template-columns: 1fr 1fr 1fr; }
-
     .field {
-      border: 1px solid #000;
-      border-top: none;
-      border-left: none;
-      padding: 0 2px;
+      border-right: 1px solid #000;
+      border-bottom: 1px solid #000;
+      display: flex;
+      align-items: stretch;
+      overflow: hidden;
+      min-height: 0;
     }
+    .field:nth-child(2n) { border-right: none; }
+    .field.full { grid-column: 1 / -1; border-right: none; }
     .field-label {
-      font-size: 6px;
-      color: #444;
-      letter-spacing: 0.3px;
+      flex: 0 0 28%;
+      background: #fff;
+      border-right: 1px solid #000;
+      padding: 2px 4px;
+      font-size: 9px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
       line-height: 1.2;
+      color: #000;
     }
     .field-value {
-      font-size: 10px;
+      flex: 1;
+      padding: 2px 6px;
+      font-size: 12px;
       font-weight: 700;
+      display: flex;
+      align-items: center;
+      line-height: 1.2;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      line-height: 1.1;
-    }
-    .field-value-sm {
-      font-size: 9px;
-      font-weight: 700;
-      line-height: 1.1;
     }
 
-    /* 全幅フィールド */
-    .full { grid-column: 1 / -1; }
-
-    /* めっき種類は強調 */
-    .field-mekki { border-width: 1px; border-top: none; border-left: none; }
-    .field-mekki .field-value { font-size: 11px; }
+    /* 重要項目強調 */
+    .field-hilite {
+      border-top: 2px solid #000;
+      border-bottom: 2px solid #000;
+    }
+    .field-hilite .field-label {
+      font-weight: 900;
+      font-size: 10px;
+      border-right: 2px solid #000;
+    }
+    .field-hilite .field-value {
+      font-size: 14px;
+      font-weight: 900;
+    }
 
     /* 確認欄 */
-    .check-row {
-      display: grid;
-      gap: 0;
-      margin-top: 0;
-    }
+    .check-row { display: grid; }
     .check-row-2 { grid-template-columns: 1fr 1fr; }
     .check-row-3 { grid-template-columns: 1fr 1fr 1fr; }
     .check-box {
-      border: 1px solid #000;
-      border-bottom: none;
-      border-left: none;
-      padding: 0 2px;
+      border-top: 1px solid #000;
+      border-right: 1px solid #000;
+      padding: 3px;
       text-align: center;
+      min-height: 10mm;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
     }
+    .check-box:last-child { border-right: none; }
     .check-label {
-      font-size: 6px;
-      color: #444;
-      display: block;
-      margin-bottom: 1px;
-      line-height: 1.2;
+      font-size: 8.5px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
     }
 
-    /* ── 印刷スタイル ── */
+    /* 荷札 */
+    .tag-big {
+      flex: 1.4;
+      border-bottom: 2px solid #000;
+      padding: 3px 6px;
+      display: flex;
+      align-items: center;
+      overflow: hidden;
+    }
+    .tag-big.top { border-top: none; }
+    .tag-big .lbl {
+      flex: 0 0 22%;
+      background: #fff;
+      border-right: 2px solid #000;
+      padding: 3px 5px;
+      font-size: 9px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      align-self: stretch;
+      display: flex;
+      align-items: center;
+      margin-right: 6px;
+      color: #000;
+    }
+    .tag-big .val {
+      flex: 1;
+      font-size: 16px;
+      font-weight: 900;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .tag-row {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      border-bottom: 1px solid #000;
+      min-height: 0;
+    }
+    .tag-row:last-child { border-bottom: none; }
+    .tag-cell {
+      display: flex;
+      border-right: 1px solid #000;
+      overflow: hidden;
+    }
+    .tag-cell:last-child { border-right: none; }
+    .tag-cell .lbl {
+      flex: 0 0 32%;
+      background: #fff;
+      border-right: 1px solid #000;
+      padding: 2px 4px;
+      font-size: 9px;
+      display: flex;
+      align-items: center;
+      line-height: 1.2;
+      color: #000;
+    }
+    .tag-cell .val {
+      flex: 1;
+      padding: 2px 6px;
+      font-size: 12px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      line-height: 1.2;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .tag-cell.big .val { font-size: 15px; font-weight: 900; }
+
     @media print {
       @page {
         size: A4 portrait;
@@ -181,11 +258,8 @@
         border: none;
         margin: 0;
         overflow: hidden;
-        zoom: 0.85;
       }
-      .slip {
-        overflow: hidden;
-      }
+      .slip { overflow: hidden; }
     }
   </style>
 </head>
@@ -194,7 +268,7 @@
 <div class="screen-only">
   <button class="btn-print" onclick="window.print()">🖨 印刷 / PDF保存</button>
   <a class="btn-back" href="/detail/{{ order.id }}">← 詳細に戻る</a>
-  <span class="hint">※ 用紙サイズ：A4・縦向き・余白なし（各伝票 7.4cm）</span>
+  <span class="hint">※ 用紙サイズ：A4・縦向き・余白なし（各伝票 7.3cm）</span>
 </div>
 
 <div class="sheet">
@@ -208,65 +282,71 @@
       </div>
       <div class="order-no">{{ order.order_no }}</div>
     </div>
-
-    <div class="fields fields-2col" style="flex:1;">
-      <div class="field full field-mekki">
+    <div class="fields">
+      <div class="field full field-hilite">
         <div class="field-label">顧客名</div>
         <div class="field-value">{{ order.customer }}</div>
       </div>
-      <div class="field full field-mekki">
+      <div class="field full field-hilite">
         <div class="field-label">めっき種類</div>
         <div class="field-value">{{ order.mekki_type }}</div>
       </div>
-      <div class="field">
-        <div class="field-label">めっき膜厚</div>
-        <div class="field-value">{{ order.mekki_thickness if order.mekki_thickness else '—' }}</div>
-      </div>
-      <div class="field">
-        <div class="field-label">材質（番手）</div>
-        <div class="field-value">{{ order.material if order.material else '—' }}</div>
-      </div>
-      <div class="field">
-        <div class="field-label">納期</div>
-        <div class="field-value">{{ order.due_date }}</div>
-      </div>
-      <div class="field">
-        <div class="field-label">膜厚データ</div>
-        <div class="field-value">{{ order.thickness_data if order.thickness_data else '不要' }}</div>
-      </div>
-      <div class="field">
-        <div class="field-label">品番</div>
-        <div class="field-value field-value-sm">{{ order.part_no if order.part_no else '—' }}</div>
-      </div>
-      <div class="field">
-        <div class="field-label">品名</div>
-        <div class="field-value field-value-sm">{{ order.product }}</div>
-      </div>
-      <div class="field">
-        <div class="field-label">数量</div>
-        <div class="field-value">{{ order.quantity }} 個</div>
-      </div>
-      <div class="field">
-        <div class="field-label">単価</div>
-        <div class="field-value">{{ order.unit_price if order.unit_price else '—' }}</div>
-      </div>
-      <div class="field">
-        <div class="field-label">めっきライン</div>
-        <div class="field-value">{{ order.mekki_line if order.mekki_line else '—' }}</div>
-      </div>
-      <div class="field">
-        <div class="field-label">工程</div>
-        <div class="field-value field-value-sm">{{ order.process_note if order.process_note else '—' }}</div>
-      </div>
+      <div class="field"><div class="field-label">めっき膜厚</div><div class="field-value">{{ order.mekki_thickness if order.mekki_thickness else '—' }}</div></div>
+      <div class="field"><div class="field-label">材質（番手）</div><div class="field-value">{{ order.material if order.material else '—' }}</div></div>
+      <div class="field"><div class="field-label">納期</div><div class="field-value">{{ order.due_date }}</div></div>
+      <div class="field"><div class="field-label">膜厚データ</div><div class="field-value">{{ order.thickness_data if order.thickness_data else '不要' }}</div></div>
+      <div class="field"><div class="field-label">品番</div><div class="field-value">{{ order.part_no if order.part_no else '—' }}</div></div>
+      <div class="field"><div class="field-label">品名</div><div class="field-value">{{ order.product }}</div></div>
+      <div class="field"><div class="field-label">数量</div><div class="field-value">{{ order.quantity }} 個</div></div>
+      <div class="field"><div class="field-label">単価</div><div class="field-value">{{ order.unit_price if order.unit_price else '—' }}</div></div>
+      <div class="field"><div class="field-label">めっきライン</div><div class="field-value">{{ order.mekki_line if order.mekki_line else '—' }}</div></div>
+      <div class="field"><div class="field-label">工程</div><div class="field-value">{{ order.process_note if order.process_note else '—' }}</div></div>
     </div>
-
     <div class="check-row check-row-2">
       <div class="check-box"><span class="check-label">受注確認</span></div>
       <div class="check-box"><span class="check-label">顧客承認</span></div>
     </div>
   </div>
 
-  <!-- ② 作業指示書 -->
+  <!-- ② 検査成績書 -->
+  <div class="slip">
+    <div class="slip-header">
+      <div>
+        <div class="slip-title">検 査 成 績 書</div>
+        <div class="slip-sub">INSPECTION REPORT</div>
+      </div>
+      <div class="order-no">{{ order.order_no }}</div>
+    </div>
+    <div class="fields">
+      <div class="field full field-hilite">
+        <div class="field-label">顧客名</div>
+        <div class="field-value">{{ order.customer }}</div>
+      </div>
+      <div class="field full field-hilite">
+        <div class="field-label">めっき種類</div>
+        <div class="field-value">{{ order.mekki_type }}</div>
+      </div>
+      <div class="field"><div class="field-label">めっき膜厚</div><div class="field-value">{{ order.mekki_thickness if order.mekki_thickness else '—' }}</div></div>
+      <div class="field"><div class="field-label">材質（番手）</div><div class="field-value">{{ order.material if order.material else '—' }}</div></div>
+      <div class="field"><div class="field-label">納期</div><div class="field-value">{{ order.due_date }}</div></div>
+      <div class="field"><div class="field-label">膜厚データ</div><div class="field-value">{{ order.thickness_data if order.thickness_data else '不要' }}</div></div>
+      <div class="field"><div class="field-label">品番</div><div class="field-value">{{ order.part_no if order.part_no else '—' }}</div></div>
+      <div class="field"><div class="field-label">品名</div><div class="field-value">{{ order.product }}</div></div>
+      <div class="field"><div class="field-label">検査数量</div><div class="field-value">{{ order.quantity }} 個</div></div>
+      <div class="field"><div class="field-label">めっきライン</div><div class="field-value">{{ order.mekki_line if order.mekki_line else '—' }}</div></div>
+      <div class="field full"><div class="field-label">工程</div><div class="field-value">{{ order.process_note if order.process_note else '—' }}</div></div>
+    </div>
+    <div class="check-row check-row-2">
+      <div class="check-box"><span class="check-label">外観検査</span></div>
+      <div class="check-box"><span class="check-label">膜厚測定</span></div>
+    </div>
+    <div class="check-row check-row-2">
+      <div class="check-box"><span class="check-label">検査合否　合格 ／ 不合格</span></div>
+      <div class="check-box"><span class="check-label">検査員印</span></div>
+    </div>
+  </div>
+
+  <!-- ③ 作業指示書 -->
   <div class="slip">
     <div class="slip-header">
       <div>
@@ -275,125 +355,29 @@
       </div>
       <div class="order-no">{{ order.order_no }}</div>
     </div>
-
-    <div class="fields fields-2col" style="flex:1;">
-      <div class="field full field-mekki">
+    <div class="fields">
+      <div class="field full field-hilite">
         <div class="field-label">顧客名</div>
         <div class="field-value">{{ order.customer }}</div>
       </div>
-      <div class="field full field-mekki">
-        <div class="field-label">処理内容（めっき種類）</div>
+      <div class="field full field-hilite">
+        <div class="field-label">処理内容</div>
         <div class="field-value">{{ order.mekki_type }}</div>
       </div>
-      <div class="field">
-        <div class="field-label">めっき膜厚</div>
-        <div class="field-value">{{ order.mekki_thickness if order.mekki_thickness else '—' }}</div>
-      </div>
-      <div class="field">
-        <div class="field-label">材質（番手）</div>
-        <div class="field-value">{{ order.material if order.material else '—' }}</div>
-      </div>
-      <div class="field">
-        <div class="field-label">納期</div>
-        <div class="field-value">{{ order.due_date }}</div>
-      </div>
-      <div class="field">
-        <div class="field-label">膜厚データ</div>
-        <div class="field-value">{{ order.thickness_data if order.thickness_data else '不要' }}</div>
-      </div>
-      <div class="field">
-        <div class="field-label">品番</div>
-        <div class="field-value field-value-sm">{{ order.part_no if order.part_no else '—' }}</div>
-      </div>
-      <div class="field">
-        <div class="field-label">品名</div>
-        <div class="field-value field-value-sm">{{ order.product }}</div>
-      </div>
-      <div class="field">
-        <div class="field-label">加工数量</div>
-        <div class="field-value">{{ order.quantity }} 個</div>
-      </div>
-      <div class="field">
-        <div class="field-label">めっきライン</div>
-        <div class="field-value">{{ order.mekki_line if order.mekki_line else '—' }}</div>
-      </div>
-      <div class="field full">
-        <div class="field-label">工程</div>
-        <div class="field-value field-value-sm">{{ order.process_note if order.process_note else '—' }}</div>
-      </div>
+      <div class="field"><div class="field-label">めっき膜厚</div><div class="field-value">{{ order.mekki_thickness if order.mekki_thickness else '—' }}</div></div>
+      <div class="field"><div class="field-label">材質（番手）</div><div class="field-value">{{ order.material if order.material else '—' }}</div></div>
+      <div class="field"><div class="field-label">出荷方法</div><div class="field-value">{{ order.shipping_method if order.shipping_method else '—' }}</div></div>
+      <div class="field"><div class="field-label">膜厚データ</div><div class="field-value">{{ order.thickness_data if order.thickness_data else '不要' }}</div></div>
+      <div class="field"><div class="field-label">品番</div><div class="field-value">{{ order.part_no if order.part_no else '—' }}</div></div>
+      <div class="field"><div class="field-label">品名</div><div class="field-value">{{ order.product }}</div></div>
+      <div class="field"><div class="field-label">加工数量</div><div class="field-value">{{ order.quantity }} 個</div></div>
+      <div class="field"><div class="field-label">めっきライン</div><div class="field-value">{{ order.mekki_line if order.mekki_line else '—' }}</div></div>
+      <div class="field full"><div class="field-label">工程</div><div class="field-value">{{ order.process_note if order.process_note else '—' }}</div></div>
     </div>
-
     <div class="check-row check-row-3">
       <div class="check-box"><span class="check-label">作業開始</span></div>
       <div class="check-box"><span class="check-label">作業完了</span></div>
       <div class="check-box"><span class="check-label">担当者印</span></div>
-    </div>
-  </div>
-
-  <!-- ③ 検査指示書 -->
-  <div class="slip">
-    <div class="slip-header">
-      <div>
-        <div class="slip-title">検 査 指 示 書</div>
-        <div class="slip-sub">INSPECTION ORDER</div>
-      </div>
-      <div class="order-no">{{ order.order_no }}</div>
-    </div>
-
-    <div class="fields fields-2col" style="flex:1;">
-      <div class="field full field-mekki">
-        <div class="field-label">顧客名</div>
-        <div class="field-value">{{ order.customer }}</div>
-      </div>
-      <div class="field full field-mekki">
-        <div class="field-label">めっき種類</div>
-        <div class="field-value">{{ order.mekki_type }}</div>
-      </div>
-      <div class="field">
-        <div class="field-label">めっき膜厚</div>
-        <div class="field-value">{{ order.mekki_thickness if order.mekki_thickness else '—' }}</div>
-      </div>
-      <div class="field">
-        <div class="field-label">材質（番手）</div>
-        <div class="field-value">{{ order.material if order.material else '—' }}</div>
-      </div>
-      <div class="field">
-        <div class="field-label">納期</div>
-        <div class="field-value">{{ order.due_date }}</div>
-      </div>
-      <div class="field">
-        <div class="field-label">膜厚データ</div>
-        <div class="field-value">{{ order.thickness_data if order.thickness_data else '不要' }}</div>
-      </div>
-      <div class="field">
-        <div class="field-label">品番</div>
-        <div class="field-value field-value-sm">{{ order.part_no if order.part_no else '—' }}</div>
-      </div>
-      <div class="field">
-        <div class="field-label">品名</div>
-        <div class="field-value field-value-sm">{{ order.product }}</div>
-      </div>
-      <div class="field">
-        <div class="field-label">検査数量</div>
-        <div class="field-value">{{ order.quantity }} 個</div>
-      </div>
-      <div class="field">
-        <div class="field-label">めっきライン</div>
-        <div class="field-value">{{ order.mekki_line if order.mekki_line else '—' }}</div>
-      </div>
-      <div class="field full">
-        <div class="field-label">工程</div>
-        <div class="field-value field-value-sm">{{ order.process_note if order.process_note else '—' }}</div>
-      </div>
-    </div>
-
-    <div class="check-row check-row-2">
-      <div class="check-box"><span class="check-label">外観検査</span></div>
-      <div class="check-box"><span class="check-label">膜厚測定</span></div>
-    </div>
-    <div class="check-row check-row-2" style="margin-top:1px;">
-      <div class="check-box"><span class="check-label">検査合否　合格 ／ 不合格</span></div>
-      <div class="check-box"><span class="check-label">検査員印</span></div>
     </div>
   </div>
 
@@ -406,74 +390,29 @@
       </div>
       <div class="order-no">{{ order.order_no }}</div>
     </div>
-
-    <div style="flex:1; display:flex; flex-direction:column; gap:0; overflow:hidden; min-height:0;">
-
-      <div style="flex:1; border-bottom:1px solid #000; padding:0 3px; text-align:center; overflow:hidden;">
-        <div class="field-label" style="font-size:6px; letter-spacing:2px;">お 届 け 先</div>
-        <div style="font-size:13px; font-weight:900; letter-spacing:1px; line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ order.customer }}</div>
-      </div>
-
-      <div style="flex:1; display:grid; grid-template-columns:1fr 1fr; min-height:0; overflow:hidden;">
-        <div style="border-bottom:1px solid #000; border-right:1px solid #000; padding:0 2px; overflow:hidden;">
-          <div class="field-label">品名</div>
-          <div style="font-size:10px; font-weight:700; line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ order.product }}</div>
-        </div>
-        <div style="border-bottom:1px solid #000; padding:0 2px; text-align:center; overflow:hidden;">
-          <div class="field-label">数量</div>
-          <div style="font-size:13px; font-weight:900; line-height:1.2;">{{ order.quantity }}<span style="font-size:9px; font-weight:400;"> 個</span></div>
-        </div>
-      </div>
-
-      <div style="flex:1; display:grid; grid-template-columns:1fr 1fr; min-height:0; overflow:hidden;">
-        <div style="border-bottom:1px solid #000; border-right:1px solid #000; padding:0 2px; overflow:hidden;">
-          <div class="field-label">品番</div>
-          <div style="font-size:10px; font-weight:700; line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ order.part_no if order.part_no else '—' }}</div>
-        </div>
-        <div style="border-bottom:1px solid #000; padding:0 2px; overflow:hidden;">
-          <div class="field-label">材質（番手）</div>
-          <div style="font-size:10px; font-weight:700; line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ order.material if order.material else '—' }}</div>
-        </div>
-      </div>
-
-      <div style="flex:1; border-bottom:1px solid #000; padding:0 3px; text-align:center; overflow:hidden;">
-        <div style="font-size:6px; letter-spacing:1px;">処 理 内 容</div>
-        <div style="font-size:12px; font-weight:900; letter-spacing:2px; line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ order.mekki_type }}</div>
-      </div>
-
-      <div style="flex:1; display:grid; grid-template-columns:1fr 1fr; min-height:0; overflow:hidden;">
-        <div style="border-bottom:1px solid #000; border-right:1px solid #000; padding:0 2px; overflow:hidden;">
-          <div class="field-label">めっき膜厚</div>
-          <div style="font-size:10px; font-weight:700; line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ order.mekki_thickness if order.mekki_thickness else '—' }}</div>
-        </div>
-        <div style="border-bottom:1px solid #000; padding:0 2px; overflow:hidden;">
-          <div class="field-label">膜厚データ</div>
-          <div style="font-size:10px; font-weight:700; line-height:1.2;">{{ order.thickness_data if order.thickness_data else '不要' }}</div>
-        </div>
-      </div>
-
-      <div style="flex:1; display:grid; grid-template-columns:1fr 1fr; min-height:0; overflow:hidden;">
-        <div style="border-bottom:1px solid #000; border-right:1px solid #000; padding:0 2px; overflow:hidden;">
-          <div class="field-label">納期</div>
-          <div style="font-size:10px; font-weight:700; line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ order.due_date }}</div>
-        </div>
-        <div style="border-bottom:1px solid #000; padding:0 2px; overflow:hidden;">
-          <div class="field-label">めっきライン</div>
-          <div style="font-size:10px; font-weight:700; line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ order.mekki_line if order.mekki_line else '—' }}</div>
-        </div>
-      </div>
-
-      <div style="flex:1; display:grid; grid-template-columns:1fr 1fr; min-height:0; overflow:hidden;">
-        <div style="border-right:1px solid #000; padding:0 2px; overflow:hidden;">
-          <div class="field-label">工程</div>
-          <div style="font-size:9px; font-weight:700; line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ order.process_note if order.process_note else '—' }}</div>
-        </div>
-        <div style="padding:0 2px; overflow:hidden;">
-          <div class="field-label">伝票番号</div>
-          <div style="font-size:9px; font-weight:700; line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ order.order_no }}</div>
-        </div>
-      </div>
-
+    <div class="tag-big top">
+      <div class="lbl">お 届 け 先</div>
+      <div class="val">{{ order.customer }}</div>
+    </div>
+    <div class="tag-row">
+      <div class="tag-cell big"><div class="lbl">品名</div><div class="val">{{ order.product }}</div></div>
+      <div class="tag-cell big"><div class="lbl">数量</div><div class="val">{{ order.quantity }} 個</div></div>
+    </div>
+    <div class="tag-row">
+      <div class="tag-cell"><div class="lbl">品番</div><div class="val">{{ order.part_no if order.part_no else '—' }}</div></div>
+      <div class="tag-cell"><div class="lbl">材質</div><div class="val">{{ order.material if order.material else '—' }}</div></div>
+    </div>
+    <div class="tag-big">
+      <div class="lbl">処 理 内 容</div>
+      <div class="val">{{ order.mekki_type }}</div>
+    </div>
+    <div class="tag-row">
+      <div class="tag-cell"><div class="lbl">めっき膜厚</div><div class="val">{{ order.mekki_thickness if order.mekki_thickness else '—' }}</div></div>
+      <div class="tag-cell"><div class="lbl">膜厚データ</div><div class="val">{{ order.thickness_data if order.thickness_data else '不要' }}</div></div>
+    </div>
+    <div class="tag-row">
+      <div class="tag-cell"><div class="lbl">納期</div><div class="val">{{ order.due_date }}</div></div>
+      <div class="tag-cell"><div class="lbl">めっきライン</div><div class="val">{{ order.mekki_line if order.mekki_line else '—' }}</div></div>
     </div>
   </div>
 
