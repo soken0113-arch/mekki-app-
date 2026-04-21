@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+
+{% block title %}編集（複数品目）{{ order.order_no }}{% endblock %}
+
+{% block extra_css %}
+<style>
+  .form-section { margin-bottom: 16px; }
+  .form-grid {
+    display: grid;
+    grid-template-columns: 140px 1fr 140px 1fr;
+    gap: 12px 16px;
+    align-items: center;
+  }
+  .form-grid label { color: var(--text-sub); font-weight: 500; font-size: 13px; }
+  .form-grid-full { grid-column: 1 / -1; }
+  .items-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  .items-table th {
+    background: #eef1f6;
+    color: var(--navy-700);
+    font-weight: 600;
+    padding: 8px 10px;
+    text-align: left;
+    border-bottom: 2px solid var(--navy-700);
+    font-size: 12px;
+  }
+  .items-table td {
+    padding: 6px 6px;
+    border-bottom: 1px solid var(--border-light);
+    vertical-align: middle;
+  }
+  .items-table td input {
+    width: 100%;
+    border: 1px solid var(--border);
+    padding: 6px 8px;
+    border-radius: 3px;
+    font-size: 13px;
+    font-family: inherit;
+    background: #fcfcfd;
+  }
+  .items-table td input:focus {
+    outline: none;
+    border-color: var(--navy-700);
+    background: #fff;
+  }
+  .items-table td.row-no {
+    text-align: center;
+    color: var(--text-mute);
+    font-size: 12px;
+    width: 36px;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<h1 class="page-title">編集（複数品目）</h1>
+
+<form method="POST" action="{{ url_for('edit_order_multi', order_id=order.id) }}">
+
+  <!-- ヘッダー情報 -->
+  <div class="card form-section">
+    <h3>受注情報</h3>
+    <div class="form-grid">
+      <label>顧客名 <span style="color:red;">*</span></label>
+      <input list="customer-list" type="text" name="customer" required value="{{ order.customer }}">
+      <datalist id="customer-list">
+        {% for c in customers %}<option value="{{ c.name }}">{% endfor %}
+      </datalist>
+
+      <label>めっき種類 <span style="color:red;">*</span></label>
+      <select name="mekki_type" required>
+        <option value="">-- 選択 --</option>
+        {% for t in mekki_types %}
+        <option value="{{ t }}" {% if t == order.mekki_type %}selected{% endif %}>{{ t }}</option>
+        {% endfor %}
+      </select>
+
+      <label>めっき膜厚</label>
+      <input type="text" name="mekki_thickness" value="{{ order.mekki_thickness or '' }}">
+
+      <label>材質（番手）</label>
+      <input type="text" name="material" value="{{ order.material or '' }}">
+
+      <label>納期 <span style="color:red;">*</span></label>
+      <input type="date" name="due_date" required value="{{ order.due_date }}">
+
+      <label>膜厚データ</label>
+      <select name="thickness_data">
+        <option value="不要" {% if order.thickness_data == '不要' %}selected{% endif %}>不要</option>
+        <option value="必要" {% if order.thickness_data == '必要' %}selected{% endif %}>必要</option>
+      </select>
+
+      <label>めっきライン</label>
+      <select name="mekki_line">
+        <option value="">-- 選択 --</option>
+        {% for l in mekki_lines %}
+        <option value="{{ l }}" {% if l == order.mekki_line %}selected{% endif %}>{{ l }}</option>
+        {% endfor %}
+      </select>
+
+      <label>出荷方法</label>
+      <select name="shipping_method">
+        <option value="">-- 選択 --</option>
+        <option value="納品" {% if order.shipping_method == '納品' %}selected{% endif %}>納品</option>
+        <option value="発送" {% if order.shipping_method == '発送' %}selected{% endif %}>発送</option>
+        <option value="引取" {% if order.shipping_method == '引取' %}selected{% endif %}>引取</option>
+      </select>
+
+      <label>工程</label>
+      <input type="text" name="process_note" value="{{ order.process_note or '' }}" class="form-grid-full">
+
+      <label>備考</label>
+      <input type="text" name="note" value="{{ order.note or '' }}" class="form-grid-full">
+    </div>
+  </div>
+
+  <!-- 明細 -->
+  <div class="card form-section">
+    <h3>明細（最大5品目）</h3>
+    <table class="items-table">
+      <thead>
+        <tr>
+          <th style="width:36px;">No</th>
+          <th style="width:14%;">品番</th>
+          <th style="width:28%;">品名 <span style="color:red;">*</span></th>
+          <th style="width:12%;">材質</th>
+          <th style="width:10%;">数量</th>
+          <th style="width:12%;">単価</th>
+          <th>備考</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for i in range(5) %}
+        {% set item = items[i] if i < items|length else none %}
+        <tr>
+          <td class="row-no">{{ i + 1 }}</td>
+          <td><input type="text" name="part_no[]" value="{{ item.part_no if item else '' }}"></td>
+          <td><input type="text" name="product[]" value="{{ item.product if item else '' }}"></td>
+          <td><input type="text" name="material[]" value="{{ item.material if item else '' }}"></td>
+          <td><input type="number" name="quantity[]" value="{{ item.quantity if item else '' }}" min="0"></td>
+          <td><input type="text" name="unit_price[]" value="{{ item.unit_price if item else '' }}"></td>
+          <td><input type="text" name="note[]" value="{{ item.note if item else '' }}"></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <p style="font-size:12px; color:var(--text-mute); margin-top:8px;">※ 品名が空の行は保存されません</p>
+  </div>
+
+  <div class="btn-group">
+    <a href="{{ url_for('detail_multi', order_id=order.id) }}" class="btn btn-secondary">キャンセル</a>
+    <button type="submit" class="btn btn-primary">保存する</button>
+  </div>
+
+</form>
+{% endblock %}

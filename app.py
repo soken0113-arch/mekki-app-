@@ -97,6 +97,18 @@ def init_db():
                 created_at TEXT NOT NULL
             )
         """)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS order_items (
+                id SERIAL PRIMARY KEY,
+                order_id INTEGER NOT NULL,
+                part_no TEXT NOT NULL DEFAULT '',
+                product TEXT NOT NULL,
+                material TEXT NOT NULL DEFAULT '',
+                quantity INTEGER NOT NULL,
+                unit_price TEXT NOT NULL DEFAULT '',
+                note TEXT NOT NULL DEFAULT ''
+            )
+        """)
         # 新カラムのマイグレーション（既存テーブルへの追加）
         for col, definition in [
             ("mekki_thickness",  "TEXT NOT NULL DEFAULT ''"),
@@ -528,6 +540,183 @@ def export_excel():
         download_name=filename,
         mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     )
+
+# ─── 複数品目受注 ───────────────────────────────────────
+
+@app.route("/edit_multi/<int:order_id>", methods=["GET", "POST"])
+@login_required
+def edit_order_multi(order_id):
+    with get_db() as conn:
+        order = conn.execute(
+            "SELECT * FROM orders WHERE id=?", (order_id,)
+        ).fetchone()
+        items = conn.execute(
+            "SELECT * FROM order_items WHERE order_id=? ORDER BY id",
+            (order_id,)
+        ).fetchall()
+    if not order:
+        return redirect(url_for("index"))
+
+    if request.method == "POST":
+        with get_db() as conn:
+            # ヘッダー更新
+            conn.execute("""
+                UPDATE orders SET
+                    customer=?, mekki_type=?, mekki_thickness=?, thickness_data=?,
+                    material=?, due_date=?, mekki_line=?, process_note=?,
+                    shipping_method=?, note=?
+                WHERE id=?
+            """, (
+                request.form["customer"],
+                request.form["mekki_type"],
+                request.form.get("mekki_thickness", ""),
+                request.form.get("thickness_data", "不要"),
+                request.form.get("material", ""),
+                request.form["due_date"],
+                request.form.get("mekki_line", ""),
+                request.form.get("process_note", ""),
+                request.form.get("shipping_method", ""),
+                request.form.get("note", ""),
+                order_id,
+            ))
+            # 既存の明細を全削除して再登録
+            conn.execute("DELETE FROM order_items WHERE order_id=?", (order_id,))
+            products = request.form.getlist("product[]")
+            part_nos = request.form.getlist("part_no[]")
+            materials = request.form.getlist("material[]")
+            quantities = request.form.getlist("quantity[]")
+            unit_prices = request.form.getlist("unit_price[]")
+            notes = request.form.getlist("note[]")
+            for i, product in enumerate(products):
+                if not product.strip():
+                    continue
+                conn.execute("""
+                    INSERT INTO order_items (
+                        order_id, part_no, product, material, quantity, unit_price, note
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                """, (
+                    order_id,
+                    part_nos[i] if i < len(part_nos) else "",
+                    product,
+                    materials[i] if i < len(materials) else "",
+                    int(quantities[i]) if i < len(quantities) and quantities[i] else 0,
+                    unit_prices[i] if i < len(unit_prices) else "",
+                    notes[i] if i < len(notes) else "",
+                ))
+        return redirect(url_for("detail_multi", order_id=order_id))
+
+    with get_db() as conn:
+        customers = conn.execute("SELECT name FROM customers ORDER BY name").fetchall()
+    return render_template("edit_multi.html",
+                           order=order,
+                           items=items,
+                           mekki_types=MEKKI_TYPES,
+                           mekki_lines=MEKKI_LINES,
+                           customers=customers)
+
+
+@app.route("/new_multi", methods=["GET", "POST"])
+@login_required
+def new_order_multi():
+    if request.method == "POST":
+        now = datetime.now()
+        order_no = f"ORD-{now.strftime('%Y%m%d%H%M%S')}-M"
+        with get_db() as conn:
+            # ヘッダー情報をordersテーブルに登録（product="複数品目"として保存）
+            conn.execute("""
+                INSERT INTO orders (
+                    order_no, customer, product, part_no, material, quantity,
+                    mekki_type, mekki_thickness, thickness_data, due_date,
+                    unit_price, mekki_line, process_note, shipping_method, note, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                order_no,
+                request.form["customer"],
+                "複数品目",
+                "",
+                request.form.get("material", ""),
+                0,
+                request.form["mekki_type"],
+                request.form.get("mekki_thickness", ""),
+                request.form.get("thickness_data", "不要"),
+                request.form["due_date"],
+                "",
+                request.form.get("mekki_line", ""),
+                request.form.get("process_note", ""),
+                request.form.get("shipping_method", ""),
+                request.form.get("note", ""),
+                now.strftime("%Y-%m-%d %H:%M:%S"),
+            ))
+            order = conn.execute(
+                "SELECT * FROM orders WHERE order_no=?", (order_no,)
+            ).fetchone()
+            order_id = order["id"]
+
+            # 明細行をorder_itemsテーブルに登録
+            products = request.form.getlist("product[]")
+            part_nos = request.form.getlist("part_no[]")
+            materials = request.form.getlist("material[]")
+            quantities = request.form.getlist("quantity[]")
+            unit_prices = request.form.getlist("unit_price[]")
+            notes = request.form.getlist("note[]")
+
+            for i, product in enumerate(products):
+                if not product.strip():
+                    continue
+                conn.execute("""
+                    INSERT INTO order_items (
+                        order_id, part_no, product, material, quantity, unit_price, note
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                """, (
+                    order_id,
+                    part_nos[i] if i < len(part_nos) else "",
+                    product,
+                    materials[i] if i < len(materials) else "",
+                    int(quantities[i]) if i < len(quantities) and quantities[i] else 0,
+                    unit_prices[i] if i < len(unit_prices) else "",
+                    notes[i] if i < len(notes) else "",
+                ))
+        return redirect(url_for("index"))
+
+    with get_db() as conn:
+        customers = conn.execute("SELECT name FROM customers ORDER BY name").fetchall()
+    return render_template("new_multi.html",
+                           mekki_types=MEKKI_TYPES,
+                           mekki_lines=MEKKI_LINES,
+                           customers=customers)
+
+
+@app.route("/detail_multi/<int:order_id>")
+@login_required
+def detail_multi(order_id):
+    with get_db() as conn:
+        order = conn.execute(
+            "SELECT * FROM orders WHERE id=?", (order_id,)
+        ).fetchone()
+        items = conn.execute(
+            "SELECT * FROM order_items WHERE order_id=? ORDER BY id",
+            (order_id,)
+        ).fetchall()
+    if not order:
+        return redirect(url_for("index"))
+    return render_template("detail_multi.html", order=order, items=items)
+
+
+@app.route("/print_multi/<int:order_id>")
+@login_required
+def print_order_multi(order_id):
+    with get_db() as conn:
+        order = conn.execute(
+            "SELECT * FROM orders WHERE id=?", (order_id,)
+        ).fetchone()
+        items = conn.execute(
+            "SELECT * FROM order_items WHERE order_id=? ORDER BY id",
+            (order_id,)
+        ).fetchall()
+    if not order:
+        return redirect(url_for("index"))
+    return render_template("print_multi.html", order=order, items=items)
+
 
 init_db()
 
