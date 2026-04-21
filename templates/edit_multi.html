@@ -79,7 +79,14 @@
       </select>
 
       <label>めっき膜厚</label>
-      <input type="text" name="mekki_thickness" value="{{ order.mekki_thickness or '' }}">
+      <div style="display:flex; align-items:center; gap:6px;">
+        <input type="number" name="thickness_from" placeholder="下限" min="0" step="0.1" style="width:80px;"
+               value="{{ thickness_from }}">
+        <span>〜</span>
+        <input type="number" name="thickness_to" placeholder="上限" min="0" step="0.1" style="width:80px;"
+               value="{{ thickness_to }}">
+        <span>μm</span>
+      </div>
 
       <label>材質（番手）</label>
       <input type="text" name="material" value="{{ order.material or '' }}">
@@ -137,8 +144,12 @@
         {% set item = items[i] if i < items|length else none %}
         <tr>
           <td class="row-no">{{ i + 1 }}</td>
-          <td><input type="text" name="part_no[]" value="{{ item.part_no if item else '' }}"></td>
-          <td><input type="text" name="product[]" value="{{ item.product if item else '' }}"></td>
+          <td><input type="text" name="part_no[]" class="part-no-input" value="{{ item.part_no if item else '' }}" autocomplete="off"></td>
+          <td><input type="text" name="product[]" class="product-input" value="{{ item.product if item else '' }}" autocomplete="off" list="product-list-{{ i }}">
+              <datalist id="product-list-{{ i }}">
+                {% for p in products %}<option value="{{ p.name }}" data-part-no="{{ p.part_no }}">{% endfor %}
+              </datalist>
+          </td>
           <td><input type="text" name="material[]" value="{{ item.material if item else '' }}"></td>
           <td><input type="number" name="quantity[]" value="{{ item.quantity if item else '' }}" min="0"></td>
           <td><input type="text" name="unit_price[]" value="{{ item.unit_price if item else '' }}"></td>
@@ -155,5 +166,23 @@
     <button type="submit" class="btn btn-primary">保存する</button>
   </div>
 
+<script>
+const productMap = {
+  {% for p in products %}
+  "{{ p.name }}": "{{ p.part_no }}",
+  {% endfor %}
+};
+
+document.querySelectorAll('.product-input').forEach(function(input) {
+  input.addEventListener('change', function() {
+    const row = this.closest('tr');
+    const partNoInput = row.querySelector('.part-no-input');
+    const selectedName = this.value;
+    if (productMap[selectedName] && productMap[selectedName] !== '') {
+      partNoInput.value = productMap[selectedName];
+    }
+  });
+});
+</script>
 </form>
 {% endblock %}

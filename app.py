@@ -33,6 +33,26 @@ MEKKI_TYPES = [
 
 MEKKI_LINES = ["銅", "２号機", "無Ⅰ", "無Ⅱ", "特殊", "アルマイト", "化成処理", "亜鉛", "Ni自動バレル", "外注"]
 
+def build_thickness(from_val, to_val):
+    """下限・上限を '下限〜上限μm' 形式の文字列にまとめる"""
+    f = (from_val or "").strip()
+    t = (to_val or "").strip()
+    if f and t:
+        return f"{f}〜{t}μm"
+    elif f:
+        return f"{f}μm"
+    return ""
+
+def parse_thickness(value):
+    """'X〜Yμm' を (X, Y) に分解して返す。単独値は (X, '') を返す"""
+    if not value:
+        return "", ""
+    v = value.replace("μm", "").strip()
+    if "〜" in v:
+        parts = v.split("〜", 1)
+        return parts[0].strip(), parts[1].strip()
+    return v, ""
+
 class _Conn:
     """psycopg2接続をSQLite風インターフェースでラップするクラス"""
     def __init__(self):
@@ -86,6 +106,7 @@ def init_db():
             CREATE TABLE IF NOT EXISTS products (
                 id SERIAL PRIMARY KEY,
                 name TEXT NOT NULL UNIQUE,
+                part_no TEXT NOT NULL DEFAULT '',
                 created_at TEXT NOT NULL
             )
         """)
@@ -235,7 +256,7 @@ def new_order():
                 request.form.get("material", ""),
                 request.form["quantity"],
                 request.form["mekki_type"],
-                request.form.get("mekki_thickness", ""),
+                build_thickness(request.form.get("thickness_from", ""), request.form.get("thickness_to", "")),
                 request.form.get("thickness_data", "不要"),
                 request.form["due_date"],
                 request.form.get("unit_price", ""),
@@ -272,7 +293,7 @@ def edit_order(order_id):
                 request.form.get("material", ""),
                 request.form["quantity"],
                 request.form["mekki_type"],
-                request.form.get("mekki_thickness", ""),
+                build_thickness(request.form.get("thickness_from", ""), request.form.get("thickness_to", "")),
                 request.form.get("thickness_data", "不要"),
                 request.form["due_date"],
                 request.form.get("unit_price", ""),
@@ -286,8 +307,10 @@ def edit_order(order_id):
     with get_db() as conn:
         customers = conn.execute("SELECT name FROM customers ORDER BY name").fetchall()
         products = conn.execute("SELECT name FROM products ORDER BY name").fetchall()
+    t_from, t_to = parse_thickness(order["mekki_thickness"])
     return render_template("edit.html", order=order, mekki_types=MEKKI_TYPES, mekki_lines=MEKKI_LINES,
-                           customers=customers, products=products)
+                           customers=customers, products=products,
+                           thickness_from=t_from, thickness_to=t_to)
 
 @app.route("/detail/<int:order_id>")
 @login_required
@@ -440,10 +463,11 @@ def add_product():
     name = request.form.get("name", "").strip()
     if name:
         try:
+            part_no = request.form.get("part_no", "").strip()
             with get_db() as conn:
                 conn.execute(
-                    "INSERT INTO products (name, created_at) VALUES (?, ?)",
-                    (name, datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+                    "INSERT INTO products (name, part_no, created_at) VALUES (?, ?, ?)",
+                    (name, part_no, datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
                 )
             flash(f"「{name}」を登録しました。", "success")
         except Exception:
@@ -456,8 +480,9 @@ def edit_product(product_id):
     name = request.form.get("name", "").strip()
     if name:
         try:
+            new_part_no = request.form.get("part_no", "").strip()
             with get_db() as conn:
-                conn.execute("UPDATE products SET name=? WHERE id=?", (name, product_id))
+                conn.execute("UPDATE products SET name=?, part_no=? WHERE id=?", (name, new_part_no, product_id))
             flash(f"品名を「{name}」に更新しました。", "success")
         except Exception:
             flash("同じ品名が既に登録されています。", "error")
@@ -569,7 +594,7 @@ def edit_order_multi(order_id):
             """, (
                 request.form["customer"],
                 request.form["mekki_type"],
-                request.form.get("mekki_thickness", ""),
+                build_thickness(request.form.get("thickness_from", ""), request.form.get("thickness_to", "")),
                 request.form.get("thickness_data", "不要"),
                 request.form.get("material", ""),
                 request.form["due_date"],
@@ -607,12 +632,17 @@ def edit_order_multi(order_id):
 
     with get_db() as conn:
         customers = conn.execute("SELECT name FROM customers ORDER BY name").fetchall()
+        products = conn.execute("SELECT name, part_no FROM products ORDER BY name").fetchall()
+    t_from, t_to = parse_thickness(order["mekki_thickness"])
     return render_template("edit_multi.html",
                            order=order,
                            items=items,
                            mekki_types=MEKKI_TYPES,
                            mekki_lines=MEKKI_LINES,
-                           customers=customers)
+                           customers=customers,
+                           products=products,
+                           thickness_from=t_from,
+                           thickness_to=t_to)
 
 
 @app.route("/new_multi", methods=["GET", "POST"])
@@ -637,7 +667,7 @@ def new_order_multi():
                 request.form.get("material", ""),
                 0,
                 request.form["mekki_type"],
-                request.form.get("mekki_thickness", ""),
+                build_thickness(request.form.get("thickness_from", ""), request.form.get("thickness_to", "")),
                 request.form.get("thickness_data", "不要"),
                 request.form["due_date"],
                 "",
@@ -680,10 +710,12 @@ def new_order_multi():
 
     with get_db() as conn:
         customers = conn.execute("SELECT name FROM customers ORDER BY name").fetchall()
+        products = conn.execute("SELECT name, part_no FROM products ORDER BY name").fetchall()
     return render_template("new_multi.html",
                            mekki_types=MEKKI_TYPES,
                            mekki_lines=MEKKI_LINES,
-                           customers=customers)
+                           customers=customers,
+                           products=products)
 
 
 @app.route("/detail_multi/<int:order_id>")

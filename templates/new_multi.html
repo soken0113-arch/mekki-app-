@@ -85,7 +85,12 @@
       </select>
 
       <label>めっき膜厚</label>
-      <input type="text" name="mekki_thickness" placeholder="例：5〜8μm">
+      <div style="display:flex; align-items:center; gap:6px;">
+        <input type="number" name="thickness_from" placeholder="下限" min="0" step="0.1" style="width:80px;">
+        <span>〜</span>
+        <input type="number" name="thickness_to" placeholder="上限" min="0" step="0.1" style="width:80px;">
+        <span>μm</span>
+      </div>
 
       <label>材質（番手）</label>
       <input type="text" name="material" placeholder="例：SUS304">
@@ -142,8 +147,12 @@
         {% for i in range(1, 6) %}
         <tr>
           <td class="row-no">{{ i }}</td>
-          <td><input type="text" name="part_no[]" placeholder="品番"></td>
-          <td><input type="text" name="product[]" placeholder="品名"></td>
+          <td><input type="text" name="part_no[]" class="part-no-input" placeholder="品番" autocomplete="off"></td>
+          <td><input type="text" name="product[]" class="product-input" placeholder="品名" autocomplete="off" list="product-list-{{ i }}">
+              <datalist id="product-list-{{ i }}">
+                {% for p in products %}<option value="{{ p.name }}" data-part-no="{{ p.part_no }}">{% endfor %}
+              </datalist>
+          </td>
           <td><input type="text" name="material[]" placeholder="材質"></td>
           <td><input type="number" name="quantity[]" placeholder="0" min="0"></td>
           <td><input type="text" name="unit_price[]" placeholder="¥0"></td>
@@ -160,5 +169,23 @@
     <button type="submit" class="btn btn-primary">登録する</button>
   </div>
 
+<script>
+const productMap = {
+  {% for p in products %}
+  "{{ p.name }}": "{{ p.part_no }}",
+  {% endfor %}
+};
+
+document.querySelectorAll('.product-input').forEach(function(input) {
+  input.addEventListener('change', function() {
+    const row = this.closest('tr');
+    const partNoInput = row.querySelector('.part-no-input');
+    const selectedName = this.value;
+    if (productMap[selectedName] && productMap[selectedName] !== '') {
+      partNoInput.value = productMap[selectedName];
+    }
+  });
+});
+</script>
 </form>
 {% endblock %}
