@@ -119,6 +119,9 @@
       <label>工程</label>
       <input type="text" name="process_note" value="{{ order.process_note or '' }}" class="form-grid-full">
 
+      <label>担当者</label>
+      <input type="text" name="assigned_to" value="{{ order.assigned_to or '' }}" placeholder="担当者名">
+
       <label>備考</label>
       <input type="text" name="note" value="{{ order.note or '' }}" class="form-grid-full">
     </div>

@@ -246,23 +246,19 @@
       <div class="hf"><div class="lbl">材質</div><div class="val sm">{{ order.material or '—' }}</div></div>
       <div class="hf"><div class="lbl">膜厚データ</div><div class="val sm">{{ order.thickness_data or '—' }}</div></div>
       <div class="hf"><div class="lbl">めっきライン</div><div class="val sm">{{ order.mekki_line or '—' }}</div></div>
-      <div class="hf"><div class="lbl">担当者</div><div class="val sm">{{ session.get('username', '') }}</div></div>
+      <div class="hf"><div class="lbl">担当者</div><div class="val sm">{{ order.assigned_to or session.get('username', '') }}</div></div>
     </div>
     <table class="items-table">
-      <thead><tr><th style="width:5%;">No</th><th style="width:14%;">品番</th><th style="width:30%;">品名</th><th style="width:11%;">材質</th><th style="width:10%;">数量</th><th style="width:12%;">単価</th><th>備考</th></tr></thead>
+      <thead><tr><th style="width:5%;">No</th><th style="width:15%;">品番</th><th style="width:42%;">品名</th><th style="width:10%;">数量</th><th style="width:9%;">単価</th><th>備考</th></tr></thead>
       <tbody>
         {% for item in items %}
-        <tr><td class="center">{{ loop.index }}</td><td>{{ item.part_no or '' }}</td><td>{{ item.product }}</td><td>{{ item.material or '' }}</td><td class="num">{{ item.quantity }}個</td><td class="num">{{ item.unit_price or '' }}</td><td>{{ item.note or '' }}</td></tr>
+        <tr><td class="center">{{ loop.index }}</td><td>{{ item.part_no or '' }}</td><td>{{ item.product }}</td><td class="num">{{ item.quantity }}個</td><td class="num">{{ item.unit_price or '' }}</td><td>{{ item.note or '' }}</td></tr>
         {% endfor %}
         {% for i in range(items|length, 5) %}
-        <tr><td class="center" style="color:#ccc;">{{ i+1 }}</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+        <tr><td class="center" style="color:#ccc;">{{ i+1 }}</td><td></td><td></td><td></td><td></td><td></td></tr>
         {% endfor %}
       </tbody>
     </table>
-    <div class="check-row check-row-2">
-      <div class="check-box"><span class="check-label">受注確認</span></div>
-      <div class="check-box"><span class="check-label">顧客承認</span></div>
-    </div>
   </div>
 
   <!-- ② 検査成績書 -->
@@ -344,7 +340,7 @@
     </div>
     <div class="tag-body">
       <div class="tag-band">
-        <div class="lbl">お 届 け 先</div>
+        <div class="lbl">顧 客 名</div>
         <div class="val">{{ order.customer }}</div>
       </div>
       <div class="tag-process">
@@ -360,15 +356,15 @@
           <tr>
             <th style="width:5%;">No</th>
             <th style="width:14%;">品番</th>
-            <th style="width:32%;">品名</th>
-            <th style="width:10%;">数量</th>
-            <th style="width:14%;">材質</th>
-            <th style="width:25%;">備考</th>
+            <th style="width:38%;">品名</th>
+            <th style="width:11%;">材質</th>
+            <th style="width:14%;">数量</th>
+            <th>備考</th>
           </tr>
         </thead>
         <tbody>
           {% for item in items %}
-          <tr><td class="center">{{ loop.index }}</td><td>{{ item.part_no or '' }}</td><td>{{ item.product }}</td><td class="num">{{ item.quantity }}個</td><td>{{ item.material or '' }}</td><td>{{ item.note or '' }}</td></tr>
+          <tr><td class="center">{{ loop.index }}</td><td>{{ item.part_no or '' }}</td><td>{{ item.product }}</td><td>{{ item.material or '' }}</td><td class="num">{{ item.quantity }}個</td><td>{{ item.note or '' }}</td></tr>
           {% endfor %}
           {% for i in range(items|length, 5) %}
           <tr><td class="center" style="color:#ccc;">{{ i+1 }}</td><td></td><td></td><td></td><td></td><td></td></tr>

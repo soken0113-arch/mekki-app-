@@ -302,6 +302,10 @@
       <div class="field"><div class="field-label">めっきライン</div><div class="field-value">{{ order.mekki_line if order.mekki_line else '—' }}</div></div>
       <div class="field"><div class="field-label">工程</div><div class="field-value">{{ order.process_note if order.process_note else '—' }}</div></div>
     </div>
+      <div class="field full" style="border-top: 1px solid #000;">
+        <div class="field-label" style="flex: 0 0 14%;">担当者</div>
+        <div class="field-value" style="font-size: 11px; font-weight: 600;">{{ order.assigned_to or '—' }}</div>
+      </div>
     <div class="check-row check-row-2">
       <div class="check-box"><span class="check-label">受注確認</span></div>
       <div class="check-box"><span class="check-label">顧客承認</span></div>

@@ -92,6 +92,7 @@ def init_db():
                 mekki_type TEXT NOT NULL,
                 due_date TEXT NOT NULL,
                 note TEXT,
+                assigned_to TEXT NOT NULL DEFAULT '',
                 created_at TEXT NOT NULL
             )
         """)
@@ -246,8 +247,8 @@ def new_order():
             conn.execute("""
                 INSERT INTO orders (order_no, customer, product, part_no, material, quantity,
                     mekki_type, mekki_thickness, thickness_data, due_date,
-                    unit_price, mekki_line, process_note, shipping_method, note, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    unit_price, mekki_line, process_note, shipping_method, note, assigned_to, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
                 order_no,
                 request.form["customer"],
@@ -264,6 +265,7 @@ def new_order():
                 request.form.get("process_note", ""),
                 request.form.get("shipping_method", ""),
                 request.form.get("note", ""),
+                request.form.get("assigned_to", ""),
                 now.strftime("%Y-%m-%d %H:%M:%S"),
             ))
         return redirect(url_for("index"))
@@ -285,7 +287,7 @@ def edit_order(order_id):
             conn.execute("""
                 UPDATE orders SET customer=?, product=?, part_no=?, material=?, quantity=?,
                 mekki_type=?, mekki_thickness=?, thickness_data=?, due_date=?,
-                unit_price=?, mekki_line=?, process_note=?, shipping_method=?, note=? WHERE id=?
+                unit_price=?, mekki_line=?, process_note=?, shipping_method=?, note=?, assigned_to=? WHERE id=?
             """, (
                 request.form["customer"],
                 request.form["product"],
@@ -301,6 +303,7 @@ def edit_order(order_id):
                 request.form.get("process_note", ""),
                 request.form.get("shipping_method", ""),
                 request.form.get("note", ""),
+                request.form.get("assigned_to", ""),
                 order_id,
             ))
         return redirect(url_for("detail", order_id=order_id))
@@ -589,7 +592,7 @@ def edit_order_multi(order_id):
                 UPDATE orders SET
                     customer=?, mekki_type=?, mekki_thickness=?, thickness_data=?,
                     material=?, due_date=?, mekki_line=?, process_note=?,
-                    shipping_method=?, note=?
+                    shipping_method=?, note=?, assigned_to=?
                 WHERE id=?
             """, (
                 request.form["customer"],
@@ -602,6 +605,7 @@ def edit_order_multi(order_id):
                 request.form.get("process_note", ""),
                 request.form.get("shipping_method", ""),
                 request.form.get("note", ""),
+                request.form.get("assigned_to", ""),
                 order_id,
             ))
             # 既存の明細を全削除して再登録
@@ -657,8 +661,8 @@ def new_order_multi():
                 INSERT INTO orders (
                     order_no, customer, product, part_no, material, quantity,
                     mekki_type, mekki_thickness, thickness_data, due_date,
-                    unit_price, mekki_line, process_note, shipping_method, note, created_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    unit_price, mekki_line, process_note, shipping_method, note, assigned_to, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
                 order_no,
                 request.form["customer"],
@@ -675,6 +679,7 @@ def new_order_multi():
                 request.form.get("process_note", ""),
                 request.form.get("shipping_method", ""),
                 request.form.get("note", ""),
+                request.form.get("assigned_to", ""),
                 now.strftime("%Y-%m-%d %H:%M:%S"),
             ))
             order = conn.execute(

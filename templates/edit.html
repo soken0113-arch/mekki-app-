@@ -206,6 +206,11 @@
       </div>
 
       <div class="form-group">
+        <label>担当者</label>
+        <input type="text" name="assigned_to" value="{{ order.assigned_to or '' }}" placeholder="担当者名">
+      </div>
+
+      <div class="form-group">
         <label>備考</label>
         <textarea name="note">{{ order.note if order.note else '' }}</textarea>
       </div>
