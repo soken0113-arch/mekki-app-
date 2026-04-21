@@ -414,6 +414,9 @@
       <div class="tag-cell"><div class="lbl">納期</div><div class="val">{{ order.due_date }}</div></div>
       <div class="tag-cell"><div class="lbl">めっきライン</div><div class="val">{{ order.mekki_line if order.mekki_line else '—' }}</div></div>
     </div>
+    <div class="tag-row">
+      <div class="tag-cell" style="grid-column: 1 / -1; border-right: none;"><div class="lbl">工程</div><div class="val">{{ order.process_note if order.process_note else '—' }}</div></div>
+    </div>
   </div>
 
 </div><!-- /sheet -->

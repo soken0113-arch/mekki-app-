@@ -480,7 +480,7 @@ def export_excel():
     ws = wb.active
     ws.title = "受注データ"
 
-    headers = ["伝票番号", "顧客名", "品名", "品番", "材質", "数量", "メッキ種類", "納期", "備考", "登録日時"]
+    headers = ["伝票番号", "顧客名", "品名", "品番", "材質", "数量", "めっき種類", "めっき膜厚", "膜厚データ", "納期", "単価", "めっきライン", "工程", "出荷方法", "備考", "登録日時"]
     ws.append(headers)
 
     # ヘッダー行のスタイル
@@ -501,13 +501,19 @@ def export_excel():
             order["material"] or "",
             order["quantity"],
             order["mekki_type"],
+            order["mekki_thickness"] or "",
+            order["thickness_data"] or "",
             order["due_date"],
+            order["unit_price"] or "",
+            order["mekki_line"] or "",
+            order["process_note"] or "",
+            order["shipping_method"] or "",
             order["note"] or "",
             order["created_at"],
         ])
 
     # 列幅の自動調整
-    col_widths = [22, 20, 20, 16, 16, 8, 16, 14, 30, 20]
+    col_widths = [22, 20, 20, 16, 16, 8, 16, 14, 10, 14, 10, 16, 24, 12, 30, 20]
     for i, width in enumerate(col_widths, start=1):
         ws.column_dimensions[openpyxl.utils.get_column_letter(i)].width = width
 
