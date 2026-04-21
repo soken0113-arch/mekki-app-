@@ -166,11 +166,9 @@
       <div class="card">
         <h2>品名を直接追加</h2>
         <form method="post" action="/products/add" class="add-form" style="flex-direction:column; align-items:stretch;">
-          <div style="display:flex; gap:10px; margin-bottom:8px;">
-            <input type="text" name="part_no" placeholder="品番（例：BN-3045）" style="flex:1;">
-            <input type="text" name="name" required placeholder="品名（例：シャフト φ12×80）" style="flex:2;">
-          </div>
-          <div style="text-align:right;">
+          <input type="text" name="part_no" placeholder="品番（例：BN-3045）" style="margin-bottom:8px;">
+          <div style="display:flex; gap:10px;">
+            <input type="text" name="name" required placeholder="品名（例：シャフト φ12×80）" style="flex:1;">
             <button type="submit" class="btn-add">追加</button>
           </div>
         </form>

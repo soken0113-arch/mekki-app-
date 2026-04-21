@@ -208,7 +208,15 @@
       @page { size: A4 portrait; margin: 0; }
       html, body { margin: 0; padding: 0; background: white; }
       .screen-only { display: none !important; }
-      .sheet { width: 210mm; height: 297mm; border: none; margin: 0; box-shadow: none; }
+      .sheet {
+        width: 210mm;
+        height: 297mm;
+        border: none;
+        margin: 0;
+        box-shadow: none;
+        overflow: hidden;
+        zoom: 0.85;
+      }
       .slip { overflow: hidden; }
     }
   </style>
