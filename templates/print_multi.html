@@ -68,6 +68,19 @@
     .slip-title { font-size: 12px; font-weight: 900; letter-spacing: 3px; line-height: 1.2; }
     .slip-sub { font-size: 7px; letter-spacing: 1.5px; line-height: 1.2; color: #444; }
     .order-no { font-size: 10px; font-weight: 700; border: 1px solid #000; padding: 1px 5px; }
+    .order-date {
+      font-size: 10px;
+      font-weight: 600;
+      line-height: 1.2;
+      margin-right: 4px;
+      white-space: nowrap;
+    }
+    .order-date .lbl {
+      font-size: 7px;
+      color: #444;
+      letter-spacing: 0.5px;
+      margin-right: 3px;
+    }
 
     /* ヘッダーフィールド */
     .header-fields {
@@ -144,46 +157,68 @@
     }
     .tag-process {
       flex-shrink: 0;
-      display: flex; align-items: stretch;
+      display: flex;
+      align-items: stretch;
       border-bottom: 1.5px solid #000;
       overflow: hidden;
     }
     .tag-process .lbl {
-      flex: 0 0 16%; padding: 2px 4px;
-      font-size: 8px; font-weight: 900;
+      flex: 0 0 16%;
+      padding: 2px 4px;
+      font-size: 8px;
+      font-weight: 900;
       border-right: 2px solid #000;
-      display: flex; align-items: center; line-height: 1.2;
+      display: flex;
+      align-items: center;
+      line-height: 1.2;
     }
     .tag-process .mekki-val {
-      flex: 0 0 30%; padding: 2px 5px;
-      font-size: 11px; font-weight: 900;
-      display: flex; align-items: center;
+      flex: 0 0 26%;
+      padding: 2px 5px;
+      font-size: 10px;
+      font-weight: 900;
+      display: flex;
+      align-items: center;
       border-right: 1.5px solid #000;
-      white-space: nowrap; overflow: hidden;
+      white-space: nowrap;
+      overflow: hidden;
     }
     .tag-process .process-lbl {
-      flex: 0 0 10%; padding: 2px 3px;
-      font-size: 8px; font-weight: 900;
+      flex: 0 0 8%;
+      padding: 2px 3px;
+      font-size: 8px;
+      font-weight: 900;
       border-right: 1px solid #000;
-      display: flex; align-items: center;
+      display: flex;
+      align-items: center;
     }
     .tag-process .process-val {
-      flex: 0 0 24%; padding: 2px 4px;
-      font-size: 9px; font-weight: 700;
-      display: flex; align-items: center;
+      flex: 0 0 18%;
+      padding: 2px 4px;
+      font-size: 9px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
       border-right: 1.5px solid #000;
-      overflow: hidden; line-height: 1.2;
+      overflow: hidden;
+      line-height: 1.2;
     }
     .tag-process .date-lbl {
-      flex: 0 0 8%; padding: 2px 3px;
-      font-size: 8px; font-weight: 900;
+      flex: 0 0 7%;
+      padding: 2px 3px;
+      font-size: 8px;
+      font-weight: 900;
       border-right: 1px solid #000;
-      display: flex; align-items: center;
+      display: flex;
+      align-items: center;
     }
     .tag-process .date-val {
-      flex: 1; padding: 2px 4px;
-      font-size: 10px; font-weight: 700;
-      display: flex; align-items: center;
+      flex: 1;
+      padding: 2px 4px;
+      font-size: 10px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
     }
     .tag-row {
       flex: 1; display: grid;
@@ -235,11 +270,14 @@
   <div class="slip">
     <div class="slip-header">
       <div><div class="slip-title">注 文 伝 票</div><div class="slip-sub">ORDER SLIP</div></div>
-      <div class="order-no">{{ order.order_no }}</div>
+      <div style="display: flex; align-items: center; gap: 4px;">
+        <span class="order-date"><span class="lbl">受注日</span>{{ order.created_at[:10] }}</span>
+        <span class="order-no">{{ order.order_no }}</span>
+      </div>
     </div>
     <div class="header-fields">
       <div class="hf wide hilite"><div class="lbl">顧客名</div><div class="val">{{ order.customer }}</div></div>
-      <div class="hf"><div class="lbl">受注日</div><div class="val sm">{{ order.created_at[:10] }}</div></div>
+      <div class="hf"><div class="lbl">出荷方法</div><div class="val sm">{{ order.shipping_method or '—' }}</div></div>
       <div class="hf wide hilite"><div class="lbl">めっき種類</div><div class="val">{{ order.mekki_type }}</div></div>
       <div class="hf"><div class="lbl">納期</div><div class="val sm">{{ order.due_date }}</div></div>
       <div class="hf"><div class="lbl">めっき膜厚</div><div class="val sm">{{ order.mekki_thickness or '—' }}</div></div>
@@ -247,6 +285,7 @@
       <div class="hf"><div class="lbl">膜厚データ</div><div class="val sm">{{ order.thickness_data or '—' }}</div></div>
       <div class="hf"><div class="lbl">めっきライン</div><div class="val sm">{{ order.mekki_line or '—' }}</div></div>
       <div class="hf"><div class="lbl">担当者</div><div class="val sm">{{ order.assigned_to or session.get('username', '') }}</div></div>
+      <div class="hf wide"><div class="lbl">工程</div><div class="val sm">{{ order.process_note or '—' }}</div></div>
     </div>
     <table class="items-table">
       <thead><tr><th style="width:5%;">No</th><th style="width:15%;">品番</th><th style="width:42%;">品名</th><th style="width:10%;">数量</th><th style="width:9%;">単価</th><th>備考</th></tr></thead>
@@ -265,117 +304,102 @@
   <div class="slip">
     <div class="slip-header">
       <div><div class="slip-title">検 査 成 績 書</div><div class="slip-sub">INSPECTION RECORD</div></div>
-      <div class="order-no">{{ order.order_no }}</div>
+      <div style="display: flex; align-items: center; gap: 4px;">
+        <span class="order-date"><span class="lbl">受注日</span>{{ order.created_at[:10] }}</span>
+        <span class="order-no">{{ order.order_no }}</span>
+      </div>
     </div>
     <div class="header-fields">
       <div class="hf wide hilite"><div class="lbl">顧客名</div><div class="val">{{ order.customer }}</div></div>
-      <div class="hf"><div class="lbl">納期</div><div class="val sm">{{ order.due_date }}</div></div>
+      <div class="hf"><div class="lbl">出荷方法</div><div class="val sm">{{ order.shipping_method or '—' }}</div></div>
       <div class="hf wide hilite"><div class="lbl">めっき種類</div><div class="val">{{ order.mekki_type }}</div></div>
+      <div class="hf"><div class="lbl">納期</div><div class="val sm">{{ order.due_date }}</div></div>
       <div class="hf"><div class="lbl">めっき膜厚</div><div class="val sm">{{ order.mekki_thickness or '—' }}</div></div>
       <div class="hf"><div class="lbl">材質</div><div class="val sm">{{ order.material or '—' }}</div></div>
       <div class="hf"><div class="lbl">膜厚データ</div><div class="val sm">{{ order.thickness_data or '—' }}</div></div>
       <div class="hf"><div class="lbl">めっきライン</div><div class="val sm">{{ order.mekki_line or '—' }}</div></div>
+      <div class="hf"><div class="lbl">担当者</div><div class="val sm">{{ order.assigned_to or session.get('username', '') }}</div></div>
       <div class="hf wide"><div class="lbl">工程</div><div class="val sm">{{ order.process_note or '—' }}</div></div>
     </div>
     <table class="items-table">
-      <thead><tr><th style="width:5%;">No</th><th style="width:14%;">品番</th><th style="width:38%;">品名</th><th style="width:11%;">材質</th><th style="width:14%;">検査数量</th><th>備考</th></tr></thead>
+      <thead><tr><th style="width:5%;">No</th><th style="width:15%;">品番</th><th style="width:42%;">品名</th><th style="width:10%;">数量</th><th style="width:9%;">単価</th><th>備考</th></tr></thead>
       <tbody>
         {% for item in items %}
-        <tr><td class="center">{{ loop.index }}</td><td>{{ item.part_no or '' }}</td><td>{{ item.product }}</td><td>{{ item.material or '' }}</td><td class="num">{{ item.quantity }}個</td><td>{{ item.note or '' }}</td></tr>
+        <tr><td class="center">{{ loop.index }}</td><td>{{ item.part_no or '' }}</td><td>{{ item.product }}</td><td class="num">{{ item.quantity }}個</td><td class="num">{{ item.unit_price or '' }}</td><td>{{ item.note or '' }}</td></tr>
         {% endfor %}
         {% for i in range(items|length, 5) %}
         <tr><td class="center" style="color:#ccc;">{{ i+1 }}</td><td></td><td></td><td></td><td></td><td></td></tr>
         {% endfor %}
       </tbody>
     </table>
-    <div class="check-row check-row-2">
-      <div class="check-box"><span class="check-label">外観検査</span></div>
-      <div class="check-box"><span class="check-label">膜厚測定</span></div>
-    </div>
-    <div class="check-row check-row-2">
-      <div class="check-box"><span class="check-label">検査合否　合格 ／ 不合格</span></div>
-      <div class="check-box"><span class="check-label">検査員印</span></div>
-    </div>
   </div>
 
   <!-- ③ 作業指示書 -->
   <div class="slip">
     <div class="slip-header">
       <div><div class="slip-title">作 業 指 示 書</div><div class="slip-sub">WORK ORDER</div></div>
-      <div class="order-no">{{ order.order_no }}</div>
+      <div style="display: flex; align-items: center; gap: 4px;">
+        <span class="order-date"><span class="lbl">受注日</span>{{ order.created_at[:10] }}</span>
+        <span class="order-no">{{ order.order_no }}</span>
+      </div>
     </div>
     <div class="header-fields">
       <div class="hf wide hilite"><div class="lbl">顧客名</div><div class="val">{{ order.customer }}</div></div>
+      <div class="hf"><div class="lbl">出荷方法</div><div class="val sm">{{ order.shipping_method or '—' }}</div></div>
+      <div class="hf wide hilite"><div class="lbl">めっき種類</div><div class="val">{{ order.mekki_type }}</div></div>
       <div class="hf"><div class="lbl">納期</div><div class="val sm">{{ order.due_date }}</div></div>
-      <div class="hf wide hilite"><div class="lbl">処理内容</div><div class="val">{{ order.mekki_type }}</div></div>
       <div class="hf"><div class="lbl">めっき膜厚</div><div class="val sm">{{ order.mekki_thickness or '—' }}</div></div>
       <div class="hf"><div class="lbl">材質</div><div class="val sm">{{ order.material or '—' }}</div></div>
-      <div class="hf"><div class="lbl">出荷方法</div><div class="val sm">{{ order.shipping_method or '—' }}</div></div>
+      <div class="hf"><div class="lbl">膜厚データ</div><div class="val sm">{{ order.thickness_data or '—' }}</div></div>
       <div class="hf"><div class="lbl">めっきライン</div><div class="val sm">{{ order.mekki_line or '—' }}</div></div>
+      <div class="hf"><div class="lbl">担当者</div><div class="val sm">{{ order.assigned_to or session.get('username', '') }}</div></div>
       <div class="hf wide"><div class="lbl">工程</div><div class="val sm">{{ order.process_note or '—' }}</div></div>
     </div>
     <table class="items-table">
-      <thead><tr><th style="width:5%;">No</th><th style="width:14%;">品番</th><th style="width:38%;">品名</th><th style="width:11%;">材質</th><th style="width:14%;">加工数量</th><th>備考</th></tr></thead>
+      <thead><tr><th style="width:5%;">No</th><th style="width:15%;">品番</th><th style="width:42%;">品名</th><th style="width:10%;">数量</th><th style="width:9%;">単価</th><th>備考</th></tr></thead>
       <tbody>
         {% for item in items %}
-        <tr><td class="center">{{ loop.index }}</td><td>{{ item.part_no or '' }}</td><td>{{ item.product }}</td><td>{{ item.material or '' }}</td><td class="num">{{ item.quantity }}個</td><td>{{ item.note or '' }}</td></tr>
+        <tr><td class="center">{{ loop.index }}</td><td>{{ item.part_no or '' }}</td><td>{{ item.product }}</td><td class="num">{{ item.quantity }}個</td><td class="num">{{ item.unit_price or '' }}</td><td>{{ item.note or '' }}</td></tr>
         {% endfor %}
         {% for i in range(items|length, 5) %}
         <tr><td class="center" style="color:#ccc;">{{ i+1 }}</td><td></td><td></td><td></td><td></td><td></td></tr>
         {% endfor %}
       </tbody>
     </table>
-    <div class="check-row check-row-3">
-      <div class="check-box"><span class="check-label">作業開始</span></div>
-      <div class="check-box"><span class="check-label">作業完了</span></div>
-      <div class="check-box"><span class="check-label">担当者印</span></div>
-    </div>
   </div>
 
   <!-- ④ 現品荷札 -->
   <div class="slip">
     <div class="slip-header">
       <div><div class="slip-title">現 品 荷 札</div><div class="slip-sub">PRODUCT TAG</div></div>
-      <div class="order-no">{{ order.order_no }}</div>
-    </div>
-    <div class="tag-body">
-      <div class="tag-band">
-        <div class="lbl">顧 客 名</div>
-        <div class="val">{{ order.customer }}</div>
-      </div>
-      <div class="tag-process">
-        <div class="lbl">処 理 内 容</div>
-        <div class="mekki-val">{{ order.mekki_type }}　{{ order.mekki_thickness or '' }}</div>
-        <div class="process-lbl">工程</div>
-        <div class="process-val">{{ order.process_note or '—' }}</div>
-        <div class="date-lbl">納期</div>
-        <div class="date-val">{{ order.due_date }}</div>
-      </div>
-      <table class="items-table" style="flex:1; border-top: 1px solid #000;">
-        <thead>
-          <tr>
-            <th style="width:5%;">No</th>
-            <th style="width:14%;">品番</th>
-            <th style="width:38%;">品名</th>
-            <th style="width:11%;">材質</th>
-            <th style="width:14%;">数量</th>
-            <th>備考</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for item in items %}
-          <tr><td class="center">{{ loop.index }}</td><td>{{ item.part_no or '' }}</td><td>{{ item.product }}</td><td>{{ item.material or '' }}</td><td class="num">{{ item.quantity }}個</td><td>{{ item.note or '' }}</td></tr>
-          {% endfor %}
-          {% for i in range(items|length, 5) %}
-          <tr><td class="center" style="color:#ccc;">{{ i+1 }}</td><td></td><td></td><td></td><td></td><td></td></tr>
-          {% endfor %}
-        </tbody>
-      </table>
-      <div class="tag-row" style="display:grid; grid-template-columns:1fr 1fr; flex-shrink:0; border-top:1px solid #000; min-height:8mm;">
-        <div class="tag-cell"><div class="lbl">めっきライン</div><div class="val">{{ order.mekki_line or '—' }}</div></div>
-        <div class="tag-cell"><div class="lbl">伝票番号</div><div class="val">{{ order.order_no }}</div></div>
+      <div style="display: flex; align-items: center; gap: 4px;">
+        <span class="order-date"><span class="lbl">受注日</span>{{ order.created_at[:10] }}</span>
+        <span class="order-no">{{ order.order_no }}</span>
       </div>
     </div>
+    <div class="header-fields">
+      <div class="hf wide hilite"><div class="lbl">顧客名</div><div class="val">{{ order.customer }}</div></div>
+      <div class="hf"><div class="lbl">出荷方法</div><div class="val sm">{{ order.shipping_method or '—' }}</div></div>
+      <div class="hf wide hilite"><div class="lbl">めっき種類</div><div class="val">{{ order.mekki_type }}</div></div>
+      <div class="hf"><div class="lbl">納期</div><div class="val sm">{{ order.due_date }}</div></div>
+      <div class="hf"><div class="lbl">めっき膜厚</div><div class="val sm">{{ order.mekki_thickness or '—' }}</div></div>
+      <div class="hf"><div class="lbl">材質</div><div class="val sm">{{ order.material or '—' }}</div></div>
+      <div class="hf"><div class="lbl">膜厚データ</div><div class="val sm">{{ order.thickness_data or '—' }}</div></div>
+      <div class="hf"><div class="lbl">めっきライン</div><div class="val sm">{{ order.mekki_line or '—' }}</div></div>
+      <div class="hf"><div class="lbl">担当者</div><div class="val sm">{{ order.assigned_to or session.get('username', '') }}</div></div>
+      <div class="hf wide"><div class="lbl">工程</div><div class="val sm">{{ order.process_note or '—' }}</div></div>
+    </div>
+    <table class="items-table">
+      <thead><tr><th style="width:5%;">No</th><th style="width:15%;">品番</th><th style="width:42%;">品名</th><th style="width:10%;">数量</th><th style="width:9%;">単価</th><th>備考</th></tr></thead>
+      <tbody>
+        {% for item in items %}
+        <tr><td class="center">{{ loop.index }}</td><td>{{ item.part_no or '' }}</td><td>{{ item.product }}</td><td class="num">{{ item.quantity }}個</td><td class="num">{{ item.unit_price or '' }}</td><td>{{ item.note or '' }}</td></tr>
+        {% endfor %}
+        {% for i in range(items|length, 5) %}
+        <tr><td class="center" style="color:#ccc;">{{ i+1 }}</td><td></td><td></td><td></td><td></td><td></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
   </div>
 
 </div>

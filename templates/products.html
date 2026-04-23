@@ -167,8 +167,12 @@
         <h2>品名を直接追加</h2>
         <form method="post" action="/products/add" class="add-form" style="flex-direction:column; align-items:stretch;">
           <input type="text" name="part_no" placeholder="品番（例：BN-3045）" style="margin-bottom:8px;">
-          <div style="display:flex; gap:10px;">
+          <div style="display:flex; gap:10px; margin-bottom:8px;">
             <input type="text" name="name" required placeholder="品名（例：シャフト φ12×80）" style="flex:1;">
+          </div>
+          <input type="text" name="process_note" placeholder="工程（例：脱脂→酸洗→めっき）" style="margin-bottom:8px;">
+          <div style="display:flex; gap:10px;">
+            <input type="text" name="note" placeholder="備考" style="flex:1;">
             <button type="submit" class="btn-add">追加</button>
           </div>
         </form>
@@ -211,6 +215,8 @@
             <th>#</th>
             <th>品番</th>
             <th>品名</th>
+            <th>工程</th>
+            <th>備考</th>
             <th>登録日時</th>
             <th></th>
           </tr>
@@ -221,11 +227,13 @@
             <td style="color:#94a3b8; width:48px;">{{ loop.index }}</td>
             <td>{{ p.part_no or '—' }}</td>
             <td>{{ p.name }}</td>
+            <td style="font-size:0.85rem; color:#475569;">{{ p.process_note or '' }}</td>
+            <td style="font-size:0.85rem; color:#475569;">{{ p.note or '' }}</td>
             <td style="color:#94a3b8; font-size:0.85rem;">{{ p.created_at }}</td>
             <td style="width:120px;">
               <div style="display:flex; gap:6px;">
                 <button type="button" class="btn-edit"
-                        onclick="openEdit({{ p.id }}, '{{ p.name|e }}', '{{ p.part_no|e }}')">編集</button>
+                        onclick="openEdit({{ p.id }}, '{{ p.name|e }}', '{{ p.part_no|e }}', '{{ p.process_note|e }}', '{{ p.note|e }}')">編集</button>
                 <form method="post" action="/products/delete/{{ p.id }}"
                       onsubmit="return confirm('「{{ p.name }}」を削除しますか？')">
                   <button type="submit" class="btn-del">削除</button>
@@ -250,6 +258,8 @@
       <form id="editForm" method="post">
         <input type="text" name="part_no" id="editPartNo" placeholder="品番">
         <input type="text" name="name" id="editName" required placeholder="品名">
+        <input type="text" name="process_note" id="editProcessNote" placeholder="工程">
+        <input type="text" name="note" id="editNote" placeholder="備考">
         <div class="modal-actions">
           <button type="button" class="btn-cancel-modal" onclick="closeEdit()">キャンセル</button>
           <button type="submit" class="btn-save">保存</button>
@@ -259,10 +269,12 @@
   </div>
 
   <script>
-    function openEdit(id, name, partNo) {
+    function openEdit(id, name, partNo, processNote, note) {
       document.getElementById('editForm').action = '/products/edit/' + id;
       document.getElementById('editName').value = name;
       document.getElementById('editPartNo').value = partNo || '';
+      document.getElementById('editProcessNote').value = processNote || '';
+      document.getElementById('editNote').value = note || '';
       document.getElementById('editModal').classList.add('open');
       setTimeout(() => document.getElementById('editPartNo').focus(), 50);
     }

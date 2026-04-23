@@ -108,6 +108,8 @@ def init_db():
                 id SERIAL PRIMARY KEY,
                 name TEXT NOT NULL UNIQUE,
                 part_no TEXT NOT NULL DEFAULT '',
+                process_note TEXT NOT NULL DEFAULT '',
+                note TEXT NOT NULL DEFAULT '',
                 created_at TEXT NOT NULL
             )
         """)
@@ -467,10 +469,12 @@ def add_product():
     if name:
         try:
             part_no = request.form.get("part_no", "").strip()
+            process_note = request.form.get("process_note", "").strip()
+            note = request.form.get("note", "").strip()
             with get_db() as conn:
                 conn.execute(
-                    "INSERT INTO products (name, part_no, created_at) VALUES (?, ?, ?)",
-                    (name, part_no, datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+                    "INSERT INTO products (name, part_no, process_note, note, created_at) VALUES (?, ?, ?, ?, ?)",
+                    (name, part_no, process_note, note, datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
                 )
             flash(f"「{name}」を登録しました。", "success")
         except Exception:
@@ -484,8 +488,11 @@ def edit_product(product_id):
     if name:
         try:
             new_part_no = request.form.get("part_no", "").strip()
+            new_process_note = request.form.get("process_note", "").strip()
+            new_note = request.form.get("note", "").strip()
             with get_db() as conn:
-                conn.execute("UPDATE products SET name=?, part_no=? WHERE id=?", (name, new_part_no, product_id))
+                conn.execute("UPDATE products SET name=?, part_no=?, process_note=?, note=? WHERE id=?",
+                             (name, new_part_no, new_process_note, new_note, product_id))
             flash(f"品名を「{name}」に更新しました。", "success")
         except Exception:
             flash("同じ品名が既に登録されています。", "error")
