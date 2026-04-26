@@ -974,8 +974,13 @@ def shipments_list():
 @login_required
 def delete_shipment(shipment_id):
     with get_db() as conn:
-        conn.execute("DELETE FROM shipments WHERE id=?", (shipment_id,))
-    flash("出荷レコードを削除しました。", "success")
+        shipment = conn.execute("SELECT order_id FROM shipments WHERE id=?", (shipment_id,)).fetchone()
+        if shipment:
+            order_id = shipment["order_id"]
+            conn.execute("DELETE FROM order_items WHERE order_id=?", (order_id,))
+            conn.execute("DELETE FROM shipments WHERE id=?", (shipment_id,))
+            conn.execute("DELETE FROM orders WHERE id=?", (order_id,))
+    flash("出荷レコードと受注データを削除しました。", "success")
     return redirect(url_for("shipments_list"))
 
 
