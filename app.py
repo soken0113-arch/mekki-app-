@@ -8,8 +8,22 @@ from openpyxl.styles import Font, PatternFill, Alignment
 from werkzeug.security import generate_password_hash, check_password_hash
 import psycopg2
 import psycopg2.extras
+import requests
 
 app = Flask(__name__)
+
+def get_jp_holidays():
+    try:
+        res = requests.get("https://holidays-jp.github.io/api/v1/date.json", timeout=3)
+        return set(res.json().keys())
+    except:
+        return set()
+
+def get_prev_business_day(target_date, holidays):
+    d = target_date - timedelta(days=1)
+    while d.weekday() >= 5 or d.strftime('%Y-%m-%d') in holidays:
+        d -= timedelta(days=1)
+    return d
 app.secret_key = os.environ.get("SECRET_KEY", "mekki-secret-key")
 app.permanent_session_lifetime = timedelta(minutes=30)
 DATABASE_URL = os.environ.get("DATABASE_URL")
@@ -234,10 +248,32 @@ def change_password():
 @login_required
 def index():
     with get_db() as conn:
-        orders = conn.execute(
+        rows = conn.execute(
             "SELECT * FROM orders ORDER BY created_at DESC"
         ).fetchall()
-    return render_template("index.html", orders=orders)
+    holidays = get_jp_holidays()
+    today = datetime.now().date()
+    orders = []
+    for row in rows:
+        order = dict(row)
+        due = None
+        try:
+            due = datetime.strptime(order['due_date'], '%Y-%m-%d').date()
+        except:
+            pass
+        if due is None:
+            order['alert'] = None
+        elif due < today:
+            order['alert'] = 'overdue'
+        elif due == today:
+            order['alert'] = 'today'
+        elif get_prev_business_day(due, holidays) == today:
+            order['alert'] = 'tomorrow'
+        else:
+            order['alert'] = None
+        orders.append(order)
+    alert_orders = [o for o in orders if o['alert']]
+    return render_template("index.html", orders=orders, alert_orders=alert_orders)
 
 @app.route("/new", methods=["GET", "POST"])
 @login_required
