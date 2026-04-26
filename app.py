@@ -323,7 +323,7 @@ def new_order():
         return redirect(url_for("index"))
     with get_db() as conn:
         customers = conn.execute("SELECT name FROM customers ORDER BY name").fetchall()
-        products = conn.execute("SELECT name FROM products ORDER BY name").fetchall()
+        products = conn.execute("SELECT name, part_no FROM products ORDER BY name").fetchall()
     return render_template("new.html", mekki_types=MEKKI_TYPES, mekki_lines=MEKKI_LINES,
                            customers=customers, products=products)
 
@@ -361,7 +361,7 @@ def edit_order(order_id):
         return redirect(url_for("detail", order_id=order_id))
     with get_db() as conn:
         customers = conn.execute("SELECT name FROM customers ORDER BY name").fetchall()
-        products = conn.execute("SELECT name FROM products ORDER BY name").fetchall()
+        products = conn.execute("SELECT name, part_no FROM products ORDER BY name").fetchall()
     t_from, t_to = parse_thickness(order["mekki_thickness"])
     return render_template("edit.html", order=order, mekki_types=MEKKI_TYPES, mekki_lines=MEKKI_LINES,
                            customers=customers, products=products,
