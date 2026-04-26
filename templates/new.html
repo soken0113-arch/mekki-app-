@@ -1,335 +1,349 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>新規受注登録 | めっき受注管理</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: sans-serif; background: #f0f2f5; padding: 20px 12px; }
-    .container { max-width: 560px; margin: 0 auto; }
-    h1 { font-size: 1.4rem; color: #1a3a5c; margin-bottom: 24px; }
+{% extends "base.html" %}
 
-    .card { background: #fff; border-radius: 12px; padding: 24px 20px;
-            box-shadow: 0 2px 12px rgba(0,0,0,.08); }
+{% block title %}新規受注登録{% endblock %}
 
-    .form-group { margin-bottom: 18px; }
-    label { display: block; font-size: 0.85rem; font-weight: 600;
-            color: #444; margin-bottom: 6px; }
-    input[type="text"], input[type="number"], input[type="date"],
-    select, textarea {
-      width: 100%; padding: 10px 12px; border: 1px solid #ddd;
-      border-radius: 8px; font-size: 0.95rem; color: #333;
-      background: #fafafa;
-    }
-    input:focus, select:focus, textarea:focus {
-      outline: none; border-color: #2563eb; background: #fff;
-    }
-    textarea { resize: vertical; min-height: 80px; }
+{% block extra_css %}
+<style>
+  .form-section { margin-bottom: 16px; }
+  .radio-group {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    padding: 9px 0;
+  }
+  .radio-group label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--text);
+    cursor: pointer;
+  }
+  .items-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  .items-table th {
+    background: #eef1f6;
+    color: var(--navy-700);
+    font-weight: 600;
+    padding: 8px 10px;
+    text-align: left;
+    border-bottom: 2px solid var(--navy-700);
+    font-size: 12px;
+  }
+  .items-table td {
+    padding: 8px 8px;
+    border-bottom: 1px solid var(--border-light);
+    vertical-align: middle;
+  }
+  .items-table td input[type="text"],
+  .items-table td input[type="number"] {
+    width: 100%;
+    border: 1px solid var(--border);
+    padding: 6px 8px;
+    border-radius: 3px;
+    font-size: 13px;
+    font-family: inherit;
+    background: #fcfcfd;
+  }
+  .items-table td input:focus {
+    outline: none;
+    border-color: var(--navy-700);
+    background: #fff;
+  }
+  .items-table td.row-no {
+    text-align: center;
+    color: var(--text-mute);
+    font-size: 12px;
+    width: 40px;
+  }
+  /* モーダル */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: #fff;
+    border-radius: 6px;
+    padding: 24px;
+    width: 90%;
+    max-width: 380px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+  }
+  .modal h3 {
+    font-size: 14px;
+    color: var(--navy-700);
+    margin-bottom: 16px;
+    font-weight: 600;
+  }
+  .modal label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-sub);
+    display: block;
+    margin-bottom: 4px;
+  }
+  .modal input[type="text"] { margin-bottom: 12px; }
+  .modal-actions { display: flex; gap: 8px; margin-top: 4px; }
+  .modal-error {
+    font-size: 12px;
+    color: var(--danger);
+    margin-bottom: 8px;
+    display: none;
+  }
+</style>
+{% endblock %}
 
-    .required { color: #e53e3e; margin-left: 2px; }
+{% block content %}
+<h1 class="page-title">新規受注登録</h1>
 
-    .radio-group { display: flex; gap: 20px; padding: 10px 0; }
-    .radio-group label { display: flex; align-items: center; gap: 6px;
-                         font-size: 0.95rem; font-weight: 400; margin-bottom: 0; cursor: pointer; }
+<form method="post" action="{{ url_for('new_order') }}">
 
-    .actions { display: flex; gap: 12px; margin-top: 24px; }
-    .btn-submit {
-      flex: 1; padding: 12px; background: #2563eb; color: #fff;
-      border: none; border-radius: 8px; font-size: 1rem;
-      cursor: pointer; font-weight: 600;
-    }
-    .btn-submit:hover { background: #1d4ed8; }
-    .btn-cancel {
-      flex: 1; padding: 12px; background: #f1f5f9; color: #555;
-      border: none; border-radius: 8px; font-size: 1rem;
-      cursor: pointer; text-decoration: none; text-align: center;
-    }
-    .btn-cancel:hover { background: #e2e8f0; }
-    .btn-new {
-      padding: 10px 14px; background: #f0fdf4; color: #16a34a;
-      border: 1px solid #bbf7d0; border-radius: 8px;
-      font-size: 0.88rem; cursor: pointer; white-space: nowrap; font-weight: 600;
-    }
-    .btn-new:hover { background: #dcfce7; }
+  <!-- 受注情報 -->
+  <div class="card form-section">
+    <h3>受注情報</h3>
+    <div class="form-grid">
 
-    /* モーダル */
-    .modal-overlay {
-      display: none; position: fixed; inset: 0;
-      background: rgba(0,0,0,0.45); z-index: 100;
-      align-items: center; justify-content: center;
-    }
-    .modal-overlay.open { display: flex; }
-    .modal {
-      background: #fff; border-radius: 12px; padding: 28px;
-      width: 90%; max-width: 400px;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
-    }
-    .modal h3 { font-size: 1rem; color: #1a3a5c; margin-bottom: 16px; }
-    .modal label { font-size: 0.85rem; font-weight: 600; color: #444; display: block; margin-bottom: 4px; }
-    .modal input[type="text"] {
-      width: 100%; padding: 10px 12px; border: 1px solid #ddd;
-      border-radius: 8px; font-size: 0.95rem; color: #333;
-      background: #fafafa; margin-bottom: 12px;
-    }
-    .modal input[type="text"]:focus { outline: none; border-color: #2563eb; background: #fff; }
-    .modal-actions { display: flex; gap: 10px; margin-top: 4px; }
-    .btn-save {
-      flex: 1; padding: 10px; background: #2563eb; color: #fff;
-      border: none; border-radius: 7px; font-size: 0.95rem;
-      cursor: pointer; font-weight: 600;
-    }
-    .btn-save:hover { background: #1d4ed8; }
-    .btn-cancel-modal {
-      flex: 1; padding: 10px; background: #f1f5f9; color: #555;
-      border: none; border-radius: 7px; font-size: 0.95rem; cursor: pointer;
-    }
-    .btn-cancel-modal:hover { background: #e2e8f0; }
-    .modal-error { font-size: 0.85rem; color: #dc2626; margin-bottom: 8px; display: none; }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <h1>新規受注登録</h1>
-    <div class="card">
-      <form method="post" action="/new">
-
-        <div class="form-group">
-          <label>顧客名 <span class="required">*</span></label>
-          <div style="display:flex; gap:8px; align-items:center;">
-            <input type="text" name="customer" id="customer-input" required autofocus placeholder="例：株式会社〇〇"
-                   list="customer-list" autocomplete="off" style="flex:1;">
-            <button type="button" onclick="openModal('customerModal')" class="btn-new">＋ 新規</button>
-          </div>
-          <datalist id="customer-list">
-            {% for c in customers %}
-            <option value="{{ c.name }}">
-            {% endfor %}
-          </datalist>
-        </div>
-
-        <div class="form-group">
-          <label>めっき種類 <span class="required">*</span></label>
-          <input type="text" name="mekki_type" required placeholder="例：ニッケルメッキ"
-                 list="mekki-list" autocomplete="off">
-          <datalist id="mekki-list">
-            {% for t in mekki_types %}
-            <option value="{{ t }}">
-            {% endfor %}
-          </datalist>
-        </div>
-
-        <div class="form-group">
-          <label>めっき膜厚</label>
-          <div style="display:flex; align-items:center; gap:6px;">
-            <input type="number" name="thickness_from" placeholder="下限" min="0" step="0.1" style="width:80px;">
-            <span>〜</span>
-            <input type="number" name="thickness_to" placeholder="上限" min="0" step="0.1" style="width:80px;">
-            <span>μm</span>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label>材質（番手）</label>
-          <input type="text" name="material" placeholder="例：SUS304、S45C、#400">
-        </div>
-
-        <div class="form-group">
-          <label>納期 <span class="required">*</span></label>
-          <input type="date" name="due_date" required>
-        </div>
-
-        <div class="form-group">
-          <label>膜厚データ</label>
-          <div class="radio-group">
-            <label><input type="radio" name="thickness_data" value="要"> 要</label>
-            <label><input type="radio" name="thickness_data" value="不要" checked> 不要</label>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label>品番</label>
-          <input type="text" name="part_no" id="part_no" placeholder="例：A-001-B"
-                 list="part-no-list" autocomplete="off">
-          <datalist id="part-no-list">
-            {% for p in products %}{% if p.part_no %}<option value="{{ p.part_no }}">{% endif %}{% endfor %}
-          </datalist>
-        </div>
-
-        <div class="form-group">
-          <label>品名 <span class="required">*</span></label>
-          <div style="display:flex; gap:8px; align-items:center;">
-            <input type="text" name="product" id="product-select" required placeholder="例：ブラケット A-001"
-                   list="product-list" autocomplete="off" style="flex:1;">
-            <button type="button" onclick="openModal('productModal')" class="btn-new">＋ 新規</button>
-          </div>
-          <datalist id="product-list">
-            {% for p in products %}
-            <option value="{{ p.name }}">
-            {% endfor %}
-          </datalist>
-        </div>
-
-        <div class="form-group">
-          <label>数量 <span class="required">*</span></label>
-          <input type="number" name="quantity" required min="1" placeholder="例：100">
-        </div>
-
-        <div class="form-group">
-          <label>単価</label>
-          <span>@</span><input type="text" name="unit_price" placeholder="例：150">
-        </div>
-
-        <div class="form-group">
-          <label>めっきライン</label>
-          <select name="mekki_line">
-            <option value="">選択してください</option>
-            {% for line in mekki_lines %}
-            <option value="{{ line }}">{{ line }}</option>
-            {% endfor %}
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label>工程</label>
-          <input type="text" name="process_note" placeholder="例：前処理→めっき→後処理">
-        </div>
-
-        <div class="form-group">
-          <label>出荷方法</label>
-          <select name="shipping_method">
-            <option value="">選択してください</option>
-            <option value="納品">納品</option>
-            <option value="発送">発送</option>
-            <option value="引取">引取</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label>担当者</label>
-          <select name="assigned_to">
-            <option value="">-- 選択 --</option>
-            <option value="高橋">高橋</option>
-            <option value="新">新</option>
-            <option value="福田">福田</option>
-            <option value="吉田">吉田</option>
-            <option value="田口">田口</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label>備考</label>
-          <textarea name="note" placeholder="特記事項があれば入力してください"></textarea>
-        </div>
-
-        <div class="actions">
-          <a href="/" class="btn-cancel">一覧に戻る</a>
-          <button type="submit" class="btn-submit">登録する</button>
-        </div>
-
-      </form>
-    </div>
-  </div>
-  <!-- 顧客登録モーダル -->
-  <div class="modal-overlay" id="customerModal">
-    <div class="modal">
-      <h3>顧客を新規登録</h3>
-      <p class="modal-error" id="customerError"></p>
-      <label>顧客名 <span style="color:#e53e3e;">*</span></label>
-      <input type="text" id="customerName" placeholder="例：株式会社〇〇">
-      <div class="modal-actions">
-        <button type="button" class="btn-cancel-modal" onclick="closeModal('customerModal')">キャンセル</button>
-        <button type="button" class="btn-save" onclick="submitCustomer()">登録する</button>
+      <label>顧客名 <span style="color:red;">*</span></label>
+      <div style="display:flex; gap:8px; align-items:center;">
+        <input list="customer-list" type="text" name="customer" id="customer-input"
+               required placeholder="顧客名を入力または選択"
+               autocomplete="off" style="flex:1;">
+        <button type="button" onclick="openModal('customerModal')" class="btn btn-secondary btn-sm">＋ 新規</button>
       </div>
-    </div>
-  </div>
+      <datalist id="customer-list">
+        {% for c in customers %}<option value="{{ c.name }}">{% endfor %}
+      </datalist>
 
-  <!-- 品名登録モーダル -->
-  <div class="modal-overlay" id="productModal">
-    <div class="modal">
-      <h3>品名を新規登録</h3>
-      <p class="modal-error" id="productError"></p>
-      <label>品名 <span style="color:#e53e3e;">*</span></label>
-      <input type="text" id="productName" placeholder="例：ブラケット A-001">
-      <label>品番</label>
-      <input type="text" id="productPartNo" placeholder="例：A-001-B">
-      <div class="modal-actions">
-        <button type="button" class="btn-cancel-modal" onclick="closeModal('productModal')">キャンセル</button>
-        <button type="button" class="btn-save" onclick="submitProduct()">登録する</button>
+      <label>めっき種類 <span style="color:red;">*</span></label>
+      <input type="text" name="mekki_type" required placeholder="例：ニッケルメッキ"
+             list="mekki-list" autocomplete="off">
+      <datalist id="mekki-list">
+        {% for t in mekki_types %}<option value="{{ t }}">{% endfor %}
+      </datalist>
+
+      <label>めっき膜厚</label>
+      <div style="display:flex; align-items:center; gap:6px;">
+        <input type="number" name="thickness_from" placeholder="下限" min="0" step="0.1" style="width:80px;">
+        <span>〜</span>
+        <input type="number" name="thickness_to" placeholder="上限" min="0" step="0.1" style="width:80px;">
+        <span>μm</span>
       </div>
+
+      <label>材質（番手）</label>
+      <input type="text" name="material" placeholder="例：SUS304、S45C、#400">
+
+      <label>納期 <span style="color:red;">*</span></label>
+      <input type="date" name="due_date" required>
+
+      <label>膜厚データ</label>
+      <div class="radio-group">
+        <label><input type="radio" name="thickness_data" value="要"> 要</label>
+        <label><input type="radio" name="thickness_data" value="不要" checked> 不要</label>
+      </div>
+
+      <label>めっきライン</label>
+      <select name="mekki_line">
+        <option value="">-- 選択 --</option>
+        {% for line in mekki_lines %}
+        <option value="{{ line }}">{{ line }}</option>
+        {% endfor %}
+      </select>
+
+      <label>出荷方法</label>
+      <select name="shipping_method">
+        <option value="">-- 選択 --</option>
+        <option value="納品">納品</option>
+        <option value="発送">発送</option>
+        <option value="引取">引取</option>
+      </select>
+
+      <label>工程</label>
+      <input type="text" name="process_note" placeholder="例：前処理→めっき→後処理" class="form-grid-full">
+
+      <label>担当者</label>
+      <select name="assigned_to">
+        <option value="">-- 選択 --</option>
+        <option value="高橋">高橋</option>
+        <option value="新">新</option>
+        <option value="福田">福田</option>
+        <option value="吉田">吉田</option>
+        <option value="田口">田口</option>
+      </select>
+
+      <label style="align-self:start; padding-top:9px;">備考</label>
+      <textarea name="note" placeholder="特記事項があれば入力してください"
+                class="form-grid-full" style="min-height:80px; resize:vertical;"></textarea>
+
     </div>
   </div>
 
-  <script>
-    const partNoToProduct = {
-      {% for p in products %}{% if p.part_no %}"{{ p.part_no }}": "{{ p.name }}",{% endif %}{% endfor %}
-    };
-    document.getElementById('part_no').addEventListener('change', function() {
-      const name = partNoToProduct[this.value];
-      if (name) document.getElementById('product-select').value = name;
-    });
+  <!-- 明細 -->
+  <div class="card form-section">
+    <h3>明細</h3>
+    <table class="items-table">
+      <thead>
+        <tr>
+          <th style="width:40px;">No</th>
+          <th style="width:16%;">品番</th>
+          <th>品名 <span style="color:red;">*</span></th>
+          <th style="width:11%;">数量</th>
+          <th style="width:14%;">単価</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="row-no">1</td>
+          <td>
+            <input type="text" name="part_no" id="part_no" placeholder="品番"
+                   autocomplete="off" list="part-no-list">
+            <datalist id="part-no-list">
+              {% for p in products %}{% if p.part_no %}<option value="{{ p.part_no }}">{% endif %}{% endfor %}
+            </datalist>
+          </td>
+          <td>
+            <div style="display:flex; gap:6px; align-items:center;">
+              <input type="text" name="product" id="product-select" required
+                     placeholder="品名を入力または選択"
+                     autocomplete="off" list="product-list" style="flex:1;">
+              <button type="button" onclick="openModal('productModal')"
+                      class="btn btn-secondary btn-sm">＋ 新規</button>
+            </div>
+            <datalist id="product-list">
+              {% for p in products %}<option value="{{ p.name }}">{% endfor %}
+            </datalist>
+          </td>
+          <td><input type="number" name="quantity" required min="1" placeholder="0"></td>
+          <td>
+            <div style="display:flex; align-items:center; gap:4px;">
+              <span style="font-size:13px; color:var(--text-sub);">@</span>
+              <input type="text" name="unit_price" placeholder="単価">
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
 
-    function openModal(id) {
-      document.getElementById(id).classList.add('open');
-      const input = document.getElementById(id).querySelector('input[type="text"]');
-      if (input) setTimeout(() => input.focus(), 50);
-    }
-    function closeModal(id) {
-      document.getElementById(id).classList.remove('open');
-    }
-    document.querySelectorAll('.modal-overlay').forEach(el => {
-      el.addEventListener('click', e => { if (e.target === el) closeModal(el.id); });
-    });
+  <div class="btn-group">
+    <a href="{{ url_for('index') }}" class="btn btn-secondary">一覧に戻る</a>
+    <button type="submit" class="btn btn-primary">登録する</button>
+  </div>
 
-    async function submitCustomer() {
-      const name = document.getElementById('customerName').value.trim();
-      const errEl = document.getElementById('customerError');
-      errEl.style.display = 'none';
-      if (!name) { errEl.textContent = '顧客名を入力してください'; errEl.style.display = 'block'; return; }
-      const fd = new FormData();
-      fd.append('name', name);
-      const res = await fetch('/customers/add', { method: 'POST', body: fd });
-      const data = await res.json();
-      if (data.success) {
-        const dl = document.getElementById('customer-list');
-        const opt = document.createElement('option');
-        opt.value = data.name;
-        dl.appendChild(opt);
-        document.getElementById('customer-input').value = data.name;
-        document.getElementById('customerName').value = '';
-        closeModal('customerModal');
-      } else {
-        errEl.textContent = data.error || '登録失敗';
-        errEl.style.display = 'block';
+</form>
+
+<!-- 顧客登録モーダル -->
+<div class="modal-overlay" id="customerModal">
+  <div class="modal">
+    <h3>顧客を新規登録</h3>
+    <p class="modal-error" id="customerError"></p>
+    <label>顧客名 <span style="color:red;">*</span></label>
+    <input type="text" id="customerName" placeholder="例：株式会社〇〇">
+    <div class="modal-actions">
+      <button type="button" class="btn btn-secondary" onclick="closeModal('customerModal')">キャンセル</button>
+      <button type="button" class="btn btn-primary" onclick="submitCustomer()">登録する</button>
+    </div>
+  </div>
+</div>
+
+<!-- 品名登録モーダル -->
+<div class="modal-overlay" id="productModal">
+  <div class="modal">
+    <h3>品名を新規登録</h3>
+    <p class="modal-error" id="productError"></p>
+    <label>品名 <span style="color:red;">*</span></label>
+    <input type="text" id="productName" placeholder="例：ブラケット A-001">
+    <label>品番</label>
+    <input type="text" id="productPartNo" placeholder="例：A-001-B">
+    <div class="modal-actions">
+      <button type="button" class="btn btn-secondary" onclick="closeModal('productModal')">キャンセル</button>
+      <button type="button" class="btn btn-primary" onclick="submitProduct()">登録する</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const partNoToProduct = {
+    {% for p in products %}{% if p.part_no %}"{{ p.part_no }}": "{{ p.name }}",{% endif %}{% endfor %}
+  };
+
+  document.getElementById('part_no').addEventListener('change', function() {
+    const name = partNoToProduct[this.value];
+    if (name) document.getElementById('product-select').value = name;
+  });
+
+  function openModal(id) {
+    document.getElementById(id).classList.add('open');
+    const input = document.getElementById(id).querySelector('input[type="text"]');
+    if (input) setTimeout(() => input.focus(), 50);
+  }
+  function closeModal(id) {
+    document.getElementById(id).classList.remove('open');
+  }
+  document.querySelectorAll('.modal-overlay').forEach(el => {
+    el.addEventListener('click', e => { if (e.target === el) closeModal(el.id); });
+  });
+
+  async function submitCustomer() {
+    const name = document.getElementById('customerName').value.trim();
+    const errEl = document.getElementById('customerError');
+    errEl.style.display = 'none';
+    if (!name) { errEl.textContent = '顧客名を入力してください'; errEl.style.display = 'block'; return; }
+    const fd = new FormData();
+    fd.append('name', name);
+    const res = await fetch('/customers/add', { method: 'POST', body: fd });
+    const data = await res.json();
+    if (data.success) {
+      const dl = document.getElementById('customer-list');
+      const opt = document.createElement('option');
+      opt.value = data.name;
+      dl.appendChild(opt);
+      document.getElementById('customer-input').value = data.name;
+      document.getElementById('customerName').value = '';
+      closeModal('customerModal');
+    } else {
+      errEl.textContent = data.error || '登録失敗';
+      errEl.style.display = 'block';
+    }
+  }
+
+  async function submitProduct() {
+    const name = document.getElementById('productName').value.trim();
+    const partNo = document.getElementById('productPartNo').value.trim();
+    const errEl = document.getElementById('productError');
+    errEl.style.display = 'none';
+    if (!name) { errEl.textContent = '品名を入力してください'; errEl.style.display = 'block'; return; }
+    const fd = new FormData();
+    fd.append('name', name);
+    fd.append('part_no', partNo);
+    const res = await fetch('/products/add', { method: 'POST', body: fd });
+    const data = await res.json();
+    if (data.success) {
+      const dl = document.getElementById('product-list');
+      const opt = document.createElement('option');
+      opt.value = data.name;
+      dl.appendChild(opt);
+      document.getElementById('product-select').value = data.name;
+      if (data.part_no) {
+        document.getElementById('part_no').value = data.part_no;
+        partNoToProduct[data.part_no] = data.name;
       }
+      document.getElementById('productName').value = '';
+      document.getElementById('productPartNo').value = '';
+      closeModal('productModal');
+    } else {
+      errEl.textContent = data.error || '登録失敗';
+      errEl.style.display = 'block';
     }
-
-    async function submitProduct() {
-      const name = document.getElementById('productName').value.trim();
-      const partNo = document.getElementById('productPartNo').value.trim();
-      const errEl = document.getElementById('productError');
-      errEl.style.display = 'none';
-      if (!name) { errEl.textContent = '品名を入力してください'; errEl.style.display = 'block'; return; }
-      const fd = new FormData();
-      fd.append('name', name);
-      fd.append('part_no', partNo);
-      const res = await fetch('/products/add', { method: 'POST', body: fd });
-      const data = await res.json();
-      if (data.success) {
-        const dl = document.getElementById('product-list');
-        const opt = document.createElement('option');
-        opt.value = data.name;
-        dl.appendChild(opt);
-        document.getElementById('product-select').value = data.name;
-        if (data.part_no) document.getElementById('part_no').value = data.part_no;
-        document.getElementById('productName').value = '';
-        document.getElementById('productPartNo').value = '';
-        closeModal('productModal');
-      } else {
-        errEl.textContent = data.error || '登録失敗';
-        errEl.style.display = 'block';
-      }
-    }
-  </script>
-</body>
-</html>
+  }
+</script>
+{% endblock %}
