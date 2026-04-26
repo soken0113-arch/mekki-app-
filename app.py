@@ -631,6 +631,28 @@ def delete_all_products():
 
 # ── 外注先マスタ ────────────────────────────────────────────
 
+@app.route("/subcontractors/print/<int:order_id>")
+@login_required
+def print_subcontractor_order(order_id):
+    with get_db() as conn:
+        order = conn.execute("SELECT * FROM orders WHERE id=?", (order_id,)).fetchone()
+        if not order:
+            return redirect(url_for("index"))
+        subcontractor_name = None
+        try:
+            sub_id = order["subcontractor_id"]
+            if sub_id:
+                sub = conn.execute("SELECT name FROM subcontractors WHERE id=?", (sub_id,)).fetchone()
+                subcontractor_name = sub["name"] if sub else None
+        except Exception:
+            pass
+    is_multi = order["product"] == "複数品目"
+    back_url = url_for("detail_multi", order_id=order_id) if is_multi else url_for("detail", order_id=order_id)
+    issued_date = datetime.now().strftime("%Y年%m月%d日")
+    return render_template("print_subcontractor.html", order=order,
+                           subcontractor_name=subcontractor_name,
+                           issued_date=issued_date, back_url=back_url)
+
 @app.route("/subcontractors", methods=["GET"])
 @login_required
 def subcontractors():
