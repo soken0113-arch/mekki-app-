@@ -177,7 +177,7 @@
 {% endif %}
 
 {% if alert_orders %}
-<div id="alertModal" style="display:flex; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center;">
+<div id="alertModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center;">
   <div style="background:#fff; padding:2rem; border-radius:8px; max-width:480px; width:90%;">
     <h3 style="margin-top:0;">⚠️ 納期アラート（{{ alert_orders|length }}件）</h3>
     <table style="width:100%; border-collapse:collapse; font-size:0.9rem;">
@@ -206,12 +206,27 @@
       </tbody>
     </table>
     <div style="text-align:right; margin-top:1rem;">
-      <button onclick="document.getElementById('alertModal').style.display='none'"
+      <button onclick="confirmAlert()"
         style="padding:0.4rem 1.2rem; background:#007bff; color:#fff; border:none; border-radius:4px; cursor:pointer;">
         確認しました
       </button>
     </div>
   </div>
 </div>
+<script>
+  (function() {
+    const today = new Date().toISOString().slice(0, 10);
+    const key = 'alertConfirmed';
+    if (localStorage.getItem(key) !== today) {
+      const el = document.getElementById('alertModal');
+      el.style.display = 'flex';
+    }
+  })();
+  function confirmAlert() {
+    const today = new Date().toISOString().slice(0, 10);
+    localStorage.setItem('alertConfirmed', today);
+    document.getElementById('alertModal').style.display = 'none';
+  }
+</script>
 {% endif %}
 {% endblock %}
