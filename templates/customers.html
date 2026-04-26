@@ -37,14 +37,14 @@
   .upload-area {
     border: 2px dashed var(--border);
     border-radius: 4px;
-    padding: 24px;
+    padding: 12px 16px;
     text-align: center;
     background: #f8faff;
     transition: border-color 0.2s;
   }
   .upload-area:hover { border-color: var(--navy-700); }
-  .upload-area p { color: var(--text-sub); font-size: 13px; margin-bottom: 12px; }
-  .upload-area .hint { font-size: 12px; color: var(--text-mute); margin-top: 8px; }
+  .upload-area p { color: var(--text-sub); font-size: 13px; margin-bottom: 8px; }
+  .upload-area .hint { font-size: 12px; color: var(--text-mute); margin-top: 6px; }
   input[type="file"] { display: none; }
   .file-label {
     display: inline-block;
@@ -109,7 +109,7 @@
       <div id="file-name"></div>
       <p class="hint">※ 1列目に顧客名、1行目はヘッダー行「顧客名」の形式</p>
     </div>
-    <div style="text-align:center; margin-top:16px;">
+    <div style="text-align:center; margin-top:10px;">
       <button type="submit" class="btn btn-primary">インポート実行</button>
     </div>
   </form>
