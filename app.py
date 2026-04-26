@@ -915,7 +915,7 @@ def complete_shipment(order_id):
             now = datetime.now()
             conn.execute(
                 "INSERT INTO shipments (order_id, shipped_at, shipped_by, note, created_at) VALUES (?, ?, ?, ?, ?)",
-                (order_id, now.strftime("%Y-%m-%d %H:%M:%S"), session.get("username", ""), "", now.strftime("%Y-%m-%d %H:%M:%S"))
+                (order_id, now.strftime("%Y-%m-%d %H:%M:%S"), order["assigned_to"], "", now.strftime("%Y-%m-%d %H:%M:%S"))
             )
             flash("出荷完了として登録しました。", "success")
         else:
@@ -935,7 +935,7 @@ def ship_order(order_id):
             now = datetime.now()
             conn.execute(
                 "INSERT INTO shipments (order_id, shipped_at, shipped_by, note, created_at) VALUES (?, ?, ?, ?, ?)",
-                (order_id, now.strftime("%Y-%m-%d %H:%M:%S"), session.get("username", ""), "", now.strftime("%Y-%m-%d %H:%M:%S"))
+                (order_id, now.strftime("%Y-%m-%d %H:%M:%S"), order["assigned_to"], "", now.strftime("%Y-%m-%d %H:%M:%S"))
             )
             flash("出荷完了として登録しました。", "success")
         else:
