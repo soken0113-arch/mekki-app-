@@ -92,6 +92,9 @@
     margin: 0 auto 16px;
     opacity: 0.5;
   }
+  .alert-overdue  { background-color: #ffe0e0; }
+  .alert-today    { background-color: #ffe8cc; }
+  .alert-tomorrow { background-color: #fffacc; }
   @media (max-width: 640px) {
     .toolbar { flex-direction: column; align-items: stretch; }
     .toolbar-left, .toolbar-right { justify-content: space-between; }
@@ -129,7 +132,7 @@
     </thead>
     <tbody>
       {% for order in orders %}
-      <tr>
+      <tr class="{{ 'alert-' + order.alert if order.alert else '' }}">
         <td><strong>{{ order.order_no }}</strong></td>
         <td>{{ order.customer }}</td>
         <td>{{ order.product }}</td>
@@ -139,7 +142,13 @@
             <span class="mekki-badge">{{ order.mekki_type }}</span>
           {% endif %}
         </td>
-        <td>{{ order.due_date }}</td>
+        <td>
+          {{ order.due_date }}
+          {% if order.alert == 'overdue' %}<span title="納期超過">🔴</span>
+          {% elif order.alert == 'today' %}<span title="納期当日">🟠</span>
+          {% elif order.alert == 'tomorrow' %}<span title="納期1日前">🟡</span>
+          {% endif %}
+        </td>
         <td>
           <div class="row-actions">
             {% if order.product == '複数品目' %}
@@ -163,6 +172,45 @@
   <div class="empty-state">
     受注データがまだありません。<br>
     右上の「新規登録」ボタンから受注を追加してください。
+  </div>
+</div>
+{% endif %}
+
+{% if alert_orders %}
+<div id="alertModal" style="display:flex; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center;">
+  <div style="background:#fff; padding:2rem; border-radius:8px; max-width:480px; width:90%;">
+    <h3 style="margin-top:0;">⚠️ 納期アラート（{{ alert_orders|length }}件）</h3>
+    <table style="width:100%; border-collapse:collapse; font-size:0.9rem;">
+      <thead>
+        <tr style="border-bottom:2px solid #ccc;">
+          <th style="text-align:left; padding:4px;">得意先</th>
+          <th style="text-align:left; padding:4px;">品名</th>
+          <th style="text-align:left; padding:4px;">納期</th>
+          <th style="text-align:left; padding:4px;">状態</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for o in alert_orders %}
+        <tr style="border-bottom:1px solid #eee;">
+          <td style="padding:4px;">{{ o.customer }}</td>
+          <td style="padding:4px;">{{ o.product }}</td>
+          <td style="padding:4px;">{{ o.due_date }}</td>
+          <td style="padding:4px;">
+            {% if o.alert == 'overdue' %}🔴 超過
+            {% elif o.alert == 'today' %}🟠 当日
+            {% elif o.alert == 'tomorrow' %}🟡 明日納期
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <div style="text-align:right; margin-top:1rem;">
+      <button onclick="document.getElementById('alertModal').style.display='none'"
+        style="padding:0.4rem 1.2rem; background:#007bff; color:#fff; border:none; border-radius:4px; cursor:pointer;">
+        確認しました
+      </button>
+    </div>
   </div>
 </div>
 {% endif %}
