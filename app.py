@@ -402,7 +402,7 @@ def add_customer():
             ).fetchone()
         return jsonify({"success": True, "id": row["id"], "name": name})
     except Exception:
-        return jsonify({"success": False, "error": "同じ顧客名が既に登録されています"}), 409
+        return jsonify({"success": False, "error": "この顧客名はすでに登録されています"}), 409
 
 @app.route("/customers/edit/<int:customer_id>", methods=["POST"])
 @login_required
@@ -495,7 +495,7 @@ def add_product():
             ).fetchone()
         return jsonify({"success": True, "id": row["id"], "name": name, "part_no": part_no})
     except Exception:
-        return jsonify({"success": False, "error": "同じ品名が既に登録されています"}), 409
+        return jsonify({"success": False, "error": "この品名はすでに登録されています"}), 409
 
 @app.route("/products/edit/<int:product_id>", methods=["POST"])
 @login_required
