@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+
+{% block title %}外注一覧{% endblock %}
+
+{% block extra_css %}
+<style>
+  .toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .toolbar-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .count-badge {
+    font-size: 13px;
+    color: var(--text-sub);
+    background: #fff;
+    border: 1px solid var(--border);
+    padding: 6px 14px;
+    border-radius: 3px;
+  }
+  .count-badge strong {
+    color: var(--navy-700);
+    font-size: 15px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    margin: 0 4px;
+  }
+  .toolbar-right {
+    display: flex;
+    gap: 8px;
+  }
+  .table-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow-x: auto;
+  }
+  .table-wrap .data-table {
+    min-width: 960px;
+  }
+  .sub-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    background: #f0fdf4;
+    color: #166534;
+    border: 1px solid #bbf7d0;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .row-actions {
+    display: flex;
+    gap: 6px;
+    white-space: nowrap;
+  }
+  .row-actions form { display: inline; }
+  .empty-state {
+    padding: 60px 20px;
+    text-align: center;
+    color: var(--text-mute);
+    font-size: 14px;
+  }
+  .empty-state::before {
+    content: "";
+    display: block;
+    width: 40px;
+    height: 4px;
+    background: var(--gold);
+    margin: 0 auto 16px;
+    opacity: 0.5;
+  }
+  .alert-overdue  { background-color: #ffe0e0; }
+  .alert-today    { background-color: #ffe8cc; }
+  .alert-tomorrow { background-color: #fffacc; }
+  @media (max-width: 640px) {
+    .toolbar { flex-direction: column; align-items: stretch; }
+    .toolbar-left, .toolbar-right { justify-content: space-between; }
+    .toolbar-right { flex-wrap: wrap; gap: 6px; }
+    .row-actions { flex-wrap: wrap; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<h1 class="page-title">外注一覧</h1>
+
+<div class="toolbar">
+  <div class="toolbar-left">
+    <div class="count-badge">全 <strong>{{ orders|length }}</strong> 件</div>
+  </div>
+  <div class="toolbar-right">
+    <a href="{{ url_for('new_order') }}" class="btn btn-primary">＋ 新規登録</a>
+    <a href="{{ url_for('new_order_multi') }}" class="btn btn-primary">＋ 新規登録（複数品目）</a>
+  </div>
+</div>
+
+{% if orders %}
+<div class="table-wrap">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>受注番号</th>
+        <th>外注先</th>
+        <th>品名</th>
+        <th>品番</th>
+        <th class="num">数量</th>
+        <th class="num">金額</th>
+        <th class="num">合計金額</th>
+        <th>外注納期</th>
+        <th style="width:1%;">操作</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for order in orders %}
+      <tr class="{{ 'alert-' + order.alert if order.alert else '' }}">
+        <td><strong>{{ order.order_no }}</strong></td>
+        <td><span class="sub-badge">{{ order.subcontractor_name or '—' }}</span></td>
+        <td>{{ order.sub_part_name or '—' }}</td>
+        <td style="color:var(--text-mute); font-size:12px;">{{ order.sub_part_no or '—' }}</td>
+        <td class="num">{{ order.sub_qty or '—' }}</td>
+        <td class="num">{{ order.sub_amount or '—' }}</td>
+        <td class="num" style="font-weight:700;">{{ order.sub_total or '—' }}</td>
+        <td>
+          {{ order.sub_due_date or '—' }}
+          {% if order.alert == 'overdue' %}<span title="納期超過">🔴</span>
+          {% elif order.alert == 'today' %}<span title="納期当日">🟠</span>
+          {% elif order.alert == 'tomorrow' %}<span title="納期1日前">🟡</span>
+          {% endif %}
+        </td>
+        <td>
+          <div class="row-actions">
+            {% if order.product == '複数品目' %}
+            <a href="{{ url_for('detail_multi', order_id=order.id) }}" class="btn btn-secondary btn-sm">詳細</a>
+            {% else %}
+            <a href="{{ url_for('detail', order_id=order.id) }}" class="btn btn-secondary btn-sm">詳細</a>
+            {% endif %}
+            <a href="{{ url_for('print_subcontractor_order', order_id=order.id) }}" class="btn btn-secondary btn-sm" target="_blank">伝票</a>
+            <form method="POST" action="{{ url_for('complete_shipment', order_id=order.id) }}"
+                  onsubmit="return confirm('この受注を出荷完了にしますか？\n\n外注先：{{ order.subcontractor_name }}\n\nこの操作は元に戻せません。')">
+              <button type="submit" class="btn btn-ship btn-sm">出荷</button>
+            </form>
+            <form method="POST" action="{{ url_for('delete', order_id=order.id) }}"
+                  onsubmit="return confirm('この受注を削除しますか？\n\n外注先：{{ order.subcontractor_name }}\n\nこの操作は元に戻せません。')">
+              <button type="submit" class="btn btn-danger btn-sm">削除</button>
+            </form>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="card">
+  <div class="empty-state">
+    外注データがまだありません。<br>
+    受注登録画面の「外注情報」セクションで外注先を設定すると、こちらに表示されます。
+  </div>
+</div>
+{% endif %}
+{% endblock %}

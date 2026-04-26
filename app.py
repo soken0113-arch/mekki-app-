@@ -275,7 +275,7 @@ def change_password():
 def index():
     with get_db() as conn:
         rows = conn.execute(
-            "SELECT * FROM orders ORDER BY created_at DESC"
+            "SELECT * FROM orders WHERE (subcontractor_id IS NULL) ORDER BY created_at DESC"
         ).fetchall()
         shipped_rows = conn.execute("SELECT order_id FROM shipments").fetchall()
     shipped_ids = {r["order_id"] for r in shipped_rows}
@@ -304,6 +304,44 @@ def index():
         orders.append(order)
     alert_orders = [o for o in orders if o['alert']]
     return render_template("index.html", orders=orders, alert_orders=alert_orders)
+
+@app.route("/sub_orders")
+@login_required
+def sub_orders_list():
+    with get_db() as conn:
+        rows = conn.execute("""
+            SELECT o.*, s.name as subcontractor_name
+            FROM orders o
+            LEFT JOIN subcontractors s ON o.subcontractor_id = s.id
+            WHERE o.subcontractor_id IS NOT NULL
+            ORDER BY o.created_at DESC
+        """).fetchall()
+        shipped_rows = conn.execute("SELECT order_id FROM shipments").fetchall()
+    shipped_ids = {r["order_id"] for r in shipped_rows}
+    holidays = get_jp_holidays()
+    today = datetime.now().date()
+    orders = []
+    for row in rows:
+        if row["id"] in shipped_ids:
+            continue
+        order = dict(row)
+        due = None
+        try:
+            due = datetime.strptime(order['sub_due_date'], '%Y-%m-%d').date()
+        except:
+            pass
+        if due is None:
+            order['alert'] = None
+        elif due < today:
+            order['alert'] = 'overdue'
+        elif due == today:
+            order['alert'] = 'today'
+        elif get_prev_business_day(due, holidays) == today:
+            order['alert'] = 'tomorrow'
+        else:
+            order['alert'] = None
+        orders.append(order)
+    return render_template("sub_orders.html", orders=orders)
 
 @app.route("/new", methods=["GET", "POST"])
 @login_required

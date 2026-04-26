@@ -22,6 +22,7 @@
 
   <nav class="app-nav">
     <a href="{{ url_for('index') }}" class="{% if request.endpoint == 'index' %}active{% endif %}">受注一覧</a>
+    <a href="{{ url_for('sub_orders_list') }}" class="{% if request.endpoint == 'sub_orders_list' %}active{% endif %}">外注一覧</a>
     <a href="{{ url_for('new_order') }}" class="{% if request.endpoint == 'new_order' %}active{% endif %}">新規登録</a>
     <a href="{{ url_for('new_order_multi') }}" class="{% if request.endpoint == 'new_order_multi' %}active{% endif %}">新規登録（複数品目）</a>
     <a href="{{ url_for('new_order_gaichuu') }}" class="{% if request.endpoint == 'new_order_gaichuu' %}active{% endif %}">外注</a>
