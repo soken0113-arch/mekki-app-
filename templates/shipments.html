@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block title %}出荷管理{% endblock %}
+
+{% block extra_css %}
+<style>
+  .toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+  .count-badge {
+    background: var(--navy-700);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 10px;
+  }
+  .row-archived td {
+    color: var(--text-mute);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<h1 class="page-title">出荷管理</h1>
+
+<div class="toolbar">
+  <span class="count-badge">{{ shipments | length }} 件</span>
+  <a href="{{ url_for('export_shipments_excel') }}" class="btn btn-secondary btn-sm">📥 Excelダウンロード</a>
+</div>
+
+<div class="card">
+  {% if shipments %}
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>伝票番号</th>
+        <th>得意先名</th>
+        <th>出荷日時</th>
+        <th>担当者</th>
+        <th>状態</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for s in shipments %}
+      <tr class="{{ 'row-archived' if s.is_archived else '' }}">
+        <td>{{ s.order_no }}</td>
+        <td>{{ s.customer }}</td>
+        <td>{{ s.shipped_at }}</td>
+        <td>{{ s.shipped_by or '—' }}</td>
+        <td>
+          {% if s.is_archived %}
+            <span class="badge-archived">保管中</span>
+          {% else %}
+            <span class="badge-shipped">出荷済み</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p style="color:var(--text-mute); font-size:13px; padding:8px 0;">出荷データがありません。</p>
+  {% endif %}
+</div>
+{% endblock %}

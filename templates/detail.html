@@ -69,6 +69,15 @@
   <a href="{{ url_for('index') }}" class="btn btn-secondary">← 一覧に戻る</a>
   <a href="{{ url_for('edit_order', order_id=order.id) }}" class="btn btn-secondary">✏ 編集</a>
   <a href="{{ url_for('print_order', order_id=order.id) }}" class="btn btn-primary" target="_blank">🖨 伝票印刷</a>
+  {% if shipment %}
+    <span class="badge-shipped">出荷済み</span>
+  {% else %}
+    <form method="post" action="{{ url_for('ship_order', order_id=order.id) }}"
+          onsubmit="return confirm('出荷完了として登録します。よろしいですか？')"
+          style="display:inline;">
+      <button type="submit" class="btn btn-ship">✅ 出荷完了</button>
+    </form>
+  {% endif %}
   <form method="post" action="{{ url_for('delete', order_id=order.id) }}"
         onsubmit="return confirm('この受注を削除してもよいですか？')"
         style="display:inline;">

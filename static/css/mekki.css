@@ -246,6 +246,36 @@ input:focus, select:focus, textarea:focus {
 }
 .search-bar input { flex: 1; }
 
+/* ====== 出荷管理 ====== */
+.badge-shipped {
+  display: inline-block;
+  padding: 4px 12px;
+  background: #ebf5f0;
+  color: var(--success);
+  border: 1px solid #b7dfc9;
+  border-radius: 3px;
+  font-size: 12px;
+  font-weight: 600;
+  vertical-align: middle;
+}
+.badge-archived {
+  display: inline-block;
+  padding: 4px 12px;
+  background: #f4f5f7;
+  color: var(--text-mute);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  font-size: 12px;
+  font-weight: 600;
+  vertical-align: middle;
+}
+.btn-ship {
+  background: #ebf5f0;
+  color: var(--success);
+  border-color: #b7dfc9;
+}
+.btn-ship:hover { background: #d1eadb; }
+
 /* ====== 印刷時 ====== */
 @media print {
   .app-header, .app-nav, .btn-group, .no-print { display: none !important; }

@@ -147,6 +147,16 @@ def init_db():
                 note TEXT NOT NULL DEFAULT ''
             )
         """)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS shipments (
+                id SERIAL PRIMARY KEY,
+                order_id INTEGER NOT NULL REFERENCES orders(id),
+                shipped_at TEXT NOT NULL,
+                shipped_by TEXT NOT NULL DEFAULT '',
+                note TEXT NOT NULL DEFAULT '',
+                created_at TEXT NOT NULL
+            )
+        """)
         # 新カラムのマイグレーション（既存テーブルへの追加）
         for col, definition in [
             ("mekki_thickness",  "TEXT NOT NULL DEFAULT ''"),
@@ -358,9 +368,10 @@ def edit_order(order_id):
 def detail(order_id):
     with get_db() as conn:
         order = conn.execute("SELECT * FROM orders WHERE id=?", (order_id,)).fetchone()
+        shipment = conn.execute("SELECT * FROM shipments WHERE order_id=?", (order_id,)).fetchone()
     if not order:
         return redirect(url_for("index"))
-    return render_template("detail.html", order=order)
+    return render_template("detail.html", order=order, shipment=shipment)
 
 @app.route("/print/<int:order_id>")
 @login_required
@@ -864,9 +875,10 @@ def detail_multi(order_id):
             "SELECT * FROM order_items WHERE order_id=? ORDER BY id",
             (order_id,)
         ).fetchall()
+        shipment = conn.execute("SELECT * FROM shipments WHERE order_id=?", (order_id,)).fetchone()
     if not order:
         return redirect(url_for("index"))
-    return render_template("detail_multi.html", order=order, items=items)
+    return render_template("detail_multi.html", order=order, items=items, shipment=shipment)
 
 
 @app.route("/print_multi/<int:order_id>")
@@ -883,6 +895,107 @@ def print_order_multi(order_id):
     if not order:
         return redirect(url_for("index"))
     return render_template("print_multi.html", order=order, items=items)
+
+
+# ── 出荷管理 ────────────────────────────────────────────────
+
+@app.route("/ship/<int:order_id>", methods=["POST"])
+@login_required
+def ship_order(order_id):
+    with get_db() as conn:
+        order = conn.execute("SELECT * FROM orders WHERE id=?", (order_id,)).fetchone()
+        if not order:
+            return redirect(url_for("index"))
+        existing = conn.execute("SELECT id FROM shipments WHERE order_id=?", (order_id,)).fetchone()
+        if not existing:
+            now = datetime.now()
+            conn.execute(
+                "INSERT INTO shipments (order_id, shipped_at, shipped_by, note, created_at) VALUES (?, ?, ?, ?, ?)",
+                (order_id, now.strftime("%Y-%m-%d %H:%M:%S"), session.get("username", ""), "", now.strftime("%Y-%m-%d %H:%M:%S"))
+            )
+            flash("出荷完了として登録しました。", "success")
+        else:
+            flash("この受注はすでに出荷済みです。", "info")
+    if order["product"] == "複数品目":
+        return redirect(url_for("detail_multi", order_id=order_id))
+    return redirect(url_for("detail", order_id=order_id))
+
+
+@app.route("/shipments")
+@login_required
+def shipments_list():
+    with get_db() as conn:
+        rows = conn.execute("""
+            SELECT s.id, s.order_id, s.shipped_at, s.shipped_by, s.note,
+                   o.order_no, o.customer
+            FROM shipments s
+            JOIN orders o ON s.order_id = o.id
+            ORDER BY s.shipped_at DESC
+        """).fetchall()
+    today = datetime.now().date()
+    cutoff = today - timedelta(days=90)
+    shipments = []
+    for row in rows:
+        s = dict(row)
+        try:
+            shipped_date = datetime.strptime(s["shipped_at"], "%Y-%m-%d %H:%M:%S").date()
+            s["is_archived"] = shipped_date < cutoff
+        except Exception:
+            s["is_archived"] = False
+        shipments.append(s)
+    return render_template("shipments.html", shipments=shipments)
+
+
+@app.route("/shipments/export/excel")
+@login_required
+def export_shipments_excel():
+    with get_db() as conn:
+        rows = conn.execute("""
+            SELECT s.shipped_at, s.shipped_by, s.note,
+                   o.order_no, o.customer
+            FROM shipments s
+            JOIN orders o ON s.order_id = o.id
+            ORDER BY s.shipped_at DESC
+        """).fetchall()
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "出荷データ"
+
+    headers = ["伝票番号", "得意先名", "出荷日時", "担当者", "備考"]
+    ws.append(headers)
+
+    header_fill = PatternFill(fill_type="solid", fgColor="1A3A5C")
+    header_font = Font(bold=True, color="FFFFFF", size=11)
+    for cell in ws[1]:
+        cell.fill = header_fill
+        cell.font = header_font
+        cell.alignment = Alignment(horizontal="center", vertical="center")
+
+    for row in rows:
+        ws.append([
+            row["order_no"],
+            row["customer"],
+            row["shipped_at"],
+            row["shipped_by"] or "",
+            row["note"] or "",
+        ])
+
+    col_widths = [22, 20, 20, 16, 30]
+    for i, width in enumerate(col_widths, start=1):
+        ws.column_dimensions[openpyxl.utils.get_column_letter(i)].width = width
+
+    buf = BytesIO()
+    wb.save(buf)
+    buf.seek(0)
+
+    filename = f"shipments_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+    return send_file(
+        buf,
+        as_attachment=True,
+        download_name=filename,
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    )
 
 
 init_db()

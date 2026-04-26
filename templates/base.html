@@ -26,6 +26,7 @@
     <a href="{{ url_for('new_order_gaichuu') }}" class="{% if request.endpoint == 'new_order_gaichuu' %}active{% endif %}">外注</a>
     <a href="{{ url_for('customers') }}" class="{% if request.endpoint == 'customers' %}active{% endif %}">顧客マスタ</a>
     <a href="{{ url_for('products') }}" class="{% if request.endpoint == 'products' %}active{% endif %}">品名マスタ</a>
+    <a href="{{ url_for('shipments_list') }}" class="{% if request.endpoint == 'shipments_list' %}active{% endif %}">出荷管理</a>
   </nav>
   {% endblock %}
 
