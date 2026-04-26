@@ -160,7 +160,7 @@
               </datalist>
           </td>
           <td><input type="number" name="quantity[]" value="{{ item.quantity if item else '' }}" min="0"></td>
-          <td><input type="text" name="unit_price[]" value="{{ item.unit_price if item else '' }}"></td>
+          <td>@<input type="text" name="unit_price[]" value="{{ item.unit_price if item else '' }}"></td>
           <td><input type="text" name="note[]" value="{{ item.note if item else '' }}"></td>
         </tr>
         {% endfor %}
