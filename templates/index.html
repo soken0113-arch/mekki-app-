@@ -95,6 +95,18 @@
   .alert-overdue  { background-color: #ffe0e0; }
   .alert-today    { background-color: #ffe8cc; }
   .alert-tomorrow { background-color: #fffacc; }
+  .btn-ship-done {
+    background: #f0f0f0;
+    color: var(--text-mute);
+    border-color: var(--border);
+    cursor: default;
+  }
+  .btn-danger-disabled {
+    background: #f0f0f0;
+    color: #bbb;
+    border-color: #ddd;
+    cursor: not-allowed;
+  }
   @media (max-width: 640px) {
     .toolbar { flex-direction: column; align-items: stretch; }
     .toolbar-left, .toolbar-right { justify-content: space-between; }
@@ -133,7 +145,10 @@
     <tbody>
       {% for order in orders %}
       <tr class="{{ 'alert-' + order.alert if order.alert else '' }}">
-        <td><strong>{{ order.order_no }}</strong></td>
+        <td>
+          <strong>{{ order.order_no }}</strong>
+          {% if order.shipped %}<span class="badge-shipped" style="font-size:10px; padding:2px 7px; margin-left:6px;">出荷済</span>{% endif %}
+        </td>
         <td>{{ order.customer }}</td>
         <td>{{ order.product }}</td>
         <td class="num">{{ order.quantity }}</td>
@@ -156,10 +171,19 @@
             {% else %}
             <a href="{{ url_for('detail', order_id=order.id) }}" class="btn btn-secondary btn-sm">詳細</a>
             {% endif %}
-            <form method="POST" action="{{ url_for('delete', order_id=order.id) }}"
-                  onsubmit="return confirm('この受注を削除しますか？');">
-              <button type="submit" class="btn btn-danger btn-sm">削除</button>
-            </form>
+            {% if order.shipped %}
+              <button class="btn btn-sm btn-ship-done" disabled>出荷済</button>
+              <button class="btn btn-sm btn-danger-disabled" disabled title="出荷済みのため削除できません">削除</button>
+            {% else %}
+              <form method="POST" action="{{ url_for('complete_shipment', order_id=order.id) }}"
+                    onsubmit="return confirm('この受注を出荷完了にしますか？\n\n得意先：{{ order.customer }}\n\nこの操作は元に戻せません。')">
+                <button type="submit" class="btn btn-ship btn-sm">出荷</button>
+              </form>
+              <form method="POST" action="{{ url_for('delete', order_id=order.id) }}"
+                    onsubmit="return confirm('この受注を削除しますか？');">
+                <button type="submit" class="btn btn-danger btn-sm">削除</button>
+              </form>
+            {% endif %}
           </div>
         </td>
       </tr>

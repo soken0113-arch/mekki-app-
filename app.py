@@ -261,11 +261,14 @@ def index():
         rows = conn.execute(
             "SELECT * FROM orders ORDER BY created_at DESC"
         ).fetchall()
+        shipped_rows = conn.execute("SELECT order_id FROM shipments").fetchall()
+    shipped_ids = {r["order_id"] for r in shipped_rows}
     holidays = get_jp_holidays()
     today = datetime.now().date()
     orders = []
     for row in rows:
         order = dict(row)
+        order['shipped'] = order['id'] in shipped_ids
         due = None
         try:
             due = datetime.strptime(order['due_date'], '%Y-%m-%d').date()
@@ -898,6 +901,26 @@ def print_order_multi(order_id):
 
 
 # ── 出荷管理 ────────────────────────────────────────────────
+
+@app.route("/shipments/complete/<int:order_id>", methods=["POST"])
+@login_required
+def complete_shipment(order_id):
+    with get_db() as conn:
+        order = conn.execute("SELECT * FROM orders WHERE id=?", (order_id,)).fetchone()
+        if not order:
+            return redirect(url_for("index"))
+        existing = conn.execute("SELECT id FROM shipments WHERE order_id=?", (order_id,)).fetchone()
+        if not existing:
+            now = datetime.now()
+            conn.execute(
+                "INSERT INTO shipments (order_id, shipped_at, shipped_by, note, created_at) VALUES (?, ?, ?, ?, ?)",
+                (order_id, now.strftime("%Y-%m-%d %H:%M:%S"), session.get("username", ""), "", now.strftime("%Y-%m-%d %H:%M:%S"))
+            )
+            flash("出荷完了として登録しました。", "success")
+        else:
+            flash("この受注はすでに出荷済みです。", "info")
+    return redirect(url_for("index"))
+
 
 @app.route("/ship/<int:order_id>", methods=["POST"])
 @login_required
