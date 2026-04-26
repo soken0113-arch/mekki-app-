@@ -271,32 +271,30 @@
       el.addEventListener('click', e => { if (e.target === el) closeModal(el.id); });
     });
 
-    function submitCustomer() {
+    async function submitCustomer() {
       const name = document.getElementById('customerName').value.trim();
       const errEl = document.getElementById('customerError');
       errEl.style.display = 'none';
       if (!name) { errEl.textContent = '顧客名を入力してください'; errEl.style.display = 'block'; return; }
       const fd = new FormData();
       fd.append('name', name);
-      fetch('/customers/add', { method: 'POST', body: fd })
-        .then(r => r.json())
-        .then(data => {
-          if (data.success) {
-            const dl = document.getElementById('customer-list');
-            const opt = document.createElement('option');
-            opt.value = data.name;
-            dl.appendChild(opt);
-            document.getElementById('customer-input').value = data.name;
-            document.getElementById('customerName').value = '';
-            closeModal('customerModal');
-          } else {
-            errEl.textContent = data.error;
-            errEl.style.display = 'block';
-          }
-        });
+      const res = await fetch('/customers/add', { method: 'POST', body: fd });
+      const data = await res.json();
+      if (data.success) {
+        const dl = document.getElementById('customer-list');
+        const opt = document.createElement('option');
+        opt.value = data.name;
+        dl.appendChild(opt);
+        document.getElementById('customer-input').value = data.name;
+        document.getElementById('customerName').value = '';
+        closeModal('customerModal');
+      } else {
+        errEl.textContent = data.error || '登録失敗';
+        errEl.style.display = 'block';
+      }
     }
 
-    function submitProduct() {
+    async function submitProduct() {
       const name = document.getElementById('productName').value.trim();
       const partNo = document.getElementById('productPartNo').value.trim();
       const errEl = document.getElementById('productError');
@@ -305,22 +303,20 @@
       const fd = new FormData();
       fd.append('name', name);
       fd.append('part_no', partNo);
-      fetch('/products/add', { method: 'POST', body: fd })
-        .then(r => r.json())
-        .then(data => {
-          if (data.success) {
-            const sel = document.getElementById('product-select');
-            const opt = new Option(data.name, data.name, true, true);
-            sel.appendChild(opt);
-            if (data.part_no) document.getElementById('part_no').value = data.part_no;
-            document.getElementById('productName').value = '';
-            document.getElementById('productPartNo').value = '';
-            closeModal('productModal');
-          } else {
-            errEl.textContent = data.error;
-            errEl.style.display = 'block';
-          }
-        });
+      const res = await fetch('/products/add', { method: 'POST', body: fd });
+      const data = await res.json();
+      if (data.success) {
+        const sel = document.getElementById('product-select');
+        const opt = new Option(data.name, data.name, true, true);
+        sel.appendChild(opt);
+        if (data.part_no) document.getElementById('part_no').value = data.part_no;
+        document.getElementById('productName').value = '';
+        document.getElementById('productPartNo').value = '';
+        closeModal('productModal');
+      } else {
+        errEl.textContent = data.error || '登録失敗';
+        errEl.style.display = 'block';
+      }
     }
   </script>
 </body>
