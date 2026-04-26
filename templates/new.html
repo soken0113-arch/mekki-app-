@@ -154,25 +154,16 @@
 
         <div class="form-group">
           <label>品名 <span class="required">*</span></label>
-          {% if products %}
           <div style="display:flex; gap:8px; align-items:center;">
-            <select name="product" id="product-select" required style="flex:1;">
-              <option value="" disabled selected>選択してください</option>
-              {% for p in products %}
-              <option value="{{ p.name }}">{{ p.name }}</option>
-              {% endfor %}
-            </select>
+            <input type="text" name="product" id="product-select" required placeholder="例：ブラケット A-001"
+                   list="product-list" autocomplete="off" style="flex:1;">
             <button type="button" onclick="openModal('productModal')" class="btn-new">＋ 新規</button>
           </div>
-          {% else %}
-          <div style="display:flex; gap:8px; align-items:center;">
-            <input type="text" name="product" id="product-select" required placeholder="例：ブラケット A-001" style="flex:1;">
-            <button type="button" onclick="openModal('productModal')" class="btn-new">＋ 新規</button>
-          </div>
-          <p style="font-size:0.78rem; color:#94a3b8; margin-top:4px;">
-            ※ <a href="/products" style="color:#2563eb;">品名マスタ</a>を登録するとプルダウンで選択できます
-          </p>
-          {% endif %}
+          <datalist id="product-list">
+            {% for p in products %}
+            <option value="{{ p.name }}">
+            {% endfor %}
+          </datalist>
         </div>
 
         <div class="form-group">
@@ -306,9 +297,11 @@
       const res = await fetch('/products/add', { method: 'POST', body: fd });
       const data = await res.json();
       if (data.success) {
-        const sel = document.getElementById('product-select');
-        const opt = new Option(data.name, data.name, true, true);
-        sel.appendChild(opt);
+        const dl = document.getElementById('product-list');
+        const opt = document.createElement('option');
+        opt.value = data.name;
+        dl.appendChild(opt);
+        document.getElementById('product-select').value = data.name;
         if (data.part_no) document.getElementById('part_no').value = data.part_no;
         document.getElementById('productName').value = '';
         document.getElementById('productPartNo').value = '';
