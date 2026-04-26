@@ -276,6 +276,53 @@ input:focus, select:focus, textarea:focus {
 }
 .btn-ship:hover { background: #d1eadb; }
 
+/* ====== レスポンシブ（スマートフォン） ====== */
+@media (max-width: 640px) {
+  /* ヘッダー */
+  .app-header { padding: 10px 14px; }
+  .app-header .logo { font-size: 13px; letter-spacing: 0.03em; }
+  .app-header .user-info { font-size: 11px; }
+
+  /* ナビ: 横スクロール */
+  .app-nav {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    flex-wrap: nowrap;
+    padding: 0 8px;
+    scrollbar-width: none;
+  }
+  .app-nav::-webkit-scrollbar { display: none; }
+  .app-nav a {
+    padding: 10px 12px;
+    white-space: nowrap;
+    font-size: 12px;
+  }
+
+  /* メインコンテンツ */
+  .app-main { padding: 14px 12px; }
+  .page-title { font-size: 17px; }
+
+  /* カード */
+  .card { padding: 14px 12px; }
+  .card h3 { font-size: 13px; }
+
+  /* フォームグリッド: 2列に縮小 */
+  .form-grid {
+    grid-template-columns: 90px 1fr;
+  }
+
+  /* ボタングループ: 縦積み・逆順（登録を上に） */
+  .btn-group {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+  .btn-group .btn { text-align: center; }
+
+  /* データテーブル */
+  .data-table th,
+  .data-table td { padding: 8px 8px; font-size: 12px; }
+}
+
 /* ====== 印刷時 ====== */
 @media print {
   .app-header, .app-nav, .btn-group, .no-print { display: none !important; }

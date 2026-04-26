@@ -52,6 +52,10 @@
     font-size: 12px;
     width: 36px;
   }
+  .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  @media (max-width: 640px) {
+    .items-table th, .items-table td { white-space: nowrap; padding: 7px 6px; font-size: 12px; }
+  }
 </style>
 {% endblock %}
 
@@ -137,6 +141,7 @@
   <!-- 明細 -->
   <div class="card form-section">
     <h3>明細（最大5品目）</h3>
+    <div class="table-scroll">
     <table class="items-table">
       <thead>
         <tr>
@@ -166,6 +171,7 @@
         {% endfor %}
       </tbody>
     </table>
+    </div>
     <p style="font-size:12px; color:var(--text-mute); margin-top:8px;">※ 品名が空の行は保存されません</p>
   </div>
 

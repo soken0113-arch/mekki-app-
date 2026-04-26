@@ -60,6 +60,14 @@
     font-size: 12px;
     width: 40px;
   }
+  .table-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  @media (max-width: 640px) {
+    .items-table th, .items-table td { padding: 7px 7px; font-size: 12px; white-space: nowrap; }
+    .modal { padding: 18px 16px; }
+  }
   /* モーダル */
   .modal-overlay {
     display: none;
@@ -190,6 +198,7 @@
   <!-- 明細 -->
   <div class="card form-section">
     <h3>明細</h3>
+    <div class="table-scroll">
     <table class="items-table">
       <thead>
         <tr>
@@ -232,6 +241,7 @@
         </tr>
       </tbody>
     </table>
+    </div>
   </div>
 
   <div class="btn-group">

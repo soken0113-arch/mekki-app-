@@ -39,6 +39,14 @@
     margin-bottom: 16px;
     flex-wrap: wrap;
   }
+  @media (max-width: 640px) {
+    .detail-grid { grid-template-columns: 90px 1fr; }
+    .action-bar { gap: 6px; }
+    .action-bar .btn, .action-bar button { font-size: 12px; padding: 7px 10px; }
+    .action-bar form { display: contents; }
+    .items-table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .items-table th, .items-table td { padding: 8px 8px; font-size: 12px; white-space: nowrap; }
+  }
 </style>
 {% endblock %}
 
