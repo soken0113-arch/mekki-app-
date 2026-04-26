@@ -267,8 +267,9 @@ def index():
     today = datetime.now().date()
     orders = []
     for row in rows:
+        if row["id"] in shipped_ids:
+            continue
         order = dict(row)
-        order['shipped'] = order['id'] in shipped_ids
         due = None
         try:
             due = datetime.strptime(order['due_date'], '%Y-%m-%d').date()
