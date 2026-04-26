@@ -201,12 +201,6 @@
         <h2>登録済み品名</h2>
         <div style="display:flex; align-items:center; gap:12px;">
           <span class="count">{{ products|length }} 件</span>
-          {% if products %}
-          <form method="post" action="/products/delete-all"
-                onsubmit="return confirm('品名マスタを全件削除します。よろしいですか？')">
-            <button type="submit" class="btn-del" style="padding:5px 14px;">全件削除</button>
-          </form>
-          {% endif %}
         </div>
       </div>
       <table>
