@@ -149,7 +149,11 @@
 
         <div class="form-group">
           <label>品番</label>
-          <input type="text" name="part_no" id="part_no" placeholder="例：A-001-B">
+          <input type="text" name="part_no" id="part_no" placeholder="例：A-001-B"
+                 list="part-no-list" autocomplete="off">
+          <datalist id="part-no-list">
+            {% for p in products %}{% if p.part_no %}<option value="{{ p.part_no }}">{% endif %}{% endfor %}
+          </datalist>
         </div>
 
         <div class="form-group">
@@ -257,6 +261,14 @@
   </div>
 
   <script>
+    const partNoToProduct = {
+      {% for p in products %}{% if p.part_no %}"{{ p.part_no }}": "{{ p.name }}",{% endif %}{% endfor %}
+    };
+    document.getElementById('part_no').addEventListener('change', function() {
+      const name = partNoToProduct[this.value];
+      if (name) document.getElementById('product-select').value = name;
+    });
+
     function openModal(id) {
       document.getElementById(id).classList.add('open');
       const input = document.getElementById(id).querySelector('input[type="text"]');

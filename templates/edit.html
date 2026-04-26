@@ -144,7 +144,12 @@
 
       <div class="form-group">
         <label>品番</label>
-        <input type="text" name="part_no" value="{{ order.part_no if order.part_no else '' }}">
+        <input type="text" name="part_no" id="part_no"
+               value="{{ order.part_no if order.part_no else '' }}"
+               list="part-no-list" autocomplete="off">
+        <datalist id="part-no-list">
+          {% for p in products %}{% if p.part_no %}<option value="{{ p.part_no }}">{% endif %}{% endfor %}
+        </datalist>
       </div>
 
       <div class="form-group">
@@ -230,4 +235,16 @@
     </form>
   </div>
 </div>
+<script>
+  const partNoToProduct = {
+    {% for p in products %}{% if p.part_no %}"{{ p.part_no }}": "{{ p.name }}",{% endif %}{% endfor %}
+  };
+  document.getElementById('part_no').addEventListener('change', function() {
+    const name = partNoToProduct[this.value];
+    if (name) {
+      const sel = document.querySelector('select[name="product"]');
+      if (sel) sel.value = name;
+    }
+  });
+</script>
 {% endblock %}

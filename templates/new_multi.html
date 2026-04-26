@@ -156,7 +156,7 @@
         {% for i in range(1, 6) %}
         <tr>
           <td class="row-no">{{ i }}</td>
-          <td><input type="text" name="part_no[]" class="part-no-input" placeholder="品番" autocomplete="off"></td>
+          <td><input type="text" name="part_no[]" class="part-no-input" placeholder="品番" autocomplete="off" list="part-no-list"></td>
           <td><input type="text" name="product[]" class="product-input" placeholder="品名" autocomplete="off" list="product-list-{{ i }}">
               <datalist id="product-list-{{ i }}">
                 {% for p in products %}<option value="{{ p.name }}" data-part-no="{{ p.part_no }}">{% endfor %}
@@ -177,11 +177,18 @@
     <button type="submit" class="btn btn-primary">登録する</button>
   </div>
 
+<datalist id="part-no-list">
+  {% for p in products %}{% if p.part_no %}<option value="{{ p.part_no }}">{% endif %}{% endfor %}
+</datalist>
+
 <script>
 const productMap = {
   {% for p in products %}
   "{{ p.name }}": "{{ p.part_no }}",
   {% endfor %}
+};
+const partNoToProduct = {
+  {% for p in products %}{% if p.part_no %}"{{ p.part_no }}": "{{ p.name }}",{% endif %}{% endfor %}
 };
 
 document.querySelectorAll('.product-input').forEach(function(input) {
@@ -192,6 +199,14 @@ document.querySelectorAll('.product-input').forEach(function(input) {
     if (productMap[selectedName] && productMap[selectedName] !== '') {
       partNoInput.value = productMap[selectedName];
     }
+  });
+});
+document.querySelectorAll('.part-no-input').forEach(function(input) {
+  input.addEventListener('change', function() {
+    const row = this.closest('tr');
+    const productInput = row.querySelector('.product-input');
+    const name = partNoToProduct[this.value];
+    if (name) productInput.value = name;
   });
 });
 </script>
