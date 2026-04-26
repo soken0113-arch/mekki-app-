@@ -60,12 +60,45 @@
     font-size: 12px;
     width: 40px;
   }
-  .table-scroll {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
+  .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
   @media (max-width: 640px) {
-    .items-table th, .items-table td { padding: 7px 7px; font-size: 12px; white-space: nowrap; }
+    .table-scroll { overflow: visible; }
+    /* 明細カード化（入力） */
+    .items-table { display: block; }
+    .items-table thead { display: none; }
+    .items-table tbody { display: block; }
+    .items-table tr {
+      display: block;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 12px;
+      background: #fafbfc;
+    }
+    .items-table td {
+      display: block;
+      padding: 6px 0;
+      border: none;
+      width: 100%;
+    }
+    .items-table td.row-no {
+      font-weight: 700;
+      color: var(--navy-700);
+      font-size: 12px;
+      padding: 0 0 8px 0;
+      border-bottom: 2px solid var(--border-light) !important;
+      margin-bottom: 4px;
+    }
+    .items-table td.row-no::before { content: "明細 "; }
+    .items-table td[data-label]::before {
+      content: attr(data-label);
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-sub);
+      margin-bottom: 3px;
+    }
+    .items-table td input[type="text"],
+    .items-table td input[type="number"] { width: 100%; }
     .modal { padding: 18px 16px; }
   }
   /* モーダル */
@@ -212,14 +245,14 @@
       <tbody>
         <tr>
           <td class="row-no">1</td>
-          <td>
+          <td data-label="品番">
             <input type="text" name="part_no" id="part_no" placeholder="品番"
                    autocomplete="off" list="part-no-list">
             <datalist id="part-no-list">
               {% for p in products %}{% if p.part_no %}<option value="{{ p.part_no }}">{% endif %}{% endfor %}
             </datalist>
           </td>
-          <td>
+          <td data-label="品名">
             <div style="display:flex; gap:6px; align-items:center;">
               <input type="text" name="product" id="product-select" required
                      placeholder="品名を入力または選択"
@@ -231,11 +264,11 @@
               {% for p in products %}<option value="{{ p.name }}">{% endfor %}
             </datalist>
           </td>
-          <td><input type="number" name="quantity" required min="1" placeholder="0"></td>
-          <td>
+          <td data-label="数量"><input type="number" name="quantity" required min="1" placeholder="0"></td>
+          <td data-label="単価">
             <div style="display:flex; align-items:center; gap:4px;">
               <span style="font-size:13px; color:var(--text-sub);">@</span>
-              <input type="text" name="unit_price" placeholder="単価">
+              <input type="text" name="unit_price" placeholder="単価" style="flex:1;">
             </div>
           </td>
         </tr>

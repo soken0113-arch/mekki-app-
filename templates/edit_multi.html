@@ -54,7 +54,44 @@
   }
   .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
   @media (max-width: 640px) {
-    .items-table th, .items-table td { white-space: nowrap; padding: 7px 6px; font-size: 12px; }
+    .table-scroll { overflow: visible; }
+    .items-table { display: block; }
+    .items-table thead { display: none; }
+    .items-table tbody { display: block; }
+    .items-table tr {
+      display: block;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 12px;
+      margin-bottom: 10px;
+      background: #fafbfc;
+    }
+    .items-table tr:last-child { margin-bottom: 0; }
+    .items-table td {
+      display: block;
+      padding: 6px 0;
+      border: none;
+      width: 100%;
+    }
+    .items-table td.row-no {
+      font-weight: 700;
+      color: var(--navy-700);
+      font-size: 12px;
+      padding: 0 0 8px 0;
+      border-bottom: 2px solid var(--border-light) !important;
+      margin-bottom: 4px;
+      text-align: left;
+    }
+    .items-table td.row-no::before { content: "No. "; }
+    .items-table td[data-label]::before {
+      content: attr(data-label);
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-sub);
+      margin-bottom: 3px;
+    }
+    .items-table td input { width: 100%; }
   }
 </style>
 {% endblock %}
@@ -158,15 +195,15 @@
         {% set item = items[i] if i < items|length else none %}
         <tr>
           <td class="row-no">{{ i + 1 }}</td>
-          <td><input type="text" name="part_no[]" class="part-no-input" value="{{ item.part_no if item else '' }}" autocomplete="off" list="part-no-list"></td>
-          <td><input type="text" name="product[]" class="product-input" value="{{ item.product if item else '' }}" autocomplete="off" list="product-list-{{ i }}">
+          <td data-label="品番"><input type="text" name="part_no[]" class="part-no-input" value="{{ item.part_no if item else '' }}" autocomplete="off" list="part-no-list"></td>
+          <td data-label="品名"><input type="text" name="product[]" class="product-input" value="{{ item.product if item else '' }}" autocomplete="off" list="product-list-{{ i }}">
               <datalist id="product-list-{{ i }}">
                 {% for p in products %}<option value="{{ p.name }}" data-part-no="{{ p.part_no }}">{% endfor %}
               </datalist>
           </td>
-          <td><input type="number" name="quantity[]" value="{{ item.quantity if item else '' }}" min="0"></td>
-          <td>@<input type="text" name="unit_price[]" value="{{ item.unit_price if item else '' }}"></td>
-          <td><input type="text" name="note[]" value="{{ item.note if item else '' }}"></td>
+          <td data-label="数量"><input type="number" name="quantity[]" value="{{ item.quantity if item else '' }}" min="0"></td>
+          <td data-label="単価">@<input type="text" name="unit_price[]" value="{{ item.unit_price if item else '' }}"></td>
+          <td data-label="備考"><input type="text" name="note[]" value="{{ item.note if item else '' }}"></td>
         </tr>
         {% endfor %}
       </tbody>
