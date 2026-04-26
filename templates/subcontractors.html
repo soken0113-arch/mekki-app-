@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+
+{% block title %}外注先マスタ{% endblock %}
+
+{% block extra_css %}
+<style>
+  .toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .count-badge {
+    font-size: 13px;
+    color: var(--text-sub);
+    background: #fff;
+    border: 1px solid var(--border);
+    padding: 6px 14px;
+    border-radius: 3px;
+  }
+  .count-badge strong {
+    color: var(--navy-700);
+    font-size: 15px;
+    font-weight: 700;
+    margin: 0 4px;
+  }
+  .table-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow-x: auto;
+  }
+  .row-actions { display: flex; gap: 6px; white-space: nowrap; }
+  .row-actions form { display: inline; }
+  .add-form { display: flex; gap: 8px; align-items: center; }
+  .add-form input { flex: 1; }
+  /* モーダル */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.45); z-index: 100;
+    align-items: center; justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: #fff; border-radius: 6px; padding: 24px;
+    width: 90%; max-width: 380px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+  }
+  .modal h3 { font-size: 14px; color: var(--navy-700); margin-bottom: 16px; font-weight: 600; }
+  .modal label { font-size: 13px; font-weight: 600; color: var(--text-sub); display: block; margin-bottom: 4px; }
+  .modal input[type="text"] { margin-bottom: 12px; }
+  .modal-actions { display: flex; gap: 8px; }
+  .flash-inline { font-size: 13px; color: var(--danger); margin-top: 6px; }
+  @media (max-width: 640px) {
+    .add-form { flex-direction: column; align-items: stretch; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<h1 class="page-title">外注先マスタ</h1>
+
+<!-- 外注先を登録 -->
+<div class="card">
+  <h3>外注先を登録</h3>
+  <div class="add-form">
+    <input type="text" id="add-name" placeholder="外注先名を入力">
+    <button type="button" class="btn btn-primary" onclick="submitAdd()">登録する</button>
+  </div>
+  <div id="add-error" class="flash-inline" style="display:none;"></div>
+</div>
+
+<!-- 外注先一覧 -->
+<div class="toolbar">
+  <div class="count-badge">登録済み <strong>{{ subcontractors|length }}</strong> 件</div>
+</div>
+
+<div class="table-wrap">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th style="width:48px;">#</th>
+        <th>外注先名</th>
+        <th>登録日時</th>
+        <th style="width:1%;"></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for s in subcontractors %}
+      <tr>
+        <td style="color:var(--text-mute);">{{ loop.index }}</td>
+        <td>{{ s.name }}</td>
+        <td style="color:var(--text-mute); font-size:12px;">{{ s.created_at }}</td>
+        <td>
+          <div class="row-actions">
+            <button type="button" class="btn btn-secondary btn-sm"
+                    onclick="openEdit({{ s.id }}, '{{ s.name|e }}')">編集</button>
+            <form method="post" action="{{ url_for('delete_subcontractor', sub_id=s.id) }}"
+                  onsubmit="return confirm('「{{ s.name }}」を削除しますか？\nこの操作は元に戻せません。')">
+              <button type="submit" class="btn btn-danger btn-sm">削除</button>
+            </form>
+          </div>
+        </td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="4" style="text-align:center; padding:40px; color:var(--text-mute); font-size:13px;">
+          外注先が登録されていません
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- 編集モーダル -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal">
+    <h3>外注先名を編集</h3>
+    <form id="editForm" method="post">
+      <label>外注先名</label>
+      <input type="text" name="name" id="editName" required>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" onclick="closeEdit()">キャンセル</button>
+        <button type="submit" class="btn btn-primary">保存</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  async function submitAdd() {
+    const name = document.getElementById('add-name').value.trim();
+    const errEl = document.getElementById('add-error');
+    errEl.style.display = 'none';
+    if (!name) { errEl.textContent = '外注先名を入力してください'; errEl.style.display = 'block'; return; }
+    const fd = new FormData();
+    fd.append('name', name);
+    const res = await fetch('{{ url_for("add_subcontractor") }}', { method: 'POST', body: fd });
+    const data = await res.json();
+    if (data.success) {
+      location.reload();
+    } else {
+      errEl.textContent = data.error || '登録に失敗しました';
+      errEl.style.display = 'block';
+    }
+  }
+  document.getElementById('add-name').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') { e.preventDefault(); submitAdd(); }
+  });
+
+  function openEdit(id, name) {
+    document.getElementById('editForm').action = '/subcontractors/edit/' + id;
+    document.getElementById('editName').value = name;
+    document.getElementById('editModal').classList.add('open');
+    setTimeout(() => document.getElementById('editName').focus(), 50);
+  }
+  function closeEdit() {
+    document.getElementById('editModal').classList.remove('open');
+  }
+  document.getElementById('editModal').addEventListener('click', function(e) {
+    if (e.target === this) closeEdit();
+  });
+</script>
+{% endblock %}

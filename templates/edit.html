@@ -227,6 +227,59 @@
         <textarea name="note">{{ order.note if order.note else '' }}</textarea>
       </div>
 
+      <hr class="form-divider" style="margin: 20px 0 16px;">
+      <h4 style="font-size:13px; color:var(--navy-700); font-weight:600; margin-bottom:12px; grid-column:1/-1;">外注情報（任意）</h4>
+
+      <div class="form-group">
+        <label>外注先</label>
+        <select name="subcontractor_id">
+          <option value="">-- 選択なし（外注なし）--</option>
+          {% for s in subcontractors %}
+          <option value="{{ s.id }}" {% if order.subcontractor_id and order.subcontractor_id == s.id %}selected{% endif %}>{{ s.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>品番</label>
+        <input type="text" name="sub_part_no" value="{{ order.sub_part_no or '' }}" placeholder="品番">
+      </div>
+
+      <div class="form-group">
+        <label>品名</label>
+        <input type="text" name="sub_part_name" value="{{ order.sub_part_name or '' }}" placeholder="品名">
+      </div>
+
+      <div class="form-group">
+        <label>数量</label>
+        <input type="number" name="sub_qty" value="{{ order.sub_qty or '' }}" placeholder="0" min="0">
+      </div>
+
+      <div class="form-group">
+        <label>金額</label>
+        <input type="number" name="sub_amount" value="{{ order.sub_amount or '' }}" placeholder="0" min="0">
+      </div>
+
+      <div class="form-group">
+        <label>合計金額</label>
+        <input type="number" name="sub_total" value="{{ order.sub_total or '' }}" placeholder="0" min="0">
+      </div>
+
+      <div class="form-group">
+        <label>納期</label>
+        <input type="date" name="sub_due_date" value="{{ order.sub_due_date or '' }}">
+      </div>
+
+      <div class="form-group">
+        <label style="padding-top:9px;">依頼内容</label>
+        <textarea name="sub_request" placeholder="外注依頼内容">{{ order.sub_request or '' }}</textarea>
+      </div>
+
+      <div class="form-group">
+        <label style="padding-top:9px;">備考</label>
+        <textarea name="sub_note" placeholder="備考">{{ order.sub_note or '' }}</textarea>
+      </div>
+
       <div class="action-bar">
         <a href="{{ url_for('index') }}" class="btn btn-secondary">一覧に戻る</a>
         <button type="submit" class="btn btn-primary">保存する</button>
