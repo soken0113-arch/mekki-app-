@@ -43,6 +43,7 @@
         <th>出荷日時</th>
         <th>担当者</th>
         <th>状態</th>
+        <th style="width:1%;"></th>
       </tr>
     </thead>
     <tbody>
@@ -58,6 +59,12 @@
           {% else %}
             <span class="badge-shipped">出荷済み</span>
           {% endif %}
+        </td>
+        <td>
+          <form method="POST" action="{{ url_for('delete_shipment', shipment_id=s.id) }}"
+                onsubmit="return confirm('この出荷レコードを削除しますか？\n\n得意先：{{ s.customer }}\n\n削除すると受注一覧に再表示されます。')">
+            <button type="submit" class="btn btn-danger btn-sm">削除</button>
+          </form>
         </td>
       </tr>
       {% endfor %}

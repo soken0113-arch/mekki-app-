@@ -970,6 +970,15 @@ def shipments_list():
     return render_template("shipments.html", shipments=shipments)
 
 
+@app.route("/shipments/delete/<int:shipment_id>", methods=["POST"])
+@login_required
+def delete_shipment(shipment_id):
+    with get_db() as conn:
+        conn.execute("DELETE FROM shipments WHERE id=?", (shipment_id,))
+    flash("出荷レコードを削除しました。", "success")
+    return redirect(url_for("shipments_list"))
+
+
 @app.route("/shipments/export/excel")
 @login_required
 def export_shipments_excel():
