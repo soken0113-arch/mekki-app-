@@ -35,12 +35,26 @@
     .flash.success { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
     .flash.error   { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
 
-    /* アップロードカード */
+    /* カード共通 */
     .card {
       background: #fff; border-radius: 12px; padding: 28px;
       box-shadow: 0 2px 12px rgba(0,0,0,.08); margin-bottom: 28px;
     }
     .card h2 { font-size: 1rem; color: #1a3a5c; margin-bottom: 16px; }
+
+    /* 手動登録フォーム */
+    .add-form { display: flex; gap: 10px; }
+    .add-form input[type="text"] {
+      flex: 1; padding: 10px 12px; border: 1px solid #ddd;
+      border-radius: 8px; font-size: 0.95rem; color: #333; background: #fafafa;
+    }
+    .add-form input[type="text"]:focus { outline: none; border-color: #2563eb; background: #fff; }
+    .btn-add {
+      padding: 10px 22px; background: #2563eb; color: #fff;
+      border: none; border-radius: 7px; font-size: 0.95rem;
+      cursor: pointer; font-weight: 600; white-space: nowrap;
+    }
+    .btn-add:hover { background: #1d4ed8; }
 
     .upload-area {
       border: 2px dashed #cbd5e1; border-radius: 8px;
@@ -152,6 +166,15 @@
         </div>
         {% endfor %}
       {% endwith %}
+
+      <!-- 手動登録フォーム -->
+      <div class="card">
+        <h2>顧客を登録する</h2>
+        <form method="post" action="/customers/add" class="add-form">
+          <input type="text" name="name" placeholder="顧客名を入力" required>
+          <button type="submit" class="btn-add">登録する</button>
+        </form>
+      </div>
 
       <!-- アップロードフォーム -->
       <div class="card">

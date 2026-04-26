@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, send_file, flash, session
+from flask import Flask, render_template, request, redirect, url_for, send_file, flash, session, jsonify
 from functools import wraps
 import os
 from datetime import datetime, timedelta
@@ -388,6 +388,22 @@ def customers():
         ).fetchall()
     return render_template("customers.html", customers=customers_list)
 
+@app.route("/customers/add", methods=["POST"])
+@login_required
+def add_customer():
+    name = request.form.get("name", "").strip()
+    if not name:
+        return jsonify({"success": False, "error": "顧客名が空です"}), 400
+    try:
+        with get_db() as conn:
+            row = conn.execute(
+                "INSERT INTO customers (name, created_at) VALUES (?, ?) RETURNING id",
+                (name, datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+            ).fetchone()
+        return jsonify({"success": True, "id": row["id"], "name": name})
+    except Exception:
+        return jsonify({"success": False, "error": "同じ顧客名が既に登録されています"}), 409
+
 @app.route("/customers/edit/<int:customer_id>", methods=["POST"])
 @login_required
 def edit_customer(customer_id):
@@ -466,20 +482,20 @@ def products():
 @login_required
 def add_product():
     name = request.form.get("name", "").strip()
-    if name:
-        try:
-            part_no = request.form.get("part_no", "").strip()
-            process_note = request.form.get("process_note", "").strip()
-            note = request.form.get("note", "").strip()
-            with get_db() as conn:
-                conn.execute(
-                    "INSERT INTO products (name, part_no, process_note, note, created_at) VALUES (?, ?, ?, ?, ?)",
-                    (name, part_no, process_note, note, datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-                )
-            flash(f"「{name}」を登録しました。", "success")
-        except Exception:
-            flash("同じ品名が既に登録されています。", "error")
-    return redirect(url_for("products"))
+    if not name:
+        return jsonify({"success": False, "error": "品名が空です"}), 400
+    part_no = request.form.get("part_no", "").strip()
+    process_note = request.form.get("process_note", "").strip()
+    note = request.form.get("note", "").strip()
+    try:
+        with get_db() as conn:
+            row = conn.execute(
+                "INSERT INTO products (name, part_no, process_note, note, created_at) VALUES (?, ?, ?, ?, ?) RETURNING id",
+                (name, part_no, process_note, note, datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+            ).fetchone()
+        return jsonify({"success": True, "id": row["id"], "name": name, "part_no": part_no})
+    except Exception:
+        return jsonify({"success": False, "error": "同じ品名が既に登録されています"}), 409
 
 @app.route("/products/edit/<int:product_id>", methods=["POST"])
 @login_required
@@ -726,6 +742,77 @@ def new_order_multi():
     return render_template("new_multi.html",
                            mekki_types=MEKKI_TYPES,
                            mekki_lines=MEKKI_LINES,
+                           customers=customers,
+                           products=products)
+
+
+@app.route("/new_gaichuu", methods=["GET", "POST"])
+@login_required
+def new_order_gaichuu():
+    if request.method == "POST":
+        now = datetime.now()
+        order_no = f"ORD-{now.strftime('%Y%m%d%H%M%S')}-G"
+        with get_db() as conn:
+            conn.execute("""
+                INSERT INTO orders (
+                    order_no, customer, product, part_no, material, quantity,
+                    mekki_type, mekki_thickness, thickness_data, due_date,
+                    unit_price, mekki_line, process_note, shipping_method, note, assigned_to, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                order_no,
+                request.form["customer"],
+                "複数品目",
+                "",
+                request.form.get("material", ""),
+                0,
+                request.form.get("mekki_type", ""),
+                build_thickness(request.form.get("thickness_from", ""), request.form.get("thickness_to", "")),
+                request.form.get("thickness_data", "不要"),
+                request.form["due_date"],
+                "",
+                "外注",
+                request.form.get("process_note", ""),
+                request.form.get("shipping_method", ""),
+                request.form.get("note", ""),
+                request.form.get("assigned_to", ""),
+                now.strftime("%Y-%m-%d %H:%M:%S"),
+            ))
+            order = conn.execute(
+                "SELECT * FROM orders WHERE order_no=?", (order_no,)
+            ).fetchone()
+            order_id = order["id"]
+
+            products = request.form.getlist("product[]")
+            part_nos = request.form.getlist("part_no[]")
+            materials = request.form.getlist("material[]")
+            quantities = request.form.getlist("quantity[]")
+            unit_prices = request.form.getlist("unit_price[]")
+            notes = request.form.getlist("note[]")
+
+            for i, product in enumerate(products):
+                if not product.strip():
+                    continue
+                conn.execute("""
+                    INSERT INTO order_items (
+                        order_id, part_no, product, material, quantity, unit_price, note
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                """, (
+                    order_id,
+                    part_nos[i] if i < len(part_nos) else "",
+                    product,
+                    materials[i] if i < len(materials) else "",
+                    int(quantities[i]) if i < len(quantities) and quantities[i] else 0,
+                    unit_prices[i] if i < len(unit_prices) else "",
+                    notes[i] if i < len(notes) else "",
+                ))
+        return redirect(url_for("index"))
+
+    with get_db() as conn:
+        customers = conn.execute("SELECT name FROM customers ORDER BY name").fetchall()
+        products = conn.execute("SELECT name, part_no FROM products ORDER BY name").fetchall()
+    return render_template("new_gaichuu.html",
+                           mekki_types=MEKKI_TYPES,
                            customers=customers,
                            products=products)
 

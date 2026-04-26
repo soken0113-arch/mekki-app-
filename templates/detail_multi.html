@@ -85,7 +85,6 @@
         <th style="width:40px;">No</th>
         <th>品番</th>
         <th>品名</th>
-        <th>材質</th>
         <th class="num">数量</th>
         <th class="num">単価</th>
         <th>備考</th>
@@ -97,7 +96,6 @@
         <td style="text-align:center;">{{ loop.index }}</td>
         <td>{{ item.part_no or '—' }}</td>
         <td>{{ item.product }}</td>
-        <td>{{ item.material or '—' }}</td>
         <td class="num">{{ item.quantity }} 個</td>
         <td class="num">{{ item.unit_price or '—' }}</td>
         <td>{{ item.note or '—' }}</td>

@@ -46,6 +46,46 @@
       cursor: pointer; text-decoration: none; text-align: center;
     }
     .btn-cancel:hover { background: #e2e8f0; }
+    .btn-new {
+      padding: 10px 14px; background: #f0fdf4; color: #16a34a;
+      border: 1px solid #bbf7d0; border-radius: 8px;
+      font-size: 0.88rem; cursor: pointer; white-space: nowrap; font-weight: 600;
+    }
+    .btn-new:hover { background: #dcfce7; }
+
+    /* モーダル */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.45); z-index: 100;
+      align-items: center; justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: #fff; border-radius: 12px; padding: 28px;
+      width: 90%; max-width: 400px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+    }
+    .modal h3 { font-size: 1rem; color: #1a3a5c; margin-bottom: 16px; }
+    .modal label { font-size: 0.85rem; font-weight: 600; color: #444; display: block; margin-bottom: 4px; }
+    .modal input[type="text"] {
+      width: 100%; padding: 10px 12px; border: 1px solid #ddd;
+      border-radius: 8px; font-size: 0.95rem; color: #333;
+      background: #fafafa; margin-bottom: 12px;
+    }
+    .modal input[type="text"]:focus { outline: none; border-color: #2563eb; background: #fff; }
+    .modal-actions { display: flex; gap: 10px; margin-top: 4px; }
+    .btn-save {
+      flex: 1; padding: 10px; background: #2563eb; color: #fff;
+      border: none; border-radius: 7px; font-size: 0.95rem;
+      cursor: pointer; font-weight: 600;
+    }
+    .btn-save:hover { background: #1d4ed8; }
+    .btn-cancel-modal {
+      flex: 1; padding: 10px; background: #f1f5f9; color: #555;
+      border: none; border-radius: 7px; font-size: 0.95rem; cursor: pointer;
+    }
+    .btn-cancel-modal:hover { background: #e2e8f0; }
+    .modal-error { font-size: 0.85rem; color: #dc2626; margin-bottom: 8px; display: none; }
   </style>
 </head>
 <body>
@@ -56,8 +96,11 @@
 
         <div class="form-group">
           <label>顧客名 <span class="required">*</span></label>
-          <input type="text" name="customer" required autofocus placeholder="例：株式会社〇〇"
-                 list="customer-list" autocomplete="off">
+          <div style="display:flex; gap:8px; align-items:center;">
+            <input type="text" name="customer" id="customer-input" required autofocus placeholder="例：株式会社〇〇"
+                   list="customer-list" autocomplete="off" style="flex:1;">
+            <button type="button" onclick="openModal('customerModal')" class="btn-new">＋ 新規</button>
+          </div>
           <datalist id="customer-list">
             {% for c in customers %}
             <option value="{{ c.name }}">
@@ -106,20 +149,26 @@
 
         <div class="form-group">
           <label>品番</label>
-          <input type="text" name="part_no" placeholder="例：A-001-B">
+          <input type="text" name="part_no" id="part_no" placeholder="例：A-001-B">
         </div>
 
         <div class="form-group">
           <label>品名 <span class="required">*</span></label>
           {% if products %}
-          <select name="product" required>
-            <option value="" disabled selected>選択してください</option>
-            {% for p in products %}
-            <option value="{{ p.name }}">{{ p.name }}</option>
-            {% endfor %}
-          </select>
+          <div style="display:flex; gap:8px; align-items:center;">
+            <select name="product" id="product-select" required style="flex:1;">
+              <option value="" disabled selected>選択してください</option>
+              {% for p in products %}
+              <option value="{{ p.name }}">{{ p.name }}</option>
+              {% endfor %}
+            </select>
+            <button type="button" onclick="openModal('productModal')" class="btn-new">＋ 新規</button>
+          </div>
           {% else %}
-          <input type="text" name="product" required placeholder="例：ブラケット A-001">
+          <div style="display:flex; gap:8px; align-items:center;">
+            <input type="text" name="product" id="product-select" required placeholder="例：ブラケット A-001" style="flex:1;">
+            <button type="button" onclick="openModal('productModal')" class="btn-new">＋ 新規</button>
+          </div>
           <p style="font-size:0.78rem; color:#94a3b8; margin-top:4px;">
             ※ <a href="/products" style="color:#2563eb;">品名マスタ</a>を登録するとプルダウンで選択できます
           </p>
@@ -179,5 +228,100 @@
       </form>
     </div>
   </div>
+  <!-- 顧客登録モーダル -->
+  <div class="modal-overlay" id="customerModal">
+    <div class="modal">
+      <h3>顧客を新規登録</h3>
+      <p class="modal-error" id="customerError"></p>
+      <label>顧客名 <span style="color:#e53e3e;">*</span></label>
+      <input type="text" id="customerName" placeholder="例：株式会社〇〇">
+      <div class="modal-actions">
+        <button type="button" class="btn-cancel-modal" onclick="closeModal('customerModal')">キャンセル</button>
+        <button type="button" class="btn-save" onclick="submitCustomer()">登録する</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 品名登録モーダル -->
+  <div class="modal-overlay" id="productModal">
+    <div class="modal">
+      <h3>品名を新規登録</h3>
+      <p class="modal-error" id="productError"></p>
+      <label>品名 <span style="color:#e53e3e;">*</span></label>
+      <input type="text" id="productName" placeholder="例：ブラケット A-001">
+      <label>品番</label>
+      <input type="text" id="productPartNo" placeholder="例：A-001-B">
+      <div class="modal-actions">
+        <button type="button" class="btn-cancel-modal" onclick="closeModal('productModal')">キャンセル</button>
+        <button type="button" class="btn-save" onclick="submitProduct()">登録する</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function openModal(id) {
+      document.getElementById(id).classList.add('open');
+      const input = document.getElementById(id).querySelector('input[type="text"]');
+      if (input) setTimeout(() => input.focus(), 50);
+    }
+    function closeModal(id) {
+      document.getElementById(id).classList.remove('open');
+    }
+    document.querySelectorAll('.modal-overlay').forEach(el => {
+      el.addEventListener('click', e => { if (e.target === el) closeModal(el.id); });
+    });
+
+    function submitCustomer() {
+      const name = document.getElementById('customerName').value.trim();
+      const errEl = document.getElementById('customerError');
+      errEl.style.display = 'none';
+      if (!name) { errEl.textContent = '顧客名を入力してください'; errEl.style.display = 'block'; return; }
+      const fd = new FormData();
+      fd.append('name', name);
+      fetch('/customers/add', { method: 'POST', body: fd })
+        .then(r => r.json())
+        .then(data => {
+          if (data.success) {
+            const dl = document.getElementById('customer-list');
+            const opt = document.createElement('option');
+            opt.value = data.name;
+            dl.appendChild(opt);
+            document.getElementById('customer-input').value = data.name;
+            document.getElementById('customerName').value = '';
+            closeModal('customerModal');
+          } else {
+            errEl.textContent = data.error;
+            errEl.style.display = 'block';
+          }
+        });
+    }
+
+    function submitProduct() {
+      const name = document.getElementById('productName').value.trim();
+      const partNo = document.getElementById('productPartNo').value.trim();
+      const errEl = document.getElementById('productError');
+      errEl.style.display = 'none';
+      if (!name) { errEl.textContent = '品名を入力してください'; errEl.style.display = 'block'; return; }
+      const fd = new FormData();
+      fd.append('name', name);
+      fd.append('part_no', partNo);
+      fetch('/products/add', { method: 'POST', body: fd })
+        .then(r => r.json())
+        .then(data => {
+          if (data.success) {
+            const sel = document.getElementById('product-select');
+            const opt = new Option(data.name, data.name, true, true);
+            sel.appendChild(opt);
+            if (data.part_no) document.getElementById('part_no').value = data.part_no;
+            document.getElementById('productName').value = '';
+            document.getElementById('productPartNo').value = '';
+            closeModal('productModal');
+          } else {
+            errEl.textContent = data.error;
+            errEl.style.display = 'block';
+          }
+        });
+    }
+  </script>
 </body>
 </html>

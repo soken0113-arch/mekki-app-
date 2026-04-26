@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}新規登録（複数品目）{% endblock %}
+{% block title %}外注登録{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -13,6 +13,17 @@
   }
   .form-grid label { color: var(--text-sub); font-weight: 500; font-size: 13px; }
   .form-grid-full { grid-column: 1 / -1; }
+  .gaichuu-badge {
+    display: inline-block;
+    background: var(--navy-700);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 12px;
+    margin-left: 10px;
+    vertical-align: middle;
+  }
   .items-table {
     width: 100%;
     border-collapse: collapse;
@@ -62,11 +73,10 @@
 {% endblock %}
 
 {% block content %}
-<h1 class="page-title">新規登録（複数品目）</h1>
+<h1 class="page-title">外注登録 <span class="gaichuu-badge">外注</span></h1>
 
-<form method="POST" action="{{ url_for('new_order_multi') }}">
+<form method="POST" action="{{ url_for('new_order_gaichuu') }}">
 
-  <!-- ヘッダー情報 -->
   <div class="card form-section">
     <h3>受注情報</h3>
     <div class="form-grid">
@@ -76,8 +86,8 @@
         {% for c in customers %}<option value="{{ c.name }}">{% endfor %}
       </datalist>
 
-      <label>めっき種類 <span style="color:red;">*</span></label>
-      <select name="mekki_type" required>
+      <label>めっき種類</label>
+      <select name="mekki_type">
         <option value="">-- 選択 --</option>
         {% for t in mekki_types %}
         <option value="{{ t }}">{{ t }}</option>
@@ -104,14 +114,6 @@
         <option value="必要">必要</option>
       </select>
 
-      <label>めっきライン</label>
-      <select name="mekki_line">
-        <option value="">-- 選択 --</option>
-        {% for l in mekki_lines %}
-        <option value="{{ l }}">{{ l }}</option>
-        {% endfor %}
-      </select>
-
       <label>出荷方法</label>
       <select name="shipping_method">
         <option value="">-- 選択 --</option>
@@ -121,7 +123,7 @@
       </select>
 
       <label>工程</label>
-      <input type="text" name="process_note" placeholder="例：脱脂→酸洗→めっき" class="form-grid-full">
+      <input type="text" name="process_note" placeholder="例：外注先名・加工内容" class="form-grid-full">
 
       <label>担当者</label>
       <input type="text" name="assigned_to" placeholder="担当者名">
@@ -131,7 +133,6 @@
     </div>
   </div>
 
-  <!-- 明細 -->
   <div class="card form-section">
     <h3>明細（最大5品目）</h3>
     <table class="items-table">
@@ -140,6 +141,7 @@
           <th style="width:36px;">No</th>
           <th class="col-part">品番</th>
           <th class="col-name">品名 <span style="color:red;">*</span></th>
+          <th class="col-mat">材質</th>
           <th class="col-qty">数量</th>
           <th class="col-price">単価</th>
           <th class="col-note">備考</th>
@@ -155,6 +157,7 @@
                 {% for p in products %}<option value="{{ p.name }}" data-part-no="{{ p.part_no }}">{% endfor %}
               </datalist>
           </td>
+          <td><input type="text" name="material[]" placeholder="材質"></td>
           <td><input type="number" name="quantity[]" placeholder="0" min="0"></td>
           <td><input type="text" name="unit_price[]" placeholder="¥0"></td>
           <td><input type="text" name="note[]" placeholder="備考"></td>

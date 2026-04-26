@@ -136,7 +136,6 @@
           <th style="width:36px;">No</th>
           <th style="width:14%;">品番</th>
           <th style="width:28%;">品名 <span style="color:red;">*</span></th>
-          <th style="width:12%;">材質</th>
           <th style="width:10%;">数量</th>
           <th style="width:12%;">単価</th>
           <th>備考</th>
@@ -153,7 +152,6 @@
                 {% for p in products %}<option value="{{ p.name }}" data-part-no="{{ p.part_no }}">{% endfor %}
               </datalist>
           </td>
-          <td><input type="text" name="material[]" value="{{ item.material if item else '' }}"></td>
           <td><input type="number" name="quantity[]" value="{{ item.quantity if item else '' }}" min="0"></td>
           <td><input type="text" name="unit_price[]" value="{{ item.unit_price if item else '' }}"></td>
           <td><input type="text" name="note[]" value="{{ item.note if item else '' }}"></td>

@@ -1,43 +1,43 @@
 {% extends "base.html" %}
 
-{% block title %}受注詳細{% endblock %}
+{% block title %}受注詳細 {{ order.order_no }}{% endblock %}
 
 {% block extra_css %}
 <style>
-  .detail-wrap {
-    max-width: 720px;
+  .detail-grid {
+    display: grid;
+    grid-template-columns: 140px 1fr 140px 1fr;
+    gap: 10px 16px;
+    font-size: 13px;
+    align-items: center;
   }
-  .order-no-label {
-    font-size: 12px;
-    color: var(--text-mute);
-    margin-bottom: 20px;
-    letter-spacing: 0.05em;
-  }
-  .detail-table {
+  .detail-grid .lbl { color: var(--text-sub); font-weight: 500; }
+  .detail-grid .val { font-weight: 600; }
+  .items-table {
     width: 100%;
     border-collapse: collapse;
     font-size: 13px;
   }
-  .detail-table tr {
+  .items-table th {
+    background: #eef1f6;
+    color: var(--navy-700);
+    font-weight: 600;
+    padding: 10px 12px;
+    text-align: left;
+    border-bottom: 2px solid var(--navy-700);
+    font-size: 12px;
+  }
+  .items-table td {
+    padding: 10px 12px;
     border-bottom: 1px solid var(--border-light);
   }
-  .detail-table tr:last-child {
-    border-bottom: none;
-  }
-  .detail-table th {
-    width: 140px;
-    padding: 11px 12px;
-    text-align: left;
-    font-weight: 600;
-    color: var(--text-sub);
-    background: #f8f9fb;
-    border-right: 1px solid var(--border-light);
-    vertical-align: top;
-    white-space: nowrap;
-  }
-  .detail-table td {
-    padding: 11px 16px;
-    color: var(--text);
+  .items-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .items-table tr:hover td { background: #f8f9fb; }
+  .action-bar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
   }
   .mekki-badge {
     display: inline-block;
@@ -59,113 +59,70 @@
     font-size: 12px;
     font-weight: 600;
   }
-  .note-text {
-    white-space: pre-wrap;
-    color: var(--text-sub);
-  }
-  .action-bar {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    margin-top: 20px;
-  }
-  .btn-print {
-    background: var(--navy-900);
-    color: var(--gold);
-    border-color: var(--gold);
-  }
-  .btn-print:hover {
-    background: var(--navy-700);
-    color: var(--gold);
-  }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="detail-wrap">
-  <h1 class="page-title">受注詳細</h1>
+<h1 class="page-title">受注詳細</h1>
 
-  <div class="card">
-    <div class="order-no-label">受注番号：{{ order.order_no }}</div>
+<div class="action-bar">
+  <a href="{{ url_for('index') }}" class="btn btn-secondary">← 一覧に戻る</a>
+  <a href="{{ url_for('edit_order', order_id=order.id) }}" class="btn btn-secondary">✏ 編集</a>
+  <a href="{{ url_for('print_order', order_id=order.id) }}" class="btn btn-primary" target="_blank">🖨 伝票印刷</a>
+  <form method="post" action="{{ url_for('delete', order_id=order.id) }}"
+        onsubmit="return confirm('この受注を削除してもよいですか？')"
+        style="display:inline;">
+    <button type="submit" class="btn btn-danger">削除</button>
+  </form>
+</div>
 
-    <table class="detail-table">
-      <tr>
-        <th>顧客名</th>
-        <td>{{ order.customer }}</td>
-      </tr>
-      <tr>
-        <th>めっき種類</th>
-        <td><span class="mekki-badge">{{ order.mekki_type }}</span></td>
-      </tr>
-      <tr>
-        <th>めっき膜厚</th>
-        <td>{{ order.mekki_thickness if order.mekki_thickness else "—" }}</td>
-      </tr>
-      <tr>
-        <th>材質（番手）</th>
-        <td>{{ order.material if order.material else "—" }}</td>
-      </tr>
-      <tr>
-        <th>納期</th>
-        <td>{{ order.due_date }}</td>
-      </tr>
-      <tr>
-        <th>膜厚データ</th>
-        <td>
-          {% if order.thickness_data == '要' %}
-            <span class="req-badge">要</span>
-          {% else %}
-            不要
-          {% endif %}
-        </td>
-      </tr>
-      <tr>
-        <th>品番</th>
-        <td>{{ order.part_no if order.part_no else "—" }}</td>
-      </tr>
-      <tr>
-        <th>品名</th>
-        <td>{{ order.product }}</td>
-      </tr>
-      <tr>
-        <th>数量</th>
-        <td>{{ order.quantity }} 個</td>
-      </tr>
-      <tr>
-        <th>単価</th>
-        <td>{{ order.unit_price if order.unit_price else "—" }}</td>
-      </tr>
-      <tr>
-        <th>めっきライン</th>
-        <td>{{ order.mekki_line if order.mekki_line else "—" }}</td>
-      </tr>
-      <tr>
-        <th>工程</th>
-        <td>{{ order.process_note if order.process_note else "—" }}</td>
-      </tr>
-      <tr>
-        <th>出荷方法</th>
-        <td>{{ order.shipping_method if order.shipping_method else "—" }}</td>
-      </tr>
-      <tr>
-        <th>備考</th>
-        <td><span class="note-text">{{ order.note if order.note else "—" }}</span></td>
-      </tr>
-      <tr>
-        <th>登録日時</th>
-        <td>{{ order.created_at }}</td>
-      </tr>
-    </table>
-
-    <div class="action-bar">
-      <a href="{{ url_for('index') }}" class="btn btn-secondary">← 一覧に戻る</a>
-      <a href="{{ url_for('edit_order', order_id=order.id) }}" class="btn btn-secondary">✏ 編集</a>
-      <a href="{{ url_for('print_order', order_id=order.id) }}" class="btn btn-print" target="_blank">🖨 伝票印刷</a>
-      <form method="post" action="{{ url_for('delete', order_id=order.id) }}"
-            onsubmit="return confirm('この受注を削除してもよいですか？')">
-        <button type="submit" class="btn btn-danger">削除する</button>
-      </form>
-    </div>
+<!-- 受注情報 -->
+<div class="card">
+  <h3>受注情報</h3>
+  <div class="detail-grid">
+    <span class="lbl">伝票番号</span><span class="val">{{ order.order_no }}</span>
+    <span class="lbl">登録日時</span><span class="val">{{ order.created_at }}</span>
+    <span class="lbl">顧客名</span><span class="val">{{ order.customer }}</span>
+    <span class="lbl">納期</span><span class="val">{{ order.due_date }}</span>
+    <span class="lbl">めっき種類</span><span class="val"><span class="mekki-badge">{{ order.mekki_type }}</span></span>
+    <span class="lbl">めっき膜厚</span><span class="val">{{ order.mekki_thickness or '—' }}</span>
+    <span class="lbl">材質（番手）</span><span class="val">{{ order.material or '—' }}</span>
+    <span class="lbl">膜厚データ</span><span class="val">
+      {% if order.thickness_data == '要' %}
+        <span class="req-badge">要</span>
+      {% else %}
+        {{ order.thickness_data or '不要' }}
+      {% endif %}
+    </span>
+    <span class="lbl">めっきライン</span><span class="val">{{ order.mekki_line or '—' }}</span>
+    <span class="lbl">出荷方法</span><span class="val">{{ order.shipping_method or '—' }}</span>
+    <span class="lbl">工程</span><span class="val">{{ order.process_note or '—' }}</span>
+    <span class="lbl">備考</span><span class="val" style="white-space:pre-wrap;">{{ order.note or '—' }}</span>
   </div>
+</div>
+
+<!-- 明細 -->
+<div class="card">
+  <h3>明細</h3>
+  <table class="items-table">
+    <thead>
+      <tr>
+        <th style="width:40px;">No</th>
+        <th>品番</th>
+        <th>品名</th>
+        <th class="num">数量</th>
+        <th class="num">単価</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td style="text-align:center;">1</td>
+        <td>{{ order.part_no or '—' }}</td>
+        <td>{{ order.product }}</td>
+        <td class="num">{{ order.quantity }} 個</td>
+        <td class="num">{{ order.unit_price or '—' }}</td>
+      </tr>
+    </tbody>
+  </table>
 </div>
 {% endblock %}
