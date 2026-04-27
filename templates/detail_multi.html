@@ -95,9 +95,6 @@
   <a href="{{ url_for('index') }}" class="btn btn-secondary">← 一覧に戻る</a>
   <a href="{{ url_for('edit_order_multi', order_id=order.id) }}" class="btn btn-secondary">編集</a>
   <a href="{{ url_for('print_order_multi', order_id=order.id) }}" class="btn btn-primary" target="_blank">🖨 伝票印刷</a>
-  {% if subcontractor_name %}
-  <a href="{{ url_for('print_subcontractor_order', order_id=order.id) }}" class="btn btn-primary" target="_blank">🖨 外注伝票印刷</a>
-  {% endif %}
   {% if shipment %}
     <span class="badge-shipped">出荷済み</span>
   {% else %}
@@ -129,27 +126,10 @@
     <span class="lbl">めっきライン</span><span class="val">{{ order.mekki_line or '—' }}</span>
     <span class="lbl">出荷方法</span><span class="val">{{ order.shipping_method or '—' }}</span>
     <span class="lbl">工程</span><span class="val">{{ order.process_note or '—' }}</span>
+    <span class="lbl">外注先</span><span class="val">{{ subcontractor_name or '—' }}</span>
     <span class="lbl">備考</span><span class="val">{{ order.note or '—' }}</span>
   </div>
 </div>
-
-<!-- 外注情報 -->
-{% if subcontractor_name %}
-<div class="card">
-  <h3>外注情報</h3>
-  <div class="detail-grid">
-    <span class="lbl">外注先</span><span class="val">{{ subcontractor_name }}</span>
-    <span class="lbl">品番</span><span class="val">{{ order.sub_part_no or '—' }}</span>
-    <span class="lbl">品名</span><span class="val">{{ order.sub_part_name or '—' }}</span>
-    <span class="lbl">数量</span><span class="val">{{ order.sub_qty or '—' }}</span>
-    <span class="lbl">金額</span><span class="val">{{ order.sub_amount or '—' }}</span>
-    <span class="lbl">合計金額</span><span class="val">{{ order.sub_total or '—' }}</span>
-    <span class="lbl">納期</span><span class="val">{{ order.sub_due_date or '—' }}</span>
-    <span class="lbl">依頼内容</span><span class="val" style="white-space:pre-wrap;">{{ order.sub_request or '—' }}</span>
-    <span class="lbl">備考</span><span class="val" style="white-space:pre-wrap;">{{ order.sub_note or '—' }}</span>
-  </div>
-</div>
-{% endif %}
 
 <!-- 明細 -->
 <div class="card">

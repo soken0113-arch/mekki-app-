@@ -43,7 +43,7 @@
     overflow-x: auto;
   }
   .table-wrap .data-table {
-    min-width: 960px;
+    min-width: 800px;
   }
   .sub-badge {
     display: inline-block;
@@ -108,12 +108,11 @@
       <tr>
         <th>受注番号</th>
         <th>外注先</th>
+        <th>顧客名</th>
         <th>品名</th>
-        <th>品番</th>
         <th class="num">数量</th>
-        <th class="num">金額</th>
-        <th class="num">合計金額</th>
-        <th>外注納期</th>
+        <th>めっき種類</th>
+        <th>納期</th>
         <th style="width:1%;">操作</th>
       </tr>
     </thead>
@@ -122,13 +121,12 @@
       <tr class="{{ 'alert-' + order.alert if order.alert else '' }}">
         <td><strong>{{ order.order_no }}</strong></td>
         <td><span class="sub-badge">{{ order.subcontractor_name or '—' }}</span></td>
-        <td>{{ order.sub_part_name or '—' }}</td>
-        <td style="color:var(--text-mute); font-size:12px;">{{ order.sub_part_no or '—' }}</td>
-        <td class="num">{{ order.sub_qty or '—' }}</td>
-        <td class="num">{{ order.sub_amount or '—' }}</td>
-        <td class="num" style="font-weight:700;">{{ order.sub_total or '—' }}</td>
+        <td>{{ order.customer }}</td>
+        <td>{{ order.product }}</td>
+        <td class="num">{{ order.quantity or '—' }}</td>
+        <td>{{ order.mekki_type }}</td>
         <td>
-          {{ order.sub_due_date or '—' }}
+          {{ order.due_date or '—' }}
           {% if order.alert == 'overdue' %}<span title="納期超過">🔴</span>
           {% elif order.alert == 'today' %}<span title="納期当日">🟠</span>
           {% elif order.alert == 'tomorrow' %}<span title="納期1日前">🟡</span>
@@ -141,8 +139,7 @@
             {% else %}
             <a href="{{ url_for('detail', order_id=order.id) }}" class="btn btn-secondary btn-sm">詳細</a>
             {% endif %}
-            <a href="{{ url_for('print_subcontractor_order', order_id=order.id) }}" class="btn btn-secondary btn-sm" target="_blank">伝票</a>
-            <form method="POST" action="{{ url_for('complete_shipment', order_id=order.id) }}"
+            <form method="POST" action="{{ url_for('ship_order', order_id=order.id) }}"
                   onsubmit="return confirm('この受注を出荷完了にしますか？\n\n外注先：{{ order.subcontractor_name }}\n\nこの操作は元に戻せません。')">
               <button type="submit" class="btn btn-ship btn-sm">出荷</button>
             </form>

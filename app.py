@@ -173,14 +173,6 @@ def init_db():
             ("process_note",     "TEXT NOT NULL DEFAULT ''"),
             ("shipping_method",  "TEXT NOT NULL DEFAULT ''"),
             ("subcontractor_id", "INTEGER"),
-            ("sub_part_no",      "TEXT NOT NULL DEFAULT ''"),
-            ("sub_part_name",    "TEXT NOT NULL DEFAULT ''"),
-            ("sub_qty",          "TEXT NOT NULL DEFAULT ''"),
-            ("sub_amount",       "TEXT NOT NULL DEFAULT ''"),
-            ("sub_total",        "TEXT NOT NULL DEFAULT ''"),
-            ("sub_due_date",     "TEXT NOT NULL DEFAULT ''"),
-            ("sub_request",      "TEXT NOT NULL DEFAULT ''"),
-            ("sub_note",         "TEXT NOT NULL DEFAULT ''"),
         ]:
             exists = conn.execute(
                 "SELECT 1 FROM information_schema.columns WHERE table_name='orders' AND column_name=?",
@@ -188,6 +180,16 @@ def init_db():
             ).fetchone()
             if not exists:
                 conn.execute(f"ALTER TABLE orders ADD COLUMN {col} {definition}")
+
+        # 不要になった外注詳細カラムを削除
+        for col in ["sub_part_no", "sub_part_name", "sub_qty", "sub_amount",
+                    "sub_total", "sub_due_date", "sub_request", "sub_note"]:
+            exists = conn.execute(
+                "SELECT 1 FROM information_schema.columns WHERE table_name='orders' AND column_name=?",
+                (col,)
+            ).fetchone()
+            if exists:
+                conn.execute(f"ALTER TABLE orders DROP COLUMN {col}")
 
         # デフォルトユーザーが未登録なら作成
         if not conn.execute("SELECT id FROM users WHERE username='admin'").fetchone():
@@ -327,7 +329,7 @@ def sub_orders_list():
         order = dict(row)
         due = None
         try:
-            due = datetime.strptime(order['sub_due_date'], '%Y-%m-%d').date()
+            due = datetime.strptime(order['due_date'], '%Y-%m-%d').date()
         except:
             pass
         if due is None:
@@ -354,9 +356,8 @@ def new_order():
                 INSERT INTO orders (order_no, customer, product, part_no, material, quantity,
                     mekki_type, mekki_thickness, thickness_data, due_date,
                     unit_price, mekki_line, process_note, shipping_method, note, assigned_to, created_at,
-                    subcontractor_id, sub_part_no, sub_part_name, sub_qty,
-                    sub_amount, sub_total, sub_due_date, sub_request, sub_note)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    subcontractor_id)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
                 order_no,
                 request.form["customer"],
@@ -376,14 +377,6 @@ def new_order():
                 request.form.get("assigned_to", ""),
                 now.strftime("%Y-%m-%d %H:%M:%S"),
                 request.form.get("subcontractor_id") or None,
-                request.form.get("sub_part_no", ""),
-                request.form.get("sub_part_name", ""),
-                request.form.get("sub_qty", ""),
-                request.form.get("sub_amount", ""),
-                request.form.get("sub_total", ""),
-                request.form.get("sub_due_date", ""),
-                request.form.get("sub_request", ""),
-                request.form.get("sub_note", ""),
             ))
         return redirect(url_for("index"))
     with get_db() as conn:
@@ -406,8 +399,7 @@ def edit_order(order_id):
                 UPDATE orders SET customer=?, product=?, part_no=?, material=?, quantity=?,
                 mekki_type=?, mekki_thickness=?, thickness_data=?, due_date=?,
                 unit_price=?, mekki_line=?, process_note=?, shipping_method=?, note=?, assigned_to=?,
-                subcontractor_id=?, sub_part_no=?, sub_part_name=?, sub_qty=?,
-                sub_amount=?, sub_total=?, sub_due_date=?, sub_request=?, sub_note=?
+                subcontractor_id=?
                 WHERE id=?
             """, (
                 request.form["customer"],
@@ -426,14 +418,6 @@ def edit_order(order_id):
                 request.form.get("note", ""),
                 request.form.get("assigned_to", ""),
                 request.form.get("subcontractor_id") or None,
-                request.form.get("sub_part_no", ""),
-                request.form.get("sub_part_name", ""),
-                request.form.get("sub_qty", ""),
-                request.form.get("sub_amount", ""),
-                request.form.get("sub_total", ""),
-                request.form.get("sub_due_date", ""),
-                request.form.get("sub_request", ""),
-                request.form.get("sub_note", ""),
                 order_id,
             ))
         return redirect(url_for("detail", order_id=order_id))
@@ -669,27 +653,6 @@ def delete_all_products():
 
 # ── 外注先マスタ ────────────────────────────────────────────
 
-@app.route("/subcontractors/print/<int:order_id>")
-@login_required
-def print_subcontractor_order(order_id):
-    with get_db() as conn:
-        order = conn.execute("SELECT * FROM orders WHERE id=?", (order_id,)).fetchone()
-        if not order:
-            return redirect(url_for("index"))
-        subcontractor_name = None
-        try:
-            sub_id = order["subcontractor_id"]
-            if sub_id:
-                sub = conn.execute("SELECT name FROM subcontractors WHERE id=?", (sub_id,)).fetchone()
-                subcontractor_name = sub["name"] if sub else None
-        except Exception:
-            pass
-    is_multi = order["product"] == "複数品目"
-    back_url = url_for("detail_multi", order_id=order_id) if is_multi else url_for("detail", order_id=order_id)
-    issued_date = datetime.now().strftime("%Y年%m月%d日")
-    return render_template("print_subcontractor.html", order=order,
-                           subcontractor_name=subcontractor_name,
-                           issued_date=issued_date, back_url=back_url)
 
 @app.route("/subcontractors", methods=["GET"])
 @login_required
@@ -817,8 +780,7 @@ def edit_order_multi(order_id):
                     customer=?, mekki_type=?, mekki_thickness=?, thickness_data=?,
                     material=?, due_date=?, mekki_line=?, process_note=?,
                     shipping_method=?, note=?, assigned_to=?,
-                    subcontractor_id=?, sub_part_no=?, sub_part_name=?, sub_qty=?,
-                    sub_amount=?, sub_total=?, sub_due_date=?, sub_request=?, sub_note=?
+                    subcontractor_id=?
                 WHERE id=?
             """, (
                 request.form["customer"],
@@ -833,14 +795,6 @@ def edit_order_multi(order_id):
                 request.form.get("note", ""),
                 request.form.get("assigned_to", ""),
                 request.form.get("subcontractor_id") or None,
-                request.form.get("sub_part_no", ""),
-                request.form.get("sub_part_name", ""),
-                request.form.get("sub_qty", ""),
-                request.form.get("sub_amount", ""),
-                request.form.get("sub_total", ""),
-                request.form.get("sub_due_date", ""),
-                request.form.get("sub_request", ""),
-                request.form.get("sub_note", ""),
                 order_id,
             ))
             # 既存の明細を全削除して再登録
@@ -899,9 +853,8 @@ def new_order_multi():
                     order_no, customer, product, part_no, material, quantity,
                     mekki_type, mekki_thickness, thickness_data, due_date,
                     unit_price, mekki_line, process_note, shipping_method, note, assigned_to, created_at,
-                    subcontractor_id, sub_part_no, sub_part_name, sub_qty,
-                    sub_amount, sub_total, sub_due_date, sub_request, sub_note
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    subcontractor_id
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
                 order_no,
                 request.form["customer"],
@@ -921,14 +874,6 @@ def new_order_multi():
                 request.form.get("assigned_to", ""),
                 now.strftime("%Y-%m-%d %H:%M:%S"),
                 request.form.get("subcontractor_id") or None,
-                request.form.get("sub_part_no", ""),
-                request.form.get("sub_part_name", ""),
-                request.form.get("sub_qty", ""),
-                request.form.get("sub_amount", ""),
-                request.form.get("sub_total", ""),
-                request.form.get("sub_due_date", ""),
-                request.form.get("sub_request", ""),
-                request.form.get("sub_note", ""),
             ))
             order = conn.execute(
                 "SELECT * FROM orders WHERE order_no=?", (order_no,)

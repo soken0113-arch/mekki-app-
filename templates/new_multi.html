@@ -175,6 +175,14 @@
         <option value="田口">田口</option>
       </select>
 
+      <label>外注先</label>
+      <select name="subcontractor_id">
+        <option value="">-- なし --</option>
+        {% for s in subcontractors %}
+        <option value="{{ s.id }}">{{ s.name }}</option>
+        {% endfor %}
+      </select>
+
       <label>備考</label>
       <input type="text" name="note" placeholder="備考" class="form-grid-full">
     </div>
@@ -214,44 +222,6 @@
     </table>
     </div>
     <p style="font-size:12px; color:var(--text-mute); margin-top:8px;">※ 品名が空の行は登録されません</p>
-  </div>
-
-  <!-- 外注情報 -->
-  <div class="card form-section">
-    <h3>外注情報（任意）</h3>
-    <div class="form-grid">
-      <label>外注先</label>
-      <select name="subcontractor_id">
-        <option value="">-- 選択なし（外注なし）--</option>
-        {% for s in subcontractors %}
-        <option value="{{ s.id }}">{{ s.name }}</option>
-        {% endfor %}
-      </select>
-
-      <label>品番</label>
-      <input type="text" name="sub_part_no" placeholder="品番">
-
-      <label>品名</label>
-      <input type="text" name="sub_part_name" placeholder="品名">
-
-      <label>数量</label>
-      <input type="number" name="sub_qty" placeholder="0" min="0">
-
-      <label>金額</label>
-      <input type="number" name="sub_amount" placeholder="0" min="0">
-
-      <label>合計金額</label>
-      <input type="number" name="sub_total" placeholder="0" min="0">
-
-      <label>納期</label>
-      <input type="date" name="sub_due_date">
-
-      <label style="align-self:start; padding-top:9px;">依頼内容</label>
-      <textarea name="sub_request" placeholder="外注依頼内容" class="form-grid-full"></textarea>
-
-      <label style="align-self:start; padding-top:9px;">備考</label>
-      <textarea name="sub_note" placeholder="備考" class="form-grid-full"></textarea>
-    </div>
   </div>
 
   <div class="btn-group">
