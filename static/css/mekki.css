@@ -324,6 +324,10 @@ input:focus, select:focus, textarea:focus {
 }
 
 /* ====== 印刷時 ====== */
+@page {
+  margin: 15mm 10mm 15mm 15mm; /* 上 右 下 左 */
+}
+
 @media print {
   .app-header, .app-nav, .btn-group, .no-print { display: none !important; }
   body { background: #fff; }

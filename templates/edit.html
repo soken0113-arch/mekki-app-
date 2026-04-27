@@ -77,18 +77,10 @@
 
       <div class="form-group">
         <label>顧客名 <span class="required">*</span></label>
-        {% if customers %}
-        <select name="customer" required>
-          {% for c in customers %}
-          <option value="{{ c.name }}" {% if c.name == order.customer %}selected{% endif %}>{{ c.name }}</option>
-          {% endfor %}
-          {% if order.customer not in customers | map(attribute='name') | list %}
-          <option value="{{ order.customer }}" selected>{{ order.customer }}</option>
-          {% endif %}
-        </select>
-        {% else %}
-        <input type="text" name="customer" required value="{{ order.customer }}">
-        {% endif %}
+        <input list="customer-list" type="text" name="customer" required value="{{ order.customer }}">
+        <datalist id="customer-list">
+          {% for c in customers %}<option value="{{ c.name }}">{% endfor %}
+        </datalist>
       </div>
 
       <div class="form-group">
