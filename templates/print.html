@@ -257,7 +257,7 @@
     @media print {
       @page {
         size: A4 portrait;
-        margin: 0;
+        margin: 0 0 0 8mm; /* 左だけ余白を確保 */
       }
       html, body {
         margin: 0;
@@ -266,7 +266,7 @@
       }
       .screen-only { display: none !important; }
       .sheet {
-        width: 210mm;
+        width: 202mm; /* 210mm - 8mm */
         height: 292mm;
         border: none;
         margin: 0;
