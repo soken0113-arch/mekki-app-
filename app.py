@@ -382,7 +382,8 @@ def new_order():
                 now.strftime("%Y-%m-%d %H:%M:%S"),
                 request.form.get("subcontractor_id") or None,
             ))
-        return redirect(url_for("index"))
+            new_id = conn.execute("SELECT last_insert_rowid()").fetchone()[0]
+        return redirect(url_for("detail", order_id=new_id))
     with get_db() as conn:
         customers = conn.execute("SELECT name FROM customers ORDER BY name").fetchall()
         products = conn.execute("SELECT name, part_no FROM products ORDER BY name").fetchall()
