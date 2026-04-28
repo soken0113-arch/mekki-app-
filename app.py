@@ -1079,6 +1079,9 @@ def ship_order(order_id):
             flash("出荷完了として登録しました。", "success")
         else:
             flash("この受注はすでに出荷済みです。", "info")
+    referrer = request.referrer or ""
+    if "sub_orders" in referrer:
+        return redirect(url_for("sub_orders_list"))
     if order["product"] == "複数品目":
         return redirect(url_for("detail_multi", order_id=order_id))
     return redirect(url_for("detail", order_id=order_id))
