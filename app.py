@@ -356,12 +356,13 @@ def new_order():
         now = datetime.now()
         order_no = f"ORD-{now.strftime('%Y%m%d%H%M%S')}"
         with get_db() as conn:
-            conn.execute("""
+            cur = conn.execute("""
                 INSERT INTO orders (order_no, customer, product, part_no, material, quantity,
                     mekki_type, mekki_thickness, thickness_data, due_date,
                     unit_price, mekki_line, process_note, shipping_method, note, assigned_to, created_at,
                     subcontractor_id)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                RETURNING id
             """, (
                 order_no,
                 request.form["customer"],
@@ -382,7 +383,7 @@ def new_order():
                 now.strftime("%Y-%m-%d %H:%M:%S"),
                 request.form.get("subcontractor_id") or None,
             ))
-            new_id = conn.execute("SELECT last_insert_rowid()").fetchone()[0]
+            new_id = cur.fetchone()["id"]
         return redirect(url_for("detail", order_id=new_id))
     with get_db() as conn:
         customers = conn.execute("SELECT name FROM customers ORDER BY name").fetchall()
