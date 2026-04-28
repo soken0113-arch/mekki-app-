@@ -910,7 +910,7 @@ def new_order_multi():
                     unit_prices[i] if i < len(unit_prices) else "",
                     notes[i] if i < len(notes) else "",
                 ))
-        return redirect(url_for("index"))
+        return redirect(url_for("detail_multi", order_id=order_id))
 
     with get_db() as conn:
         customers = conn.execute("SELECT name FROM customers ORDER BY name").fetchall()
