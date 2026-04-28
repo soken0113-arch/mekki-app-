@@ -468,6 +468,9 @@ def print_order(order_id):
 def delete(order_id):
     with get_db() as conn:
         conn.execute("DELETE FROM orders WHERE id=?", (order_id,))
+    referrer = request.referrer or ""
+    if "sub_orders" in referrer:
+        return redirect(url_for("sub_orders_list"))
     return redirect(url_for("index"))
 
 # ── 顧客マスタ ──────────────────────────────────────────────
