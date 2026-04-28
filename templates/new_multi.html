@@ -118,13 +118,12 @@
         {% for c in customers %}<option value="{{ c.name }}">{% endfor %}
       </datalist>
 
-      <label>めっき種類 <span style="color:red;">*</span></label>
-      <select name="mekki_type" required>
-        <option value="">-- 選択 --</option>
-        {% for t in mekki_types %}
-        <option value="{{ t }}">{{ t }}</option>
-        {% endfor %}
-      </select>
+      <label>めっきの種類 <span style="color:red;">*</span></label>
+      <input type="text" name="mekki_type" required placeholder="例：ニッケルメッキ"
+             list="mekki-list" autocomplete="off">
+      <datalist id="mekki-list">
+        {% for t in mekki_types %}<option value="{{ t }}">{% endfor %}
+      </datalist>
 
       <label>めっき膜厚</label>
       <div style="display:flex; align-items:center; gap:6px;">

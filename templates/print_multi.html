@@ -277,7 +277,7 @@
     <div class="header-fields">
       <div class="hf wide hilite"><div class="lbl">顧客名</div><div class="val">{{ order.customer }}</div></div>
       <div class="hf"><div class="lbl">出荷方法</div><div class="val sm">{{ order.shipping_method or '—' }}</div></div>
-      <div class="hf wide hilite"><div class="lbl">めっき種類</div><div class="val">{{ order.mekki_type }}</div></div>
+      <div class="hf wide hilite"><div class="lbl">めっきの種類</div><div class="val">{{ order.mekki_type }}</div></div>
       <div class="hf"><div class="lbl">納期</div><div class="val sm">{{ order.due_date }}</div></div>
       <div class="hf"><div class="lbl">めっき膜厚</div><div class="val sm">{{ order.mekki_thickness or '—' }}</div></div>
       <div class="hf"><div class="lbl">材質</div><div class="val sm">{{ order.material or '—' }}</div></div>
@@ -311,7 +311,7 @@
     <div class="header-fields">
       <div class="hf wide hilite"><div class="lbl">顧客名</div><div class="val">{{ order.customer }}</div></div>
       <div class="hf"><div class="lbl">出荷方法</div><div class="val sm">{{ order.shipping_method or '—' }}</div></div>
-      <div class="hf wide hilite"><div class="lbl">めっき種類</div><div class="val">{{ order.mekki_type }}</div></div>
+      <div class="hf wide hilite"><div class="lbl">めっきの種類</div><div class="val">{{ order.mekki_type }}</div></div>
       <div class="hf"><div class="lbl">納期</div><div class="val sm">{{ order.due_date }}</div></div>
       <div class="hf"><div class="lbl">めっき膜厚</div><div class="val sm">{{ order.mekki_thickness or '—' }}</div></div>
       <div class="hf"><div class="lbl">材質</div><div class="val sm">{{ order.material or '—' }}</div></div>
@@ -321,13 +321,13 @@
       <div class="hf wide"><div class="lbl">工程</div><div class="val sm">{{ order.process_note or '—' }}</div></div>
     </div>
     <table class="items-table">
-      <thead><tr><th style="width:5%;">No</th><th style="width:15%;">品番</th><th style="width:42%;">品名</th><th style="width:10%;">数量</th><th style="width:9%;">単価</th><th>備考</th></tr></thead>
+      <thead><tr><th style="width:5%;">No</th><th style="width:15%;">品番</th><th style="width:47%;">品名</th><th style="width:10%;">数量</th><th>備考</th></tr></thead>
       <tbody>
         {% for item in items %}
-        <tr><td class="center">{{ loop.index }}</td><td>{{ item.part_no or '' }}</td><td>{{ item.product }}</td><td class="num">{{ item.quantity }}個</td><td class="num">{{ item.unit_price or '' }}</td><td>{{ item.note or '' }}</td></tr>
+        <tr><td class="center">{{ loop.index }}</td><td>{{ item.part_no or '' }}</td><td>{{ item.product }}</td><td class="num">{{ item.quantity }}個</td><td>{{ item.note or '' }}</td></tr>
         {% endfor %}
         {% for i in range(items|length, 5) %}
-        <tr><td class="center" style="color:#ccc;">{{ i+1 }}</td><td></td><td></td><td></td><td></td><td></td></tr>
+        <tr><td class="center" style="color:#ccc;">{{ i+1 }}</td><td></td><td></td><td></td><td></td></tr>
         {% endfor %}
       </tbody>
     </table>
@@ -345,7 +345,7 @@
     <div class="header-fields">
       <div class="hf wide hilite"><div class="lbl">顧客名</div><div class="val">{{ order.customer }}</div></div>
       <div class="hf"><div class="lbl">出荷方法</div><div class="val sm">{{ order.shipping_method or '—' }}</div></div>
-      <div class="hf wide hilite"><div class="lbl">めっき種類</div><div class="val">{{ order.mekki_type }}</div></div>
+      <div class="hf wide hilite"><div class="lbl">めっきの種類</div><div class="val">{{ order.mekki_type }}</div></div>
       <div class="hf"><div class="lbl">納期</div><div class="val sm">{{ order.due_date }}</div></div>
       <div class="hf"><div class="lbl">めっき膜厚</div><div class="val sm">{{ order.mekki_thickness or '—' }}</div></div>
       <div class="hf"><div class="lbl">材質</div><div class="val sm">{{ order.material or '—' }}</div></div>
@@ -355,13 +355,13 @@
       <div class="hf wide"><div class="lbl">工程</div><div class="val sm">{{ order.process_note or '—' }}</div></div>
     </div>
     <table class="items-table">
-      <thead><tr><th style="width:5%;">No</th><th style="width:15%;">品番</th><th style="width:42%;">品名</th><th style="width:10%;">数量</th><th style="width:9%;">単価</th><th>備考</th></tr></thead>
+      <thead><tr><th style="width:5%;">No</th><th style="width:15%;">品番</th><th style="width:47%;">品名</th><th style="width:10%;">数量</th><th>備考</th></tr></thead>
       <tbody>
         {% for item in items %}
-        <tr><td class="center">{{ loop.index }}</td><td>{{ item.part_no or '' }}</td><td>{{ item.product }}</td><td class="num">{{ item.quantity }}個</td><td class="num">{{ item.unit_price or '' }}</td><td>{{ item.note or '' }}</td></tr>
+        <tr><td class="center">{{ loop.index }}</td><td>{{ item.part_no or '' }}</td><td>{{ item.product }}</td><td class="num">{{ item.quantity }}個</td><td>{{ item.note or '' }}</td></tr>
         {% endfor %}
         {% for i in range(items|length, 5) %}
-        <tr><td class="center" style="color:#ccc;">{{ i+1 }}</td><td></td><td></td><td></td><td></td><td></td></tr>
+        <tr><td class="center" style="color:#ccc;">{{ i+1 }}</td><td></td><td></td><td></td><td></td></tr>
         {% endfor %}
       </tbody>
     </table>
@@ -379,7 +379,7 @@
     <div class="header-fields">
       <div class="hf wide hilite"><div class="lbl">顧客名</div><div class="val">{{ order.customer }}</div></div>
       <div class="hf"><div class="lbl">出荷方法</div><div class="val sm">{{ order.shipping_method or '—' }}</div></div>
-      <div class="hf wide hilite"><div class="lbl">めっき種類</div><div class="val">{{ order.mekki_type }}</div></div>
+      <div class="hf wide hilite"><div class="lbl">めっきの種類</div><div class="val">{{ order.mekki_type }}</div></div>
       <div class="hf"><div class="lbl">納期</div><div class="val sm">{{ order.due_date }}</div></div>
       <div class="hf"><div class="lbl">めっき膜厚</div><div class="val sm">{{ order.mekki_thickness or '—' }}</div></div>
       <div class="hf"><div class="lbl">材質</div><div class="val sm">{{ order.material or '—' }}</div></div>
@@ -389,13 +389,13 @@
       <div class="hf wide"><div class="lbl">工程</div><div class="val sm">{{ order.process_note or '—' }}</div></div>
     </div>
     <table class="items-table">
-      <thead><tr><th style="width:5%;">No</th><th style="width:15%;">品番</th><th style="width:42%;">品名</th><th style="width:10%;">数量</th><th style="width:9%;">単価</th><th>備考</th></tr></thead>
+      <thead><tr><th style="width:5%;">No</th><th style="width:15%;">品番</th><th style="width:47%;">品名</th><th style="width:10%;">数量</th><th>備考</th></tr></thead>
       <tbody>
         {% for item in items %}
-        <tr><td class="center">{{ loop.index }}</td><td>{{ item.part_no or '' }}</td><td>{{ item.product }}</td><td class="num">{{ item.quantity }}個</td><td class="num">{{ item.unit_price or '' }}</td><td>{{ item.note or '' }}</td></tr>
+        <tr><td class="center">{{ loop.index }}</td><td>{{ item.part_no or '' }}</td><td>{{ item.product }}</td><td class="num">{{ item.quantity }}個</td><td>{{ item.note or '' }}</td></tr>
         {% endfor %}
         {% for i in range(items|length, 5) %}
-        <tr><td class="center" style="color:#ccc;">{{ i+1 }}</td><td></td><td></td><td></td><td></td><td></td></tr>
+        <tr><td class="center" style="color:#ccc;">{{ i+1 }}</td><td></td><td></td><td></td><td></td></tr>
         {% endfor %}
       </tbody>
     </table>

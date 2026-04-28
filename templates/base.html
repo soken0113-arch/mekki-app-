@@ -25,7 +25,6 @@
     <a href="{{ url_for('sub_orders_list') }}" class="{% if request.endpoint == 'sub_orders_list' %}active{% endif %}">外注一覧</a>
     <a href="{{ url_for('new_order') }}" class="{% if request.endpoint == 'new_order' %}active{% endif %}">新規登録</a>
     <a href="{{ url_for('new_order_multi') }}" class="{% if request.endpoint == 'new_order_multi' %}active{% endif %}">新規登録（複数品目）</a>
-    <a href="{{ url_for('new_order_gaichuu') }}" class="{% if request.endpoint == 'new_order_gaichuu' %}active{% endif %}">外注</a>
     <a href="{{ url_for('customers') }}" class="{% if request.endpoint == 'customers' %}active{% endif %}">顧客マスタ</a>
     <a href="{{ url_for('products') }}" class="{% if request.endpoint == 'products' %}active{% endif %}">品名マスタ</a>
     <a href="{{ url_for('subcontractors') }}" class="{% if request.endpoint == 'subcontractors' %}active{% endif %}">外注先マスタ</a>
