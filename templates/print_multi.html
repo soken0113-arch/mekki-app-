@@ -240,14 +240,14 @@
     }
 
     @media print {
-      @page { size: A4 portrait; margin: 0 0 0 8mm; }
+      @page { size: A4 portrait; margin: 0; }
       html, body { margin: 0; padding: 0; background: white; height: 297mm; overflow: hidden; }
       .screen-only { display: none !important; }
       .sheet {
-        width: 202mm; /* 210mm - 8mm */
+        width: 210mm;
         height: 297mm;
         border: none;
-        margin: 0;
+        margin: 0 0 0 8mm;
         box-shadow: none;
         overflow: hidden;
         page-break-after: avoid;
