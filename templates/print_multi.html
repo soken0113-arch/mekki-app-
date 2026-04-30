@@ -289,7 +289,7 @@
       <div class="hf wide"><div class="lbl">工程</div><div class="val sm">{{ order.process_note or '—' }}</div></div>
     </div>
     <table class="items-table">
-      <thead><tr><th style="width:5%;">No</th><th style="width:15%;">品番</th><th style="width:42%;">品名</th><th style="width:10%;">数量</th><th style="width:9%;">単価</th><th>備考</th></tr></thead>
+      <thead><tr><th style="width:5%;">No</th><th style="width:20%;">品番</th><th style="width:37%;">品名</th><th style="width:10%;">数量</th><th style="width:9%;">単価</th><th>備考</th></tr></thead>
       <tbody>
         {% for item in items %}
         <tr><td class="center">{{ loop.index }}</td><td>{{ item.part_no or '' }}</td><td>{{ item.product }}</td><td class="num">{{ item.quantity }}個</td><td class="num">{{ item.unit_price or '' }}</td><td>{{ item.note or '' }}</td></tr>
@@ -323,7 +323,7 @@
       <div class="hf wide"><div class="lbl">工程</div><div class="val sm">{{ order.process_note or '—' }}</div></div>
     </div>
     <table class="items-table">
-      <thead><tr><th style="width:5%;">No</th><th style="width:15%;">品番</th><th style="width:47%;">品名</th><th style="width:10%;">数量</th><th>備考</th></tr></thead>
+      <thead><tr><th style="width:5%;">No</th><th style="width:20%;">品番</th><th style="width:42%;">品名</th><th style="width:10%;">数量</th><th>備考</th></tr></thead>
       <tbody>
         {% for item in items %}
         <tr><td class="center">{{ loop.index }}</td><td>{{ item.part_no or '' }}</td><td>{{ item.product }}</td><td class="num">{{ item.quantity }}個</td><td>{{ item.note or '' }}</td></tr>
@@ -357,7 +357,7 @@
       <div class="hf wide"><div class="lbl">工程</div><div class="val sm">{{ order.process_note or '—' }}</div></div>
     </div>
     <table class="items-table">
-      <thead><tr><th style="width:5%;">No</th><th style="width:15%;">品番</th><th style="width:47%;">品名</th><th style="width:10%;">数量</th><th>備考</th></tr></thead>
+      <thead><tr><th style="width:5%;">No</th><th style="width:20%;">品番</th><th style="width:42%;">品名</th><th style="width:10%;">数量</th><th>備考</th></tr></thead>
       <tbody>
         {% for item in items %}
         <tr><td class="center">{{ loop.index }}</td><td>{{ item.part_no or '' }}</td><td>{{ item.product }}</td><td class="num">{{ item.quantity }}個</td><td>{{ item.note or '' }}</td></tr>
@@ -391,7 +391,7 @@
       <div class="hf wide"><div class="lbl">工程</div><div class="val sm">{{ order.process_note or '—' }}</div></div>
     </div>
     <table class="items-table">
-      <thead><tr><th style="width:5%;">No</th><th style="width:15%;">品番</th><th style="width:47%;">品名</th><th style="width:10%;">数量</th><th>備考</th></tr></thead>
+      <thead><tr><th style="width:5%;">No</th><th style="width:20%;">品番</th><th style="width:42%;">品名</th><th style="width:10%;">数量</th><th>備考</th></tr></thead>
       <tbody>
         {% for item in items %}
         <tr><td class="center">{{ loop.index }}</td><td>{{ item.part_no or '' }}</td><td>{{ item.product }}</td><td class="num">{{ item.quantity }}個</td><td>{{ item.note or '' }}</td></tr>
