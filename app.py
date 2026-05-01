@@ -1,6 +1,8 @@
 from flask import Flask, render_template, request, redirect, url_for, send_file, flash, session, jsonify
 from functools import wraps
 import os
+import sys
+import secrets as _secrets_mod
 from datetime import datetime, timedelta
 from io import BytesIO
 import openpyxl
@@ -9,6 +11,9 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import psycopg2
 import psycopg2.extras
 import requests
+from flask_wtf.csrf import CSRFProtect
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 
 app = Flask(__name__)
 
@@ -24,10 +29,17 @@ def get_prev_business_day(target_date, holidays):
     while d.weekday() >= 5 or d.strftime('%Y-%m-%d') in holidays:
         d -= timedelta(days=1)
     return d
-app.secret_key = os.environ.get("SECRET_KEY", "mekki-secret-key")
+_sk = os.environ.get("SECRET_KEY")
+if not _sk:
+    _sk = _secrets_mod.token_hex(32)
+    print("[警告] SECRET_KEY が未設定です。ランダムキーを使用します（再起動するとセッションが無効になります）", file=sys.stderr)
+app.secret_key = _sk
 app.permanent_session_lifetime = timedelta(minutes=30)
 DATABASE_URL = os.environ.get("DATABASE_URL")
 SESSION_TIMEOUT = 30  # 分
+
+csrf = CSRFProtect(app)
+limiter = Limiter(get_remote_address, app=app, default_limits=[], storage_uri="memory://")
 
 MEKKI_TYPES = [
     "ニッケルメッキ",
@@ -126,7 +138,7 @@ def init_db():
                 id SERIAL PRIMARY KEY,
                 name TEXT NOT NULL UNIQUE,
                 part_no TEXT NOT NULL DEFAULT '',
-                process_note TEXT NOT NULL DEFAULT '',
+                unit_price TEXT NOT NULL DEFAULT '',
                 note TEXT NOT NULL DEFAULT '',
                 created_at TEXT NOT NULL
             )
@@ -195,11 +207,25 @@ def init_db():
             if exists:
                 conn.execute(f"ALTER TABLE orders DROP COLUMN {col}")
 
-        # デフォルトユーザーが未登録なら作成
+        # products テーブルに unit_price カラムを追加（マイグレーション）
+        p_unit_price_exists = conn.execute(
+            "SELECT 1 FROM information_schema.columns WHERE table_name='products' AND column_name='unit_price'"
+        ).fetchone()
+        if not p_unit_price_exists:
+            conn.execute("ALTER TABLE products ADD COLUMN unit_price TEXT NOT NULL DEFAULT ''")
+
+        # users テーブルに must_change_password カラムを追加（マイグレーション）
+        u_exists = conn.execute(
+            "SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='must_change_password'"
+        ).fetchone()
+        if not u_exists:
+            conn.execute("ALTER TABLE users ADD COLUMN must_change_password BOOLEAN NOT NULL DEFAULT FALSE")
+
+        # デフォルトユーザーが未登録なら作成（初回ログイン時にパスワード変更を強制）
         if not conn.execute("SELECT id FROM users WHERE username='admin'").fetchone():
             conn.execute(
-                "INSERT INTO users (username, password_hash, created_at) VALUES (?, ?, ?)",
-                ("admin", generate_password_hash("admin1234", method="pbkdf2:sha256"), datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+                "INSERT INTO users (username, password_hash, must_change_password, created_at) VALUES (?, ?, ?, ?)",
+                ("admin", generate_password_hash("admin1234", method="pbkdf2:sha256"), True, datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
             )
 
 @app.before_request
@@ -213,6 +239,9 @@ def check_session_timeout():
                 flash(f"{SESSION_TIMEOUT}分間操作がなかったため自動ログアウトしました。", "info")
                 return redirect(url_for("login"))
         session["last_active"] = datetime.now().isoformat()
+        if session.get("must_change_password") and request.endpoint not in ("change_password", "logout", "static"):
+            flash("初回ログインのため、パスワードを変更してください。", "info")
+            return redirect(url_for("change_password"))
 
 def login_required(f):
     @wraps(f)
@@ -225,6 +254,7 @@ def login_required(f):
 # ── 認証 ────────────────────────────────────────────────────
 
 @app.route("/login", methods=["GET", "POST"])
+@limiter.limit("5 per minute")
 def login():
     if session.get("user_id"):
         return redirect(url_for("index"))
@@ -241,9 +271,14 @@ def login():
             session["user_id"] = user["id"]
             session["username"] = user["username"]
             session["last_active"] = datetime.now().isoformat()
+            session["must_change_password"] = bool(user.get("must_change_password"))
             return redirect(url_for("index"))
         error = "ユーザー名またはパスワードが正しくありません。"
     return render_template("login.html", error=error)
+
+@app.errorhandler(429)
+def ratelimit_handler(e):
+    return render_template("login.html", error="ログイン試行回数が多すぎます。1分後に再試行してください。"), 429
 
 @app.route("/logout")
 def logout():
@@ -270,9 +305,10 @@ def change_password():
         else:
             with get_db() as conn:
                 conn.execute(
-                    "UPDATE users SET password_hash=? WHERE id=?",
+                    "UPDATE users SET password_hash=?, must_change_password=FALSE WHERE id=?",
                     (generate_password_hash(new_pw, method="pbkdf2:sha256"), session["user_id"])
                 )
+            session["must_change_password"] = False
             success = "パスワードを変更しました。"
     return render_template("change_password.html", error=error, success=success)
 
@@ -616,13 +652,13 @@ def add_product():
     if not name:
         return jsonify({"success": False, "error": "品名が空です"}), 400
     part_no = request.form.get("part_no", "").strip()
-    process_note = request.form.get("process_note", "").strip()
+    unit_price = request.form.get("unit_price", "").strip()
     note = request.form.get("note", "").strip()
     try:
         with get_db() as conn:
             row = conn.execute(
-                "INSERT INTO products (name, part_no, process_note, note, created_at) VALUES (?, ?, ?, ?, ?) RETURNING id",
-                (name, part_no, process_note, note, datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+                "INSERT INTO products (name, part_no, unit_price, note, created_at) VALUES (?, ?, ?, ?, ?) RETURNING id",
+                (name, part_no, unit_price, note, datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
             ).fetchone()
         return jsonify({"success": True, "id": row["id"], "name": name, "part_no": part_no})
     except Exception:
@@ -635,11 +671,11 @@ def edit_product(product_id):
     if name:
         try:
             new_part_no = request.form.get("part_no", "").strip()
-            new_process_note = request.form.get("process_note", "").strip()
+            new_unit_price = request.form.get("unit_price", "").strip()
             new_note = request.form.get("note", "").strip()
             with get_db() as conn:
-                conn.execute("UPDATE products SET name=?, part_no=?, process_note=?, note=? WHERE id=?",
-                             (name, new_part_no, new_process_note, new_note, product_id))
+                conn.execute("UPDATE products SET name=?, part_no=?, unit_price=?, note=? WHERE id=?",
+                             (name, new_part_no, new_unit_price, new_note, product_id))
             flash(f"品名を「{name}」に更新しました。", "success")
         except Exception:
             flash("同じ品名が既に登録されています。", "error")

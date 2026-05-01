@@ -99,7 +99,7 @@
   <div class="add-grid">
     <input type="text" id="add-part-no" placeholder="品番">
     <input type="text" id="add-name" placeholder="品名（必須）">
-    <input type="text" id="add-process" placeholder="工程">
+    <input type="text" id="add-unit-price" placeholder="単価">
     <input type="text" id="add-note" placeholder="備考">
   </div>
   <div class="add-actions">
@@ -138,7 +138,7 @@
         <th style="width:48px;">#</th>
         <th style="width:12%;">品番</th>
         <th>品名</th>
-        <th style="width:18%;">工程</th>
+        <th style="width:18%;">単価</th>
         <th style="width:15%;">備考</th>
         <th style="width:13%;">登録日時</th>
         <th style="width:1%;"></th>
@@ -150,13 +150,13 @@
         <td style="color:var(--text-mute);">{{ loop.index }}</td>
         <td style="color:var(--text-mute); font-size:12px;">{{ p.part_no or '—' }}</td>
         <td>{{ p.name }}</td>
-        <td style="color:var(--text-mute); font-size:12px;">{{ p.process_note or '—' }}</td>
+        <td style="color:var(--text-mute); font-size:12px;">{{ p.unit_price or '—' }}</td>
         <td style="color:var(--text-mute); font-size:12px;">{{ p.note or '—' }}</td>
         <td style="color:var(--text-mute); font-size:12px;">{{ p.created_at }}</td>
         <td>
           <div class="row-actions">
             <button type="button" class="btn btn-secondary btn-sm"
-                    onclick="openEdit({{ p.id }}, '{{ p.name|e }}', '{{ p.part_no|e }}', '{{ p.process_note|e }}', '{{ p.note|e }}')">編集</button>
+                    onclick="openEdit({{ p.id }}, '{{ p.name|e }}', '{{ p.part_no|e }}', '{{ p.unit_price|e }}', '{{ p.note|e }}')">編集</button>
             <form method="post" action="{{ url_for('delete_product', product_id=p.id) }}"
                   onsubmit="return confirm('「{{ p.name }}」を削除しますか？\nこの操作は元に戻せません。')">
               <button type="submit" class="btn btn-danger btn-sm">削除</button>
@@ -184,8 +184,8 @@
       <input type="text" name="part_no" id="editPartNo">
       <label>品名 <span style="color:red;">*</span></label>
       <input type="text" name="name" id="editName" required>
-      <label>工程</label>
-      <input type="text" name="process_note" id="editProcessNote">
+      <label>単価</label>
+      <input type="text" name="unit_price" id="editUnitPrice">
       <label>備考</label>
       <input type="text" name="note" id="editNote">
       <div class="modal-actions">
@@ -205,7 +205,7 @@
     const fd = new FormData();
     fd.append('name', name);
     fd.append('part_no', document.getElementById('add-part-no').value.trim());
-    fd.append('process_note', document.getElementById('add-process').value.trim());
+    fd.append('unit_price', document.getElementById('add-unit-price').value.trim());
     fd.append('note', document.getElementById('add-note').value.trim());
     const res = await fetch('{{ url_for("add_product") }}', { method: 'POST', body: fd });
     const data = await res.json();
@@ -220,11 +220,11 @@
     if (e.key === 'Enter') { e.preventDefault(); submitAdd(); }
   });
 
-  function openEdit(id, name, partNo, processNote, note) {
+  function openEdit(id, name, partNo, unitPrice, note) {
     document.getElementById('editForm').action = '/products/edit/' + id;
     document.getElementById('editName').value = name;
     document.getElementById('editPartNo').value = partNo || '';
-    document.getElementById('editProcessNote').value = processNote || '';
+    document.getElementById('editUnitPrice').value = unitPrice || '';
     document.getElementById('editNote').value = note || '';
     document.getElementById('editModal').classList.add('open');
     setTimeout(() => document.getElementById('editPartNo').focus(), 50);
