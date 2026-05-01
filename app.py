@@ -254,6 +254,7 @@ def login_required(f):
 # ── 認証 ────────────────────────────────────────────────────
 
 @app.route("/login", methods=["GET", "POST"])
+@csrf.exempt
 @limiter.limit("5 per minute")
 def login():
     if session.get("user_id"):
