@@ -112,6 +112,7 @@
 <div class="card">
   <h3>Excelファイルからインポート</h3>
   <form method="post" action="{{ url_for('products') }}" enctype="multipart/form-data">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <div class="upload-area">
       <p>品名一覧の Excel ファイル（.xlsx）をアップロード</p>
       <label class="file-label" for="file-input">📂 ファイルを選択</label>
@@ -159,6 +160,7 @@
                     onclick="openEdit({{ p.id }}, '{{ p.name|e }}', '{{ p.part_no|e }}', '{{ p.unit_price|e }}', '{{ p.note|e }}')">編集</button>
             <form method="post" action="{{ url_for('delete_product', product_id=p.id) }}"
                   onsubmit="return confirm('「{{ p.name }}」を削除しますか？\nこの操作は元に戻せません。')">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <button type="submit" class="btn btn-danger btn-sm">削除</button>
             </form>
           </div>
@@ -180,6 +182,7 @@
   <div class="modal">
     <h3>品名を編集</h3>
     <form id="editForm" method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <label>品番</label>
       <input type="text" name="part_no" id="editPartNo">
       <label>品名 <span style="color:red;">*</span></label>
@@ -207,6 +210,7 @@
     fd.append('part_no', document.getElementById('add-part-no').value.trim());
     fd.append('unit_price', document.getElementById('add-unit-price').value.trim());
     fd.append('note', document.getElementById('add-note').value.trim());
+    fd.append('csrf_token', document.querySelector('meta[name="csrf-token"]').content);
     const res = await fetch('{{ url_for("add_product") }}', { method: 'POST', body: fd });
     const data = await res.json();
     if (data.success) {
