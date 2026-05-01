@@ -326,10 +326,25 @@
   const partNoToProduct = {
     {% for p in products %}{% if p.part_no %}"{{ p.part_no }}": "{{ p.name }}",{% endif %}{% endfor %}
   };
+  const productToUnitPrice = {
+    {% for p in products %}{% if p.unit_price %}"{{ p.name|e }}": "{{ p.unit_price|e }}",{% endif %}{% endfor %}
+  };
+
+  function fillUnitPrice(productName) {
+    const price = productToUnitPrice[productName];
+    if (price) document.querySelector('input[name="unit_price"]').value = price;
+  }
 
   document.getElementById('part_no').addEventListener('change', function() {
     const name = partNoToProduct[this.value];
-    if (name) document.getElementById('product-select').value = name;
+    if (name) {
+      document.getElementById('product-select').value = name;
+      fillUnitPrice(name);
+    }
+  });
+
+  document.getElementById('product-select').addEventListener('change', function() {
+    fillUnitPrice(this.value);
   });
 
   function openModal(id) {

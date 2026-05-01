@@ -424,7 +424,7 @@ def new_order():
         return redirect(url_for("detail", order_id=new_id))
     with get_db() as conn:
         customers = conn.execute("SELECT name FROM customers ORDER BY name").fetchall()
-        products = conn.execute("SELECT name, part_no FROM products ORDER BY name").fetchall()
+        products = conn.execute("SELECT name, part_no, unit_price FROM products ORDER BY name").fetchall()
         subcontractors = conn.execute("SELECT id, name FROM subcontractors ORDER BY name").fetchall()
     return render_template("new.html", mekki_types=MEKKI_TYPES, mekki_lines=MEKKI_LINES,
                            customers=customers, products=products, subcontractors=subcontractors)
@@ -466,7 +466,7 @@ def edit_order(order_id):
         return redirect(url_for("detail", order_id=order_id))
     with get_db() as conn:
         customers = conn.execute("SELECT name FROM customers ORDER BY name").fetchall()
-        products = conn.execute("SELECT name, part_no FROM products ORDER BY name").fetchall()
+        products = conn.execute("SELECT name, part_no, unit_price FROM products ORDER BY name").fetchall()
         subcontractors = conn.execute("SELECT id, name FROM subcontractors ORDER BY name").fetchall()
     t_from, t_to = parse_thickness(order["mekki_thickness"])
     return render_template("edit.html", order=order, mekki_types=MEKKI_TYPES, mekki_lines=MEKKI_LINES,
@@ -873,7 +873,7 @@ def edit_order_multi(order_id):
 
     with get_db() as conn:
         customers = conn.execute("SELECT name FROM customers ORDER BY name").fetchall()
-        products = conn.execute("SELECT name, part_no FROM products ORDER BY name").fetchall()
+        products = conn.execute("SELECT name, part_no, unit_price FROM products ORDER BY name").fetchall()
         subcontractors = conn.execute("SELECT id, name FROM subcontractors ORDER BY name").fetchall()
     t_from, t_to = parse_thickness(order["mekki_thickness"])
     return render_template("edit_multi.html",
@@ -956,7 +956,7 @@ def new_order_multi():
 
     with get_db() as conn:
         customers = conn.execute("SELECT name FROM customers ORDER BY name").fetchall()
-        products = conn.execute("SELECT name, part_no FROM products ORDER BY name").fetchall()
+        products = conn.execute("SELECT name, part_no, unit_price FROM products ORDER BY name").fetchall()
         subcontractors = conn.execute("SELECT id, name FROM subcontractors ORDER BY name").fetchall()
     return render_template("new_multi.html",
                            mekki_types=MEKKI_TYPES,
@@ -1030,7 +1030,7 @@ def new_order_gaichuu():
 
     with get_db() as conn:
         customers = conn.execute("SELECT name FROM customers ORDER BY name").fetchall()
-        products = conn.execute("SELECT name, part_no FROM products ORDER BY name").fetchall()
+        products = conn.execute("SELECT name, part_no, unit_price FROM products ORDER BY name").fetchall()
     return render_template("new_gaichuu.html",
                            mekki_types=MEKKI_TYPES,
                            customers=customers,
