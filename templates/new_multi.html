@@ -244,10 +244,15 @@ const partNoToProduct = {
 const productToUnitPrice = {
   {% for p in products %}{% if p.unit_price %}"{{ p.name|e }}": "{{ p.unit_price|e }}",{% endif %}{% endfor %}
 };
+const productToNote = {
+  {% for p in products %}{% if p.note %}"{{ p.name|e }}": "{{ p.note|e }}",{% endif %}{% endfor %}
+};
 
-function fillRowUnitPrice(row, productName) {
+function fillRowFromProduct(row, productName) {
   const price = productToUnitPrice[productName];
   if (price) row.querySelector('input[name="unit_price[]"]').value = price;
+  const note = productToNote[productName];
+  if (note) row.querySelector('input[name="note[]"]').value = note;
 }
 
 document.querySelectorAll('.product-input').forEach(function(input) {
@@ -258,7 +263,7 @@ document.querySelectorAll('.product-input').forEach(function(input) {
     if (productMap[selectedName] && productMap[selectedName] !== '') {
       partNoInput.value = productMap[selectedName];
     }
-    fillRowUnitPrice(row, selectedName);
+    fillRowFromProduct(row, selectedName);
   });
 });
 document.querySelectorAll('.part-no-input').forEach(function(input) {
@@ -268,7 +273,7 @@ document.querySelectorAll('.part-no-input').forEach(function(input) {
     const name = partNoToProduct[this.value];
     if (name) {
       productInput.value = name;
-      fillRowUnitPrice(row, name);
+      fillRowFromProduct(row, name);
     }
   });
 });
