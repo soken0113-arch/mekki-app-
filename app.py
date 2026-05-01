@@ -662,8 +662,10 @@ def add_product():
                 (name, part_no, unit_price, note, datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
             ).fetchone()
         return jsonify({"success": True, "id": row["id"], "name": name, "part_no": part_no})
-    except Exception:
+    except psycopg2.IntegrityError:
         return jsonify({"success": False, "error": "この品名はすでに登録されています"}), 409
+    except Exception as e:
+        return jsonify({"success": False, "error": f"DB エラー: {e}"}), 500
 
 @app.route("/products/edit/<int:product_id>", methods=["POST"])
 @login_required
