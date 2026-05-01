@@ -241,6 +241,14 @@ const productMap = {
 const partNoToProduct = {
   {% for p in products %}{% if p.part_no %}"{{ p.part_no }}": "{{ p.name }}",{% endif %}{% endfor %}
 };
+const productToUnitPrice = {
+  {% for p in products %}{% if p.unit_price %}"{{ p.name|e }}": "{{ p.unit_price|e }}",{% endif %}{% endfor %}
+};
+
+function fillRowUnitPrice(row, productName) {
+  const price = productToUnitPrice[productName];
+  if (price) row.querySelector('input[name="unit_price[]"]').value = price;
+}
 
 document.querySelectorAll('.product-input').forEach(function(input) {
   input.addEventListener('change', function() {
@@ -250,6 +258,7 @@ document.querySelectorAll('.product-input').forEach(function(input) {
     if (productMap[selectedName] && productMap[selectedName] !== '') {
       partNoInput.value = productMap[selectedName];
     }
+    fillRowUnitPrice(row, selectedName);
   });
 });
 document.querySelectorAll('.part-no-input').forEach(function(input) {
@@ -257,7 +266,10 @@ document.querySelectorAll('.part-no-input').forEach(function(input) {
     const row = this.closest('tr');
     const productInput = row.querySelector('.product-input');
     const name = partNoToProduct[this.value];
-    if (name) productInput.value = name;
+    if (name) {
+      productInput.value = name;
+      fillRowUnitPrice(row, name);
+    }
   });
 });
 </script>
