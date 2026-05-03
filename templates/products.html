@@ -111,7 +111,7 @@
 <!-- Excelインポート -->
 <div class="card">
   <h3>Excelファイルからインポート</h3>
-  <form method="post" action="{{ url_for('products') }}" enctype="multipart/form-data">
+  <form method="post" action="{{ url_for('masters.products') }}" enctype="multipart/form-data">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <div class="upload-area">
       <p>品名一覧の Excel ファイル（.xlsx）をアップロード</p>
@@ -158,7 +158,7 @@
           <div class="row-actions">
             <button type="button" class="btn btn-secondary btn-sm"
                     onclick="openEdit({{ p.id }}, '{{ p.name|e }}', '{{ p.part_no|e }}', '{{ p.unit_price|e }}', '{{ p.note|e }}')">編集</button>
-            <form method="post" action="{{ url_for('delete_product', product_id=p.id) }}"
+            <form method="post" action="{{ url_for('masters.delete_product', product_id=p.id) }}"
                   onsubmit="return confirm('「{{ p.name }}」を削除しますか？\nこの操作は元に戻せません。')">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <button type="submit" class="btn btn-danger btn-sm">削除</button>
@@ -211,7 +211,7 @@
     fd.append('unit_price', document.getElementById('add-unit-price').value.trim());
     fd.append('note', document.getElementById('add-note').value.trim());
     fd.append('csrf_token', document.querySelector('meta[name="csrf-token"]').content);
-    const res = await fetch('{{ url_for("add_product") }}', { method: 'POST', body: fd });
+    const res = await fetch('{{ url_for("masters.add_product") }}', { method: 'POST', body: fd });
     const data = await res.json();
     if (data.success) {
       location.reload();

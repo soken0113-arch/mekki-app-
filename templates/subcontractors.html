@@ -97,7 +97,7 @@
           <div class="row-actions">
             <button type="button" class="btn btn-secondary btn-sm"
                     onclick="openEdit({{ s.id }}, '{{ s.name|e }}')">編集</button>
-            <form method="post" action="{{ url_for('delete_subcontractor', sub_id=s.id) }}"
+            <form method="post" action="{{ url_for('masters.delete_subcontractor', sub_id=s.id) }}"
                   onsubmit="return confirm('「{{ s.name }}」を削除しますか？\nこの操作は元に戻せません。')">
               <button type="submit" class="btn btn-danger btn-sm">削除</button>
             </form>
@@ -138,7 +138,7 @@
     if (!name) { errEl.textContent = '外注先名を入力してください'; errEl.style.display = 'block'; return; }
     const fd = new FormData();
     fd.append('name', name);
-    const res = await fetch('{{ url_for("add_subcontractor") }}', { method: 'POST', body: fd });
+    const res = await fetch('{{ url_for("masters.add_subcontractor") }}', { method: 'POST', body: fd });
     const data = await res.json();
     if (data.success) {
       location.reload();

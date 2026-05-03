@@ -30,7 +30,7 @@
 
 <div class="toolbar">
   <span class="count-badge">{{ shipments | length }} 件</span>
-  <a href="{{ url_for('export_shipments_excel') }}" class="btn btn-secondary btn-sm">📥 Excelダウンロード</a>
+  <a href="{{ url_for('shipments.export_shipments_excel') }}" class="btn btn-secondary btn-sm">📥 Excelダウンロード</a>
 </div>
 
 <div class="card">
@@ -61,7 +61,7 @@
           {% endif %}
         </td>
         <td>
-          <form method="POST" action="{{ url_for('delete_shipment', shipment_id=s.id) }}"
+          <form method="POST" action="{{ url_for('shipments.delete_shipment', shipment_id=s.id) }}"
                 onsubmit="return confirm('この出荷レコードと受注データを完全に削除しますか？\n\n得意先：{{ s.customer }}\n\nこの操作は元に戻せません。')">
             <button type="submit" class="btn btn-danger btn-sm">削除</button>
           </form>

@@ -147,7 +147,7 @@
 {% block content %}
 <h1 class="page-title">新規受注登録</h1>
 
-<form method="post" action="{{ url_for('new_order') }}">
+<form method="post" action="{{ url_for('orders.new_order') }}">
 
   <!-- 受注情報 -->
   <div class="card form-section">
@@ -286,7 +286,7 @@
   </div>
 
   <div class="btn-group">
-    <a href="{{ url_for('index') }}" class="btn btn-secondary">一覧に戻る</a>
+    <a href="{{ url_for('orders.index') }}" class="btn btn-secondary">一覧に戻る</a>
     <button type="submit" class="btn btn-primary">登録する</button>
   </div>
 

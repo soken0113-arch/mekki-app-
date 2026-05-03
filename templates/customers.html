@@ -100,7 +100,7 @@
 <!-- Excelインポート -->
 <div class="card">
   <h3>Excelファイルからインポート</h3>
-  <form method="post" action="{{ url_for('customers') }}" enctype="multipart/form-data">
+  <form method="post" action="{{ url_for('masters.customers') }}" enctype="multipart/form-data">
     <div class="upload-area">
       <p>顧客名一覧の Excel ファイル（.xlsx）をアップロード</p>
       <label class="file-label" for="file-input">📂 ファイルを選択</label>
@@ -140,7 +140,7 @@
           <div class="row-actions">
             <button type="button" class="btn btn-secondary btn-sm"
                     onclick="openEdit({{ c.id }}, '{{ c.name|e }}')">編集</button>
-            <form method="post" action="{{ url_for('delete_customer', customer_id=c.id) }}"
+            <form method="post" action="{{ url_for('masters.delete_customer', customer_id=c.id) }}"
                   onsubmit="return confirm('「{{ c.name }}」を削除しますか？\nこの操作は元に戻せません。')">
               <button type="submit" class="btn btn-danger btn-sm">削除</button>
             </form>
@@ -181,7 +181,7 @@
     if (!name) { errEl.textContent = '顧客名を入力してください'; errEl.style.display = 'block'; return; }
     const fd = new FormData();
     fd.append('name', name);
-    const res = await fetch('{{ url_for("add_customer") }}', { method: 'POST', body: fd });
+    const res = await fetch('{{ url_for("masters.add_customer") }}', { method: 'POST', body: fd });
     const data = await res.json();
     if (data.success) {
       location.reload();

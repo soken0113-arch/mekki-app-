@@ -75,7 +75,7 @@
 {% block content %}
 <h1 class="page-title">外注登録 <span class="gaichuu-badge">外注</span></h1>
 
-<form method="POST" action="{{ url_for('new_order_gaichuu') }}">
+<form method="POST" action="{{ url_for('orders.new_order_gaichuu') }}">
 
   <div class="card form-section">
     <h3>受注情報</h3>
@@ -175,7 +175,7 @@
   </div>
 
   <div class="btn-group">
-    <a href="{{ url_for('index') }}" class="btn btn-secondary">一覧に戻る</a>
+    <a href="{{ url_for('orders.index') }}" class="btn btn-secondary">一覧に戻る</a>
     <button type="submit" class="btn btn-primary">登録する</button>
   </div>
 

@@ -106,7 +106,7 @@
 {% block content %}
 <h1 class="page-title">新規登録（複数品目）</h1>
 
-<form method="POST" action="{{ url_for('new_order_multi') }}">
+<form method="POST" action="{{ url_for('orders.new_order_multi') }}">
 
   <!-- ヘッダー情報 -->
   <div class="card form-section">
@@ -224,7 +224,7 @@
   </div>
 
   <div class="btn-group">
-    <a href="{{ url_for('index') }}" class="btn btn-secondary">一覧に戻る</a>
+    <a href="{{ url_for('orders.index') }}" class="btn btn-secondary">一覧に戻る</a>
     <button type="submit" class="btn btn-primary">登録する</button>
   </div>
 

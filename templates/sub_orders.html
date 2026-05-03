@@ -96,8 +96,8 @@
     <div class="count-badge">全 <strong>{{ orders|length }}</strong> 件</div>
   </div>
   <div class="toolbar-right">
-    <a href="{{ url_for('new_order') }}" class="btn btn-primary">＋ 新規登録</a>
-    <a href="{{ url_for('new_order_multi') }}" class="btn btn-primary">＋ 新規登録（複数品目）</a>
+    <a href="{{ url_for('orders.new_order') }}" class="btn btn-primary">＋ 新規登録</a>
+    <a href="{{ url_for('orders.new_order_multi') }}" class="btn btn-primary">＋ 新規登録（複数品目）</a>
   </div>
 </div>
 
@@ -135,15 +135,15 @@
         <td>
           <div class="row-actions">
             {% if order.product == '複数品目' %}
-            <a href="{{ url_for('detail_multi', order_id=order.id) }}" class="btn btn-secondary btn-sm">詳細</a>
+            <a href="{{ url_for('orders.detail_multi', order_id=order.id) }}" class="btn btn-secondary btn-sm">詳細</a>
             {% else %}
-            <a href="{{ url_for('detail', order_id=order.id) }}" class="btn btn-secondary btn-sm">詳細</a>
+            <a href="{{ url_for('orders.detail', order_id=order.id) }}" class="btn btn-secondary btn-sm">詳細</a>
             {% endif %}
-            <form method="POST" action="{{ url_for('ship_order', order_id=order.id) }}"
+            <form method="POST" action="{{ url_for('shipments.ship_order', order_id=order.id) }}"
                   onsubmit="return confirm('この受注を出荷完了にしますか？\n\n外注先：{{ order.subcontractor_name }}\n\nこの操作は元に戻せません。')">
               <button type="submit" class="btn btn-ship btn-sm">出荷</button>
             </form>
-            <form method="POST" action="{{ url_for('delete', order_id=order.id) }}"
+            <form method="POST" action="{{ url_for('orders.delete', order_id=order.id) }}"
                   onsubmit="return confirm('この受注を削除しますか？\n\n外注先：{{ order.subcontractor_name }}\n\nこの操作は元に戻せません。')">
               <button type="submit" class="btn btn-danger btn-sm">削除</button>
             </form>

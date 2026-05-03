@@ -15,21 +15,21 @@
     <div class="user-info">
       {% if session.get('username') %}
         {{ session.get('username') }}
-        <a href="{{ url_for('change_password') }}">パスワード変更</a>
-        <a href="{{ url_for('logout') }}">ログアウト</a>
+        <a href="{{ url_for('auth.change_password') }}">パスワード変更</a>
+        <a href="{{ url_for('auth.logout') }}">ログアウト</a>
       {% endif %}
     </div>
   </header>
 
   <nav class="app-nav">
-    <a href="{{ url_for('index') }}" class="{% if request.endpoint == 'index' %}active{% endif %}">受注一覧</a>
-    <a href="{{ url_for('sub_orders_list') }}" class="{% if request.endpoint == 'sub_orders_list' %}active{% endif %}">外注一覧</a>
-    <a href="{{ url_for('new_order') }}" class="{% if request.endpoint == 'new_order' %}active{% endif %}">新規登録</a>
-    <a href="{{ url_for('new_order_multi') }}" class="{% if request.endpoint == 'new_order_multi' %}active{% endif %}">新規登録（複数品目）</a>
-    <a href="{{ url_for('customers') }}" class="{% if request.endpoint == 'customers' %}active{% endif %}">顧客マスタ</a>
-    <a href="{{ url_for('products') }}" class="{% if request.endpoint == 'products' %}active{% endif %}">品名マスタ</a>
-    <a href="{{ url_for('subcontractors') }}" class="{% if request.endpoint == 'subcontractors' %}active{% endif %}">外注先マスタ</a>
-    <a href="{{ url_for('shipments_list') }}" class="{% if request.endpoint == 'shipments_list' %}active{% endif %}">出荷管理</a>
+    <a href="{{ url_for('orders.index') }}" class="{% if request.endpoint == 'index' %}active{% endif %}">受注一覧</a>
+    <a href="{{ url_for('orders.sub_orders_list') }}" class="{% if request.endpoint == 'sub_orders_list' %}active{% endif %}">外注一覧</a>
+    <a href="{{ url_for('orders.new_order') }}" class="{% if request.endpoint == 'new_order' %}active{% endif %}">新規登録</a>
+    <a href="{{ url_for('orders.new_order_multi') }}" class="{% if request.endpoint == 'new_order_multi' %}active{% endif %}">新規登録（複数品目）</a>
+    <a href="{{ url_for('masters.customers') }}" class="{% if request.endpoint == 'customers' %}active{% endif %}">顧客マスタ</a>
+    <a href="{{ url_for('masters.products') }}" class="{% if request.endpoint == 'products' %}active{% endif %}">品名マスタ</a>
+    <a href="{{ url_for('masters.subcontractors') }}" class="{% if request.endpoint == 'subcontractors' %}active{% endif %}">外注先マスタ</a>
+    <a href="{{ url_for('shipments.shipments_list') }}" class="{% if request.endpoint == 'shipments_list' %}active{% endif %}">出荷管理</a>
   </nav>
   {% endblock %}
 
