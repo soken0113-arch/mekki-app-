@@ -223,6 +223,7 @@
       min-height: 0;
     }
     .tag-row:last-child { border-bottom: none; }
+    .tag-row.top { border-top: none; }
     .tag-cell {
       display: flex;
       border-right: 1px solid #000;
@@ -304,8 +305,14 @@
         <div class="field-value">{{ order.customer }}</div>
       </div>
       <div class="field full field-hilite">
-        <div class="field-label">めっきの種類</div>
-        <div class="field-value">{{ order.mekki_type }}</div>
+        <div style="flex:1;display:flex;align-items:stretch;border-right:2px solid #000;overflow:hidden;">
+          <div class="field-label">めっきの種類</div>
+          <div class="field-value">{{ order.mekki_type }}</div>
+        </div>
+        <div style="flex:1;display:flex;align-items:stretch;overflow:hidden;">
+          <div class="field-label">備考</div>
+          <div class="field-value">{{ order.note if order.note else '—' }}</div>
+        </div>
       </div>
       <div class="field"><div class="field-label">めっき膜厚</div><div class="field-value">{{ order.mekki_thickness if order.mekki_thickness else '—' }}</div></div>
       <div class="field"><div class="field-label">材質（番手）</div><div class="field-value">{{ order.material if order.material else '—' }}</div></div>
@@ -346,8 +353,14 @@
         <div class="field-value">{{ order.customer }}</div>
       </div>
       <div class="field full field-hilite">
-        <div class="field-label">めっきの種類</div>
-        <div class="field-value">{{ order.mekki_type }}</div>
+        <div style="flex:1;display:flex;align-items:stretch;border-right:2px solid #000;overflow:hidden;">
+          <div class="field-label">めっきの種類</div>
+          <div class="field-value">{{ order.mekki_type }}</div>
+        </div>
+        <div style="flex:1;display:flex;align-items:stretch;overflow:hidden;">
+          <div class="field-label">備考</div>
+          <div class="field-value">{{ order.note if order.note else '—' }}</div>
+        </div>
       </div>
       <div class="field"><div class="field-label">めっき膜厚</div><div class="field-value">{{ order.mekki_thickness if order.mekki_thickness else '—' }}</div></div>
       <div class="field"><div class="field-label">材質（番手）</div><div class="field-value">{{ order.material if order.material else '—' }}</div></div>
@@ -387,8 +400,14 @@
         <div class="field-value">{{ order.customer }}</div>
       </div>
       <div class="field full field-hilite">
-        <div class="field-label">めっきの種類</div>
-        <div class="field-value">{{ order.mekki_type }}</div>
+        <div style="flex:1;display:flex;align-items:stretch;border-right:2px solid #000;overflow:hidden;">
+          <div class="field-label">めっきの種類</div>
+          <div class="field-value">{{ order.mekki_type }}</div>
+        </div>
+        <div style="flex:1;display:flex;align-items:stretch;overflow:hidden;">
+          <div class="field-label">備考</div>
+          <div class="field-value">{{ order.note if order.note else '—' }}</div>
+        </div>
       </div>
       <div class="field"><div class="field-label">めっき膜厚</div><div class="field-value">{{ order.mekki_thickness if order.mekki_thickness else '—' }}</div></div>
       <div class="field"><div class="field-label">材質（番手）</div><div class="field-value">{{ order.material if order.material else '—' }}</div></div>
@@ -419,9 +438,9 @@
         <span class="order-no">{{ order.order_no }}</span>
       </div>
     </div>
-    <div class="tag-big top">
-      <div class="lbl">お 届 け 先</div>
-      <div class="val">{{ order.customer }}</div>
+    <div class="tag-row top">
+      <div class="tag-cell big"><div class="lbl">顧 客 名</div><div class="val">{{ order.customer }}</div></div>
+      <div class="tag-cell"><div class="lbl">備考</div><div class="val">{{ order.note if order.note else '—' }}</div></div>
     </div>
     <div class="tag-row">
       <div class="tag-cell big"><div class="lbl">品名</div><div class="val">{{ order.product }}</div></div>
