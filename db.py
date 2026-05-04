@@ -3,6 +3,8 @@ import psycopg2.extras
 from sqlalchemy import create_engine
 
 DATABASE_URL = os.environ.get("DATABASE_URL", "")
+if not DATABASE_URL:
+    raise RuntimeError("DATABASE_URL 環境変数が設定されていません")
 if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
@@ -23,11 +25,13 @@ class _Conn:
         return self
 
     def __exit__(self, exc_type, *_):
-        if exc_type:
-            self._conn.rollback()
-        else:
-            self._conn.commit()
-        self._conn.close()
+        try:
+            if exc_type:
+                self._conn.rollback()
+            else:
+                self._conn.commit()
+        finally:
+            self._conn.close()
 
 
 def get_db():
