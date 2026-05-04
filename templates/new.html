@@ -101,6 +101,34 @@
     .items-table td input[type="number"] { width: 100%; }
     .modal { padding: 18px 16px; }
   }
+  /* 品番カスタムドロップダウン */
+  .part-no-wrap { position: relative; }
+  .part-no-dropdown {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    min-width: 280px;
+    max-height: 220px;
+    overflow-y: auto;
+    background: #fff;
+    border: 1px solid var(--navy-700);
+    border-radius: 3px;
+    z-index: 300;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    list-style: none;
+    padding: 0;
+    margin: 2px 0 0;
+  }
+  .part-no-dropdown.open { display: block; }
+  .part-no-dropdown li {
+    padding: 7px 10px;
+    font-size: 13px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .part-no-dropdown li:hover,
+  .part-no-dropdown li.active { background: #eef1f6; color: var(--navy-700); }
   /* モーダル */
   .modal-overlay {
     display: none;
@@ -255,11 +283,10 @@
         <tr>
           <td class="row-no">1</td>
           <td data-label="品番">
-            <input type="text" name="part_no" id="part_no" placeholder="品番"
-                   autocomplete="off" list="part-no-list">
-            <datalist id="part-no-list">
-              {% for p in products %}{% if p.part_no %}<option value="{{ p.part_no }}">{% endif %}{% endfor %}
-            </datalist>
+            <div class="part-no-wrap">
+              <input type="text" name="part_no" id="part_no" placeholder="品番" autocomplete="off">
+              <ul class="part-no-dropdown" id="part-no-dropdown"></ul>
+            </div>
           </td>
           <td data-label="品名">
             <div style="display:flex; gap:6px; align-items:center;">
@@ -341,13 +368,53 @@
     if (note) document.querySelector('textarea[name="note"]').value = note;
   }
 
-  document.getElementById('part_no').addEventListener('change', function() {
-    const name = partNoToProduct[this.value];
-    if (name) {
-      document.getElementById('product-select').value = name;
-      fillFromProduct(name);
+  const allPartNos = [{% for p in products %}{% if p.part_no %}"{{ p.part_no|e }}",{% endif %}{% endfor %}];
+
+  (function() {
+    const input = document.getElementById('part_no');
+    const list  = document.getElementById('part-no-dropdown');
+
+    function renderList(matches) {
+      list.innerHTML = '';
+      if (!matches.length) { list.classList.remove('open'); return; }
+      matches.forEach(function(p) {
+        const li = document.createElement('li');
+        li.textContent = p;
+        li.addEventListener('mousedown', function(e) {
+          e.preventDefault();
+          input.value = p;
+          list.classList.remove('open');
+          const name = partNoToProduct[p];
+          if (name) {
+            document.getElementById('product-select').value = name;
+            fillFromProduct(name);
+          }
+        });
+        list.appendChild(li);
+      });
+      list.classList.add('open');
     }
-  });
+
+    input.addEventListener('input', function() {
+      const val = this.value.trim().toLowerCase();
+      if (!val) { list.classList.remove('open'); return; }
+      renderList(allPartNos.filter(p => p.toLowerCase().includes(val)));
+    });
+    input.addEventListener('focus', function() {
+      const val = this.value.trim().toLowerCase();
+      if (val) renderList(allPartNos.filter(p => p.toLowerCase().includes(val)));
+    });
+    input.addEventListener('blur', function() {
+      setTimeout(function() { list.classList.remove('open'); }, 150);
+    });
+    input.addEventListener('change', function() {
+      const name = partNoToProduct[this.value];
+      if (name) {
+        document.getElementById('product-select').value = name;
+        fillFromProduct(name);
+      }
+    });
+  })();
 
   document.getElementById('product-select').addEventListener('change', function() {
     fillFromProduct(this.value);

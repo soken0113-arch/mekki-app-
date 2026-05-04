@@ -100,6 +100,34 @@
     }
     .items-table td input { width: 100%; }
   }
+  /* 品番カスタムドロップダウン */
+  .part-no-wrap { position: relative; }
+  .part-no-dropdown {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    min-width: 280px;
+    max-height: 220px;
+    overflow-y: auto;
+    background: #fff;
+    border: 1px solid var(--navy-700);
+    border-radius: 3px;
+    z-index: 300;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    list-style: none;
+    padding: 0;
+    margin: 2px 0 0;
+  }
+  .part-no-dropdown.open { display: block; }
+  .part-no-dropdown li {
+    padding: 7px 10px;
+    font-size: 13px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .part-no-dropdown li:hover,
+  .part-no-dropdown li.active { background: #eef1f6; color: var(--navy-700); }
 </style>
 {% endblock %}
 
@@ -207,7 +235,12 @@
         {% for i in range(1, 6) %}
         <tr>
           <td class="row-no">{{ i }}</td>
-          <td data-label="品番"><input type="text" name="part_no[]" class="part-no-input" placeholder="品番" autocomplete="off" list="part-no-list"></td>
+          <td data-label="品番">
+            <div class="part-no-wrap">
+              <input type="text" name="part_no[]" class="part-no-input" placeholder="品番" autocomplete="off">
+              <ul class="part-no-dropdown"></ul>
+            </div>
+          </td>
           <td data-label="品名"><input type="text" name="product[]" class="product-input" placeholder="品名" autocomplete="off" list="product-list-{{ i }}">
               <datalist id="product-list-{{ i }}">
                 {% for p in products %}<option value="{{ p.name }}" data-part-no="{{ p.part_no }}">{% endfor %}
@@ -229,11 +262,8 @@
     <button type="submit" class="btn btn-primary">登録する</button>
   </div>
 
-<datalist id="part-no-list">
-  {% for p in products %}{% if p.part_no %}<option value="{{ p.part_no }}">{% endif %}{% endfor %}
-</datalist>
-
 <script>
+const allPartNos = [{% for p in products %}{% if p.part_no %}"{{ p.part_no|e }}",{% endif %}{% endfor %}];
 const productMap = {
   {% for p in products %}
   "{{ p.name }}": "{{ p.part_no }}",
@@ -256,6 +286,57 @@ function fillRowFromProduct(row, productName) {
   if (note) row.querySelector('input[name="note[]"]').value = note;
 }
 
+function setupPartNoDropdown(input) {
+  const list = input.closest('.part-no-wrap').querySelector('.part-no-dropdown');
+
+  function renderList(matches) {
+    list.innerHTML = '';
+    if (!matches.length) { list.classList.remove('open'); return; }
+    matches.forEach(function(p) {
+      const li = document.createElement('li');
+      li.textContent = p;
+      li.addEventListener('mousedown', function(e) {
+        e.preventDefault();
+        input.value = p;
+        list.classList.remove('open');
+        const row = input.closest('tr');
+        const productInput = row.querySelector('.product-input');
+        const name = partNoToProduct[p];
+        if (name) {
+          productInput.value = name;
+          fillRowFromProduct(row, name);
+        }
+      });
+      list.appendChild(li);
+    });
+    list.classList.add('open');
+  }
+
+  input.addEventListener('input', function() {
+    const val = this.value.trim().toLowerCase();
+    if (!val) { list.classList.remove('open'); return; }
+    renderList(allPartNos.filter(p => p.toLowerCase().includes(val)));
+  });
+  input.addEventListener('focus', function() {
+    const val = this.value.trim().toLowerCase();
+    if (val) renderList(allPartNos.filter(p => p.toLowerCase().includes(val)));
+  });
+  input.addEventListener('blur', function() {
+    setTimeout(function() { list.classList.remove('open'); }, 150);
+  });
+  input.addEventListener('change', function() {
+    const row = this.closest('tr');
+    const productInput = row.querySelector('.product-input');
+    const name = partNoToProduct[this.value];
+    if (name) {
+      productInput.value = name;
+      fillRowFromProduct(row, name);
+    }
+  });
+}
+
+document.querySelectorAll('.part-no-input').forEach(setupPartNoDropdown);
+
 document.querySelectorAll('.product-input').forEach(function(input) {
   input.addEventListener('change', function() {
     const row = this.closest('tr');
@@ -265,17 +346,6 @@ document.querySelectorAll('.product-input').forEach(function(input) {
       partNoInput.value = productMap[selectedName];
     }
     fillRowFromProduct(row, selectedName);
-  });
-});
-document.querySelectorAll('.part-no-input').forEach(function(input) {
-  input.addEventListener('change', function() {
-    const row = this.closest('tr');
-    const productInput = row.querySelector('.product-input');
-    const name = partNoToProduct[this.value];
-    if (name) {
-      productInput.value = name;
-      fillRowFromProduct(row, name);
-    }
   });
 });
 </script>
