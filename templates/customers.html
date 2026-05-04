@@ -199,7 +199,8 @@
   });
 
   function openEdit(id, name) {
-    document.getElementById('editForm').action = '/masters/customers/edit/' + id;
+    const editUrl = '{{ url_for("masters.edit_customer", customer_id="__ID__") }}'.replace('__ID__', id);
+    document.getElementById('editForm').action = editUrl;
     document.getElementById('editName').value = name;
     document.getElementById('editModal').classList.add('open');
     setTimeout(() => document.getElementById('editName').focus(), 50);
