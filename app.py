@@ -4,7 +4,6 @@ import secrets as _secrets_mod
 from datetime import datetime, timedelta
 from flask import Flask, redirect, url_for, session, flash, request, render_template
 from extensions import csrf, limiter
-from db import init_db
 from blueprints.auth import bp as auth_bp
 from blueprints.orders import bp as orders_bp
 from blueprints.masters import bp as masters_bp
@@ -50,8 +49,6 @@ def check_session_timeout():
 def ratelimit_handler(e):
     return render_template("login.html", error="ログイン試行回数が多すぎます。1分後に再試行してください。"), 429
 
-
-init_db()
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5001, debug=True)
