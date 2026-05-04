@@ -141,10 +141,12 @@
             {% endif %}
             <form method="POST" action="{{ url_for('shipments.ship_order', order_id=order.id) }}"
                   onsubmit="return confirm('この受注を出荷完了にしますか？\n\n外注先：{{ order.subcontractor_name }}\n\nこの操作は元に戻せません。')">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <button type="submit" class="btn btn-ship btn-sm">出荷</button>
             </form>
             <form method="POST" action="{{ url_for('orders.delete', order_id=order.id) }}"
                   onsubmit="return confirm('この受注を削除しますか？\n\n外注先：{{ order.subcontractor_name }}\n\nこの操作は元に戻せません。')">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <button type="submit" class="btn btn-danger btn-sm">削除</button>
             </form>
           </div>

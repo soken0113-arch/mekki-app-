@@ -74,6 +74,7 @@
     <div class="order-no-label">受注番号：{{ order.order_no }}</div>
 
     <form method="post" action="{{ url_for('orders.edit_order', order_id=order.id) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
       <div class="form-group">
         <label>顧客名 <span class="required">*</span></label>

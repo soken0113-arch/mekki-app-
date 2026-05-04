@@ -1,42 +1,69 @@
 import os
 from datetime import datetime
-import psycopg2
-import psycopg2.extras
-import psycopg2.pool
 from werkzeug.security import generate_password_hash
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
-_db_pool = None
+USE_PG = bool(DATABASE_URL)
 
+if USE_PG:
+    import psycopg2
+    import psycopg2.extras
+    import psycopg2.pool
+    _db_pool = None
 
-def _get_pool():
-    global _db_pool
-    if _db_pool is None:
-        _db_pool = psycopg2.pool.ThreadedConnectionPool(minconn=1, maxconn=4, dsn=DATABASE_URL)
-    return _db_pool
+    def _get_pool():
+        global _db_pool
+        if _db_pool is None:
+            _db_pool = psycopg2.pool.ThreadedConnectionPool(minconn=1, maxconn=4, dsn=DATABASE_URL)
+        return _db_pool
 
+    class _Conn:
+        def __init__(self):
+            self._pool = _get_pool()
+            self._conn = self._pool.getconn()
 
-class _Conn:
-    def __init__(self):
-        self._pool = _get_pool()
-        self._conn = self._pool.getconn()
+        def execute(self, sql, params=()):
+            sql = sql.replace("?", "%s")
+            cur = self._conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            cur.execute(sql, params)
+            return cur
 
-    def execute(self, sql, params=()):
-        sql = sql.replace("?", "%s")
-        cur = self._conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        cur.execute(sql, params)
-        return cur
+        def __enter__(self):
+            return self
 
-    def __enter__(self):
-        return self
+        def __exit__(self, exc_type, *_):
+            if exc_type:
+                self._conn.rollback()
+                self._pool.putconn(self._conn, close=True)
+            else:
+                self._conn.commit()
+                self._pool.putconn(self._conn)
 
-    def __exit__(self, exc_type, *_):
-        if exc_type:
-            self._conn.rollback()
-            self._pool.putconn(self._conn, close=True)
-        else:
-            self._conn.commit()
-            self._pool.putconn(self._conn)
+else:
+    import sqlite3
+
+    class _Conn:
+        def __init__(self):
+            self._conn = sqlite3.connect(
+                os.path.join(os.path.dirname(__file__), "orders.db")
+            )
+            self._conn.row_factory = sqlite3.Row
+
+        def execute(self, sql, params=()):
+            # SERIALをINTEGERに変換
+            sql = sql.replace("SERIAL PRIMARY KEY", "INTEGER PRIMARY KEY AUTOINCREMENT")
+            sql = sql.replace("BOOLEAN", "INTEGER")
+            return self._conn.execute(sql, params)
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, *_):
+            if exc_type:
+                self._conn.rollback()
+            else:
+                self._conn.commit()
+            self._conn.close()
 
 
 def get_db():
@@ -90,7 +117,7 @@ def init_db():
                 id SERIAL PRIMARY KEY,
                 username TEXT NOT NULL UNIQUE,
                 password_hash TEXT NOT NULL,
-                must_change_password BOOLEAN NOT NULL DEFAULT FALSE,
+                must_change_password INTEGER NOT NULL DEFAULT 0,
                 created_at TEXT NOT NULL
             )
         """)
@@ -109,7 +136,7 @@ def init_db():
         conn.execute("""
             CREATE TABLE IF NOT EXISTS shipments (
                 id SERIAL PRIMARY KEY,
-                order_id INTEGER NOT NULL REFERENCES orders(id),
+                order_id INTEGER NOT NULL,
                 shipped_at TEXT NOT NULL,
                 shipped_by TEXT NOT NULL DEFAULT '',
                 note TEXT NOT NULL DEFAULT '',
@@ -126,6 +153,6 @@ def init_db():
         if not conn.execute("SELECT id FROM users WHERE username='admin'").fetchone():
             conn.execute(
                 "INSERT INTO users (username, password_hash, must_change_password, created_at) VALUES (?, ?, ?, ?)",
-                ("admin", generate_password_hash("admin1234", method="pbkdf2:sha256"), True,
+                ("admin", generate_password_hash("admin1234", method="pbkdf2:sha256"), 1,
                  datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
             )

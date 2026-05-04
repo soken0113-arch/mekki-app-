@@ -27,7 +27,7 @@ def login():
             session["user_id"] = user["id"]
             session["username"] = user["username"]
             session["last_active"] = datetime.now().isoformat()
-            session["must_change_password"] = bool(user.get("must_change_password"))
+            session["must_change_password"] = bool(user["must_change_password"])
             return redirect(url_for("orders.index"))
         error = "ユーザー名またはパスワードが正しくありません。"
     return render_template("login.html", error=error)

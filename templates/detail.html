@@ -114,12 +114,14 @@
     <form method="post" action="{{ url_for('shipments.ship_order', order_id=order.id) }}"
           onsubmit="return confirm('出荷完了として登録します。よろしいですか？')"
           style="display:inline;">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <button type="submit" class="btn btn-ship">✅ 出荷完了</button>
     </form>
   {% endif %}
   <form method="post" action="{{ url_for('orders.delete', order_id=order.id) }}"
         onsubmit="return confirm('この受注を削除してもよいですか？')"
         style="display:inline;">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <button type="submit" class="btn btn-danger">削除</button>
   </form>
 </div>

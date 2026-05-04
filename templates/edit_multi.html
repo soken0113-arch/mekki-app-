@@ -100,6 +100,7 @@
 <h1 class="page-title">編集（複数品目）</h1>
 
 <form method="POST" action="{{ url_for('orders.edit_order_multi', order_id=order.id) }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
   <!-- ヘッダー情報 -->
   <div class="card form-section">

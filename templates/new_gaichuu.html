@@ -76,6 +76,7 @@
 <h1 class="page-title">外注登録 <span class="gaichuu-badge">外注</span></h1>
 
 <form method="POST" action="{{ url_for('orders.new_order_gaichuu') }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
   <div class="card form-section">
     <h3>受注情報</h3>

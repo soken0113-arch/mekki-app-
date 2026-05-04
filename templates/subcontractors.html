@@ -99,6 +99,7 @@
                     onclick="openEdit({{ s.id }}, '{{ s.name|e }}')">編集</button>
             <form method="post" action="{{ url_for('masters.delete_subcontractor', sub_id=s.id) }}"
                   onsubmit="return confirm('「{{ s.name }}」を削除しますか？\nこの操作は元に戻せません。')">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <button type="submit" class="btn btn-danger btn-sm">削除</button>
             </form>
           </div>
@@ -120,6 +121,7 @@
   <div class="modal">
     <h3>外注先名を編集</h3>
     <form id="editForm" method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <label>外注先名</label>
       <input type="text" name="name" id="editName" required>
       <div class="modal-actions">
@@ -138,6 +140,7 @@
     if (!name) { errEl.textContent = '外注先名を入力してください'; errEl.style.display = 'block'; return; }
     const fd = new FormData();
     fd.append('name', name);
+    fd.append('csrf_token', document.querySelector('meta[name="csrf-token"]').content);
     const res = await fetch('{{ url_for("masters.add_subcontractor") }}', { method: 'POST', body: fd });
     const data = await res.json();
     if (data.success) {

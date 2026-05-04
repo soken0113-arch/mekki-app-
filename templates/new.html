@@ -148,6 +148,7 @@
 <h1 class="page-title">新規受注登録</h1>
 
 <form method="post" action="{{ url_for('orders.new_order') }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
   <!-- 受注情報 -->
   <div class="card form-section">
@@ -371,7 +372,10 @@
     if (!name) { errEl.textContent = '顧客名を入力してください'; errEl.style.display = 'block'; return; }
     const fd = new FormData();
     fd.append('name', name);
-    const res = await fetch('/customers/add', { method: 'POST', body: fd });
+    const res = await fetch('/masters/add_customer', {
+      method: 'POST', body: fd,
+      headers: { 'X-CSRFToken': '{{ csrf_token() }}' }
+    });
     const data = await res.json();
     if (data.success) {
       const dl = document.getElementById('customer-list');
@@ -396,7 +400,10 @@
     const fd = new FormData();
     fd.append('name', name);
     fd.append('part_no', partNo);
-    const res = await fetch('/products/add', { method: 'POST', body: fd });
+    const res = await fetch('/masters/add_product', {
+      method: 'POST', body: fd,
+      headers: { 'X-CSRFToken': '{{ csrf_token() }}' }
+    });
     const data = await res.json();
     if (data.success) {
       const dl = document.getElementById('product-list');

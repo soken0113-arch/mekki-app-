@@ -107,6 +107,7 @@
 <h1 class="page-title">新規登録（複数品目）</h1>
 
 <form method="POST" action="{{ url_for('orders.new_order_multi') }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
   <!-- ヘッダー情報 -->
   <div class="card form-section">

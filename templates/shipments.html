@@ -63,6 +63,7 @@
         <td>
           <form method="POST" action="{{ url_for('shipments.delete_shipment', shipment_id=s.id) }}"
                 onsubmit="return confirm('この出荷レコードと受注データを完全に削除しますか？\n\n得意先：{{ s.customer }}\n\nこの操作は元に戻せません。')">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button type="submit" class="btn btn-danger btn-sm">削除</button>
           </form>
         </td>
