@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}設定{% endblock %}
+
+{% block content %}
+<h1 class="page-title">設定</h1>
+<p class="page-sub">注文の締切時刻と、発注書に印字する仕出し先を設定します。</p>
+
+<div class="card" style="max-width:520px;">
+  <form method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="field">
+      <label for="cutoff_time">注文の締切時刻</label>
+      <input type="time" id="cutoff_time" name="cutoff_time" value="{{ cutoff_time }}" required>
+      <p class="muted" style="font-size:13px;margin-top:4px;">
+        提供日のこの時刻を過ぎると、社員はその日の注文を変更できなくなります（管理者は「発注集計」画面から代理入力できます）。
+      </p>
+    </div>
+    <div class="field">
+      <label for="shop_name">仕出し先の名称</label>
+      <input type="text" id="shop_name" name="shop_name" value="{{ shop_name }}" placeholder="例: ○○弁当店">
+      <p class="muted" style="font-size:13px;margin-top:4px;">発注書（画面・Excel）に表示されます。</p>
+    </div>
+    <button type="submit" class="btn btn-primary">保存</button>
+  </form>
+</div>
+{% endblock %}

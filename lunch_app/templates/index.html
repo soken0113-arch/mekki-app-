@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% block title %}昼食を注文{% endblock %}
+
+{% block content %}
+<h1 class="page-title">昼食を注文</h1>
+<p class="page-sub">数量を入れて「この内容で注文する」を押してください。締切前なら何度でも変更できます。</p>
+
+<div class="date-nav no-print">
+  <span class="current">{{ serve_date | date_ja_full }}</span>
+  <form method="get" action="{{ url_for('orders.index') }}">
+    <input type="date" name="date" value="{{ serve_date.isoformat() }}">
+    <button type="submit" class="btn btn-sm">表示</button>
+  </form>
+  {% if serve_date != today %}
+    <a class="btn btn-sm" href="{{ url_for('orders.index') }}">今日に戻る</a>
+  {% endif %}
+</div>
+
+{% if upcoming %}
+<div class="quick-dates no-print">
+  {% for d in upcoming %}
+    <a href="{{ url_for('orders.index', date=d.isoformat()) }}"
+       class="{{ 'active' if d == serve_date }}">{{ d | date_ja }}</a>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% if status.open %}
+  <div class="status-banner status-open">
+    <span>受付中</span>
+    <span style="font-weight:400;">締切 {{ status.deadline_text }}（毎日 {{ status.cutoff_text }} まで）</span>
+  </div>
+{% else %}
+  <div class="status-banner status-closed">
+    <span>締切済み</span>
+    <span style="font-weight:400;">{{ status.deadline_text }} で受付を終了しました。変更が必要な場合は担当者にご連絡ください。</span>
+  </div>
+{% endif %}
+
+{% if not menus %}
+  <div class="card"><div class="empty">この日の献立はまだ登録されていません。</div></div>
+{% else %}
+<form method="post" action="{{ url_for('orders.save') }}" id="order-form">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <input type="hidden" name="date" value="{{ serve_date.isoformat() }}">
+
+  <div class="menu-list">
+    {% for menu in menus %}
+      {% set order = my_orders.get(menu.id) %}
+      {% set qty = order.quantity if order else 0 %}
+      <div class="menu-row {{ 'ordered' if qty }}" data-price="{{ menu.price }}">
+        <div class="info">
+          <div class="name">{{ menu.menu_item.name }}</div>
+          {% if menu.menu_item.description %}
+            <div class="desc">{{ menu.menu_item.description }}</div>
+          {% endif %}
+          {% if menu.limit_count is not none %}
+            {% set left = menu.remaining %}
+            <div class="stock {{ 'low' if left <= 2 }}">
+              残り {{ left if left > 0 else 0 }} 個 / 上限 {{ menu.limit_count }} 個
+            </div>
+          {% endif %}
+        </div>
+        <div class="price">{{ menu.price | yen }} 円</div>
+        <div class="qty-picker">
+          <button type="button" class="qty-minus" {{ 'disabled' if not status.open }} aria-label="減らす">−</button>
+          <input type="number" name="qty_{{ menu.id }}" value="{{ qty }}"
+                 min="0" max="{{ max_qty }}" inputmode="numeric"
+                 {{ 'disabled' if not status.open }}>
+          <button type="button" class="qty-plus" {{ 'disabled' if not status.open }} aria-label="増やす">＋</button>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+
+  <div class="total-bar">
+    <div>
+      <div class="label" style="font-size:13px;color:var(--text-sub);">合計金額</div>
+      <div class="amount"><span id="total">{{ my_total | yen }}</span> 円</div>
+    </div>
+    <button type="submit" class="btn btn-primary" {{ 'disabled' if not status.open }}>
+      {{ 'この内容で注文する' if status.open else '締切済み（変更できません）' }}
+    </button>
+  </div>
+</form>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const form = document.getElementById('order-form');
+  if (form) {
+    const recalc = () => {
+      let total = 0;
+      form.querySelectorAll('.menu-row').forEach(row => {
+        const input = row.querySelector('input[type="number"]');
+        const qty = Math.max(0, parseInt(input.value || '0', 10) || 0);
+        total += qty * parseInt(row.dataset.price, 10);
+        row.classList.toggle('ordered', qty > 0);
+      });
+      document.getElementById('total').textContent = total.toLocaleString('ja-JP');
+    };
+
+    const step = (input, delta) => {
+      const max = parseInt(input.max, 10);
+      const next = (parseInt(input.value || '0', 10) || 0) + delta;
+      input.value = Math.min(Math.max(next, 0), max);
+      recalc();
+    };
+
+    form.querySelectorAll('.menu-row').forEach(row => {
+      const input = row.querySelector('input[type="number"]');
+      row.querySelector('.qty-minus').addEventListener('click', () => step(input, -1));
+      row.querySelector('.qty-plus').addEventListener('click', () => step(input, 1));
+      input.addEventListener('input', recalc);
+    });
+    recalc();
+  }
+</script>
+{% endblock %}

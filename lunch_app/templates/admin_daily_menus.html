@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}献立編成{% endblock %}
+
+{% block content %}
+<h1 class="page-title">献立編成</h1>
+<p class="page-sub">その日に提供するメニューを選びます。ここで選んだものが社員の注文画面に表示されます。</p>
+
+<div class="date-nav">
+  <span class="current">{{ serve_date | date_ja_full }}</span>
+  <form method="get" action="{{ url_for('admin.daily_menus') }}">
+    <input type="date" name="date" value="{{ serve_date.isoformat() }}">
+    <button type="submit" class="btn btn-sm">表示</button>
+  </form>
+  <a class="btn btn-sm" href="{{ url_for('reports.daily', date=serve_date.isoformat()) }}">この日の集計を見る</a>
+</div>
+
+<div class="card">
+  <h3>他の日からコピー</h3>
+  <form method="post" action="{{ url_for('admin.copy_daily_menus') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="date" value="{{ serve_date.isoformat() }}">
+    <div class="form-row">
+      <div style="flex:0 1 200px;">
+        <label for="copy_from">コピー元の日付</label>
+        <input type="date" id="copy_from" name="copy_from" required>
+      </div>
+      <div style="flex:0 0 auto;">
+        <button type="submit" class="btn">この日にコピー</button>
+      </div>
+    </div>
+    <p class="muted" style="font-size:13px;margin-top:6px;">既に登録済みのメニューは上書きされません。</p>
+  </form>
+</div>
+
+<form method="post" action="{{ url_for('admin.save_daily_menus') }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <input type="hidden" name="date" value="{{ serve_date.isoformat() }}">
+  <div class="card">
+    <h3>{{ serve_date | date_ja }} に提供するメニュー</h3>
+    {% if not items %}
+      <div class="empty">
+        有効なメニューがありません。先に<a href="{{ url_for('admin.menu_items') }}">メニューマスタ</a>で登録してください。
+      </div>
+    {% else %}
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:80px;">提供</th>
+            <th>メニュー名</th>
+            <th style="width:130px;">当日の価格</th>
+            <th style="width:150px;">数量上限</th>
+            <th style="width:110px;">注文済み</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in items %}
+            {% set dm = current.get(item.id) %}
+            <tr>
+              <td>
+                <label class="check">
+                  <input type="checkbox" name="use_{{ item.id }}" {{ 'checked' if dm }}>
+                  <span>提供</span>
+                </label>
+              </td>
+              <td>
+                <strong>{{ item.name }}</strong>
+                {% if item.description %}<div class="muted" style="font-size:12px;">{{ item.description }}</div>{% endif %}
+              </td>
+              <td><input type="number" name="price_{{ item.id }}" min="0"
+                         value="{{ dm.price if dm else item.price }}"></td>
+              <td><input type="number" name="limit_{{ item.id }}" min="0" placeholder="無制限"
+                         value="{{ dm.limit_count if dm and dm.limit_count is not none else '' }}"></td>
+              <td class="num">{{ ordered.get(item.id, 0) }} 個</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="btn-row" style="margin-top:14px;">
+      <button type="submit" class="btn btn-primary">献立を保存</button>
+      <span class="muted" style="font-size:13px;">締切は毎日 {{ cutoff }}（「設定」で変更できます）</span>
+    </div>
+    {% endif %}
+  </div>
+</form>
+{% endblock %}

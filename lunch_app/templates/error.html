@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block title %}エラー {{ code }}{% endblock %}
+
+{% block content %}
+<h1 class="page-title">{{ code }}</h1>
+<p class="page-sub">{{ message }}</p>
+<a class="btn btn-primary" href="{{ url_for('orders.index') }}">注文画面に戻る</a>
+{% endblock %}

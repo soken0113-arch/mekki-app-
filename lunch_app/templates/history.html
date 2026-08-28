@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}私の注文履歴{% endblock %}
+
+{% block content %}
+<h1 class="page-title">私の注文履歴</h1>
+<p class="page-sub">月ごとの注文内容と支払い金額です。</p>
+
+<div class="date-nav no-print">
+  <a class="btn btn-sm" href="{{ url_for('orders.history', month=prev_month.strftime('%Y-%m')) }}">← 前の月</a>
+  <span class="current">{{ month | month_ja }}</span>
+  <a class="btn btn-sm" href="{{ url_for('orders.history', month=next_month.strftime('%Y-%m')) }}">次の月 →</a>
+  <form method="get" action="{{ url_for('orders.history') }}">
+    <input type="month" name="month" value="{{ month.strftime('%Y-%m') }}">
+    <button type="submit" class="btn btn-sm">表示</button>
+  </form>
+</div>
+
+<div class="stat-grid">
+  <div class="stat"><div class="label">食数</div><div class="value">{{ total_count }} 食</div></div>
+  <div class="stat"><div class="label">合計金額</div><div class="value">{{ total_amount | yen }} 円</div></div>
+</div>
+
+<div class="card">
+  <h3>明細</h3>
+  {% if not by_date %}
+    <div class="empty">この月の注文はありません。</div>
+  {% else %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>日付</th><th>メニュー</th><th class="num">数量</th><th class="num">金額</th><th>備考</th></tr>
+      </thead>
+      <tbody>
+        {% for serve_date, orders in by_date.items() %}
+          {% for order in orders %}
+          <tr>
+            <td>{% if loop.first %}{{ serve_date | date_ja }}{% endif %}</td>
+            <td>{{ order.daily_menu.menu_item.name }}</td>
+            <td class="num">{{ order.quantity }}</td>
+            <td class="num">{{ order.subtotal | yen }} 円</td>
+            <td class="muted">{{ order.note }}</td>
+          </tr>
+          {% endfor %}
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr><td colspan="2">合計</td><td class="num">{{ total_count }}</td><td class="num">{{ total_amount | yen }} 円</td><td></td></tr>
+      </tfoot>
+    </table>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

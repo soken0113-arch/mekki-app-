@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block title %}社員マスタ{% endblock %}
+
+{% block content %}
+<h1 class="page-title">社員マスタ</h1>
+<p class="page-sub">昼食を注文する社員を登録します。初期パスワードは初回ログイン時に本人が変更します。</p>
+
+<div class="card">
+  <h3>社員を追加</h3>
+  <form method="post" action="{{ url_for('admin.add_user') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="form-row">
+      <div style="flex:0 1 130px;">
+        <label for="employee_no">社員番号</label>
+        <input type="text" id="employee_no" name="employee_no">
+      </div>
+      <div style="flex:1 1 150px;">
+        <label for="name">氏名 <span class="muted">（必須）</span></label>
+        <input type="text" id="name" name="name" required>
+      </div>
+      <div style="flex:1 1 130px;">
+        <label for="department">部署</label>
+        <input type="text" id="department" name="department">
+      </div>
+      <div style="flex:1 1 140px;">
+        <label for="username">ログインID <span class="muted">（必須）</span></label>
+        <input type="text" id="username" name="username" required>
+      </div>
+      <div style="flex:1 1 160px;">
+        <label for="password">初期パスワード <span class="muted">（8文字以上）</span></label>
+        <input type="text" id="password" name="password" minlength="8" required>
+      </div>
+      <div style="flex:0 0 auto;">
+        <label class="check" style="margin-bottom:10px;">
+          <input type="checkbox" name="is_admin"><span>管理者</span>
+        </label>
+      </div>
+      <div style="flex:0 0 auto;">
+        <button type="submit" class="btn btn-primary">追加</button>
+      </div>
+    </div>
+  </form>
+</div>
+
+<div class="card">
+  <h3>登録済み社員（{{ users | length }} 名）</h3>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:110px;">社員番号</th>
+          <th style="min-width:130px;">氏名</th>
+          <th style="min-width:120px;">部署</th>
+          <th style="width:130px;">ログインID</th>
+          <th style="width:80px;">管理者</th>
+          <th style="width:80px;">利用可</th>
+          <th style="width:220px;">パスワード再設定</th>
+          <th style="width:150px;"></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for user in users %}
+        {% set f = 'user-edit-' ~ user.id %}
+        <tr>
+          <td><input type="text" form="{{ f }}" name="employee_no" value="{{ user.employee_no }}"></td>
+          <td><input type="text" form="{{ f }}" name="name" value="{{ user.name }}" required></td>
+          <td><input type="text" form="{{ f }}" name="department" value="{{ user.department }}"></td>
+          <td>
+            {{ user.username }}
+            {% if user.must_change_password %}<div class="muted" style="font-size:11px;">初回変更待ち</div>{% endif %}
+          </td>
+          <td><label class="check"><input type="checkbox" form="{{ f }}" name="is_admin" {{ 'checked' if user.is_admin }}><span></span></label></td>
+          <td><label class="check"><input type="checkbox" form="{{ f }}" name="is_active" {{ 'checked' if user.is_active }}><span></span></label></td>
+          <td>
+            <div class="btn-row">
+              <input type="password" form="user-pw-{{ user.id }}" name="password" minlength="8"
+                     placeholder="新パスワード" style="width:130px;">
+              <button type="submit" form="user-pw-{{ user.id }}" class="btn btn-sm">再設定</button>
+            </div>
+          </td>
+          <td>
+            <div class="btn-row">
+              <button type="submit" form="{{ f }}" class="btn btn-sm">保存</button>
+              <button type="submit" form="user-del-{{ user.id }}" class="btn btn-sm btn-danger">削除</button>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {# テーブルの行に <form> は置けないため、フォーム本体をここに置き form 属性で紐づける #}
+  {% for user in users %}
+    <form id="user-edit-{{ user.id }}" method="post" action="{{ url_for('admin.edit_user', user_id=user.id) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    </form>
+    <form id="user-pw-{{ user.id }}" method="post" action="{{ url_for('admin.reset_password', user_id=user.id) }}"
+          onsubmit="return confirm('{{ user.name }} さんのパスワードを再設定します。よろしいですか？');">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    </form>
+    <form id="user-del-{{ user.id }}" method="post" action="{{ url_for('admin.delete_user', user_id=user.id) }}"
+          onsubmit="return confirm('{{ user.name }} さんを削除します。よろしいですか？');">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    </form>
+  {% endfor %}
+</div>
+{% endblock %}

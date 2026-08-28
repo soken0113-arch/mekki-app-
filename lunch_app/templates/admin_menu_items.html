@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}メニューマスタ{% endblock %}
+
+{% block content %}
+<h1 class="page-title">メニューマスタ</h1>
+<p class="page-sub">お弁当の種類と価格を登録します。ここに登録したメニューを「献立編成」で日付に割り当てます。</p>
+
+<div class="card">
+  <h3>メニューを追加</h3>
+  <form method="post" action="{{ url_for('admin.add_menu_item') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="form-row">
+      <div style="flex:2 1 200px;">
+        <label for="name">メニュー名 <span class="muted">（必須）</span></label>
+        <input type="text" id="name" name="name" required>
+      </div>
+      <div style="flex:0 1 120px;">
+        <label for="price">価格（円）</label>
+        <input type="number" id="price" name="price" min="0" value="0" required>
+      </div>
+      <div style="flex:2 1 220px;">
+        <label for="description">説明</label>
+        <input type="text" id="description" name="description" placeholder="例: 唐揚げ 5 個入り">
+      </div>
+      <div style="flex:0 1 110px;">
+        <label for="sort_order">表示順</label>
+        <input type="number" id="sort_order" name="sort_order" value="0">
+      </div>
+      <div style="flex:0 0 auto;">
+        <button type="submit" class="btn btn-primary">追加</button>
+      </div>
+    </div>
+  </form>
+</div>
+
+<div class="card">
+  <h3>登録済みメニュー（{{ items | length }} 件）</h3>
+  {% if not items %}
+    <div class="empty">まだメニューが登録されていません。</div>
+  {% else %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:100px;">表示順</th>
+          <th style="min-width:160px;">メニュー名</th>
+          <th style="width:120px;">価格</th>
+          <th style="min-width:180px;">説明</th>
+          <th style="width:100px;">注文画面に表示</th>
+          <th style="width:150px;"></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in items %}
+        {% set f = 'menu-edit-' ~ item.id %}
+        <tr>
+          <td><input type="number" form="{{ f }}" name="sort_order" value="{{ item.sort_order }}"></td>
+          <td><input type="text" form="{{ f }}" name="name" value="{{ item.name }}" required></td>
+          <td><input type="number" form="{{ f }}" name="price" min="0" value="{{ item.price }}" required></td>
+          <td><input type="text" form="{{ f }}" name="description" value="{{ item.description }}"></td>
+          <td>
+            <label class="check">
+              <input type="checkbox" form="{{ f }}" name="is_active" {{ 'checked' if item.is_active }}>
+              <span>表示</span>
+            </label>
+          </td>
+          <td>
+            <div class="btn-row">
+              <button type="submit" form="{{ f }}" class="btn btn-sm">保存</button>
+              <button type="submit" form="menu-del-{{ item.id }}" class="btn btn-sm btn-danger">削除</button>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {# テーブルの行に <form> は置けないため、フォーム本体をここに置き form 属性で紐づける #}
+  {% for item in items %}
+    <form id="menu-edit-{{ item.id }}" method="post" action="{{ url_for('admin.edit_menu_item', item_id=item.id) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    </form>
+    <form id="menu-del-{{ item.id }}" method="post" action="{{ url_for('admin.delete_menu_item', item_id=item.id) }}"
+          onsubmit="return confirm('「{{ item.name }}」を削除します。よろしいですか？');">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    </form>
+  {% endfor %}
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+{% block title %}発注集計{% endblock %}
+
+{% block content %}
+<h1 class="page-title no-print">発注集計（仕出し屋への発注用）</h1>
+
+<div class="date-nav no-print">
+  <span class="current">{{ serve_date | date_ja_full }}</span>
+  <form method="get" action="{{ url_for('reports.daily') }}">
+    <input type="date" name="date" value="{{ serve_date.isoformat() }}">
+    <button type="submit" class="btn btn-sm">表示</button>
+  </form>
+  <a class="btn btn-sm" href="{{ url_for('reports.daily_export', date=serve_date.isoformat()) }}">Excel出力</a>
+  <button type="button" class="btn btn-sm" onclick="window.print()">印刷</button>
+  <a class="btn btn-sm" href="{{ url_for('admin.daily_menus', date=serve_date.isoformat()) }}">献立を編集</a>
+</div>
+
+<div class="no-print">
+  {% if status.open %}
+    <div class="status-banner status-open">
+      <span>受付中</span>
+      <span style="font-weight:400;">{{ status.deadline_text }} に締切。締切後の数量が確定値になります。</span>
+    </div>
+  {% else %}
+    <div class="status-banner status-closed">
+      <span>締切済み</span>
+      <span style="font-weight:400;">この日の注文は確定しています。</span>
+    </div>
+  {% endif %}
+</div>
+
+<div class="print-only" style="margin-bottom:12px;">
+  <h2 style="font-size:16pt;">昼食発注書</h2>
+  <div>{{ serve_date | date_ja_full }}{% if shop_name %} ／ 発注先: {{ shop_name }}{% endif %}</div>
+</div>
+
+<div class="stat-grid no-print">
+  <div class="stat"><div class="label">合計食数</div><div class="value">{{ total_qty }} 食</div></div>
+  <div class="stat"><div class="label">合計金額</div><div class="value">{{ total_amount | yen }} 円</div></div>
+  <div class="stat"><div class="label">注文した人数</div><div class="value">{{ by_user | length }} 名</div></div>
+</div>
+
+<div class="card">
+  <h3>メニュー別 発注数</h3>
+  {% if not summary %}
+    <div class="empty">この日の献立が登録されていません。</div>
+  {% else %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>メニュー</th><th class="num">単価</th><th class="num">数量</th><th class="num">金額</th></tr>
+      </thead>
+      <tbody>
+        {% for row in summary %}
+        <tr>
+          <td>{{ row.name }}</td>
+          <td class="num">{{ row.price | yen }} 円</td>
+          <td class="num"><strong>{{ row.qty }}</strong></td>
+          <td class="num">{{ row.amount | yen }} 円</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr><td>合計</td><td class="num"></td><td class="num">{{ total_qty }}</td><td class="num">{{ total_amount | yen }} 円</td></tr>
+      </tfoot>
+    </table>
+  </div>
+  {% endif %}
+</div>
+
+<div class="card">
+  <h3>社員別 内訳</h3>
+  {% if not by_user %}
+    <div class="empty">まだ注文がありません。</div>
+  {% else %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th style="width:110px;">社員番号</th><th>氏名</th><th>部署</th><th>注文内容</th><th class="num">金額</th></tr>
+      </thead>
+      <tbody>
+        {% for entry in by_user %}
+        <tr>
+          <td>{{ entry.user.employee_no }}</td>
+          <td>{{ entry.user.name }}</td>
+          <td>{{ entry.user.department }}</td>
+          <td>
+            {% for order in entry['items'] %}
+              {{ order.daily_menu.menu_item.name }} × {{ order.quantity }}{% if not loop.last %} / {% endif %}
+            {% endfor %}
+          </td>
+          <td class="num">{{ entry.amount | yen }} 円</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+</div>
+
+{% if summary %}
+<div class="card no-print">
+  <h3>代理入力（締切後の追加・取消）</h3>
+  <form method="post" action="{{ url_for('admin.proxy_order') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="date" value="{{ serve_date.isoformat() }}">
+    <div class="form-row">
+      <div style="flex:1 1 180px;">
+        <label for="user_id">社員</label>
+        <select id="user_id" name="user_id" required>
+          <option value="">選択してください</option>
+          {% for user in users %}
+            <option value="{{ user.id }}">{{ user.name }}{% if user.department %}（{{ user.department }}）{% endif %}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div style="flex:1 1 180px;">
+        <label for="daily_menu_id">メニュー</label>
+        <select id="daily_menu_id" name="daily_menu_id" required>
+          {% for row in summary %}
+            <option value="{{ row.daily_menu_id }}">{{ row.name }}（{{ row.price | yen }}円）</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div style="flex:0 1 110px;">
+        <label for="quantity">数量</label>
+        <input type="number" id="quantity" name="quantity" min="0" max="20" value="1" required>
+      </div>
+      <div style="flex:0 0 auto;">
+        <button type="submit" class="btn btn-primary">登録・更新</button>
+      </div>
+    </div>
+    <p class="muted" style="font-size:13px;margin-top:6px;">数量に 0 を指定するとその社員の注文を取り消します。</p>
+  </form>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}月次集計{% endblock %}
+
+{% block content %}
+<h1 class="page-title no-print">月次集計（個人別）</h1>
+<p class="page-sub no-print">給与天引き・集金用の個人別集計です。</p>
+
+<div class="date-nav no-print">
+  <a class="btn btn-sm" href="{{ url_for('reports.monthly', month=prev_month.strftime('%Y-%m')) }}">← 前の月</a>
+  <span class="current">{{ month | month_ja }}</span>
+  <a class="btn btn-sm" href="{{ url_for('reports.monthly', month=next_month.strftime('%Y-%m')) }}">次の月 →</a>
+  <form method="get" action="{{ url_for('reports.monthly') }}">
+    <input type="month" name="month" value="{{ month.strftime('%Y-%m') }}">
+    <button type="submit" class="btn btn-sm">表示</button>
+  </form>
+  <a class="btn btn-sm" href="{{ url_for('reports.monthly_export', month=month.strftime('%Y-%m')) }}">Excel出力</a>
+  <button type="button" class="btn btn-sm" onclick="window.print()">印刷</button>
+</div>
+
+<div class="print-only" style="margin-bottom:12px;">
+  <h2 style="font-size:16pt;">昼食代 個人別集計　{{ month | month_ja }}</h2>
+</div>
+
+<div class="stat-grid no-print">
+  <div class="stat"><div class="label">合計食数</div><div class="value">{{ total_qty }} 食</div></div>
+  <div class="stat"><div class="label">合計金額</div><div class="value">{{ total_amount | yen }} 円</div></div>
+</div>
+
+<div class="card">
+  <h3>社員別</h3>
+  {% if not rows %}
+    <div class="empty">社員が登録されていません。</div>
+  {% else %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th style="width:110px;">社員番号</th><th>氏名</th><th>部署</th><th class="num">食数</th><th class="num">金額</th></tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+        <tr>
+          <td>{{ row.employee_no }}</td>
+          <td>{{ row.name }}{% if not row.is_active %} <span class="muted">(無効)</span>{% endif %}</td>
+          <td>{{ row.department }}</td>
+          <td class="num">{{ row.qty }}</td>
+          <td class="num">{{ row.amount | yen }} 円</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr><td colspan="3">合計</td><td class="num">{{ total_qty }}</td><td class="num">{{ total_amount | yen }} 円</td></tr>
+      </tfoot>
+    </table>
+  </div>
+  {% endif %}
+</div>
+
+<div class="card no-print">
+  <h3>日別の推移</h3>
+  {% if not by_date %}
+    <div class="empty">この月の注文はありません。</div>
+  {% else %}
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>日付</th><th class="num">食数</th><th class="num">金額</th><th style="width:120px;"></th></tr></thead>
+      <tbody>
+        {% for row in by_date %}
+        <tr>
+          <td>{{ row.serve_date | date_ja }}</td>
+          <td class="num">{{ row.qty }}</td>
+          <td class="num">{{ row.amount | yen }} 円</td>
+          <td><a class="btn btn-sm" href="{{ url_for('reports.daily', date=row.serve_date.isoformat()) }}">内訳</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

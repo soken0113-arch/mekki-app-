@@ -1,0 +1,325 @@
+/* ── 社員食堂 昼食注文アプリ ── */
+:root {
+  --orange-600: #c2410c;
+  --orange-500: #ea580c;
+  --orange-50:  #fff7ed;
+  --green-600:  #15803d;
+  --green-50:   #f0fdf4;
+  --red-600:    #b91c1c;
+  --red-50:     #fef2f2;
+  --blue-50:    #eff6ff;
+  --blue-600:   #1d4ed8;
+  --text:       #1f2937;
+  --text-sub:   #4b5563;
+  --text-mute:  #9ca3af;
+  --border:     #e5e7eb;
+  --surface:    #ffffff;
+  --bg:         #f7f5f2;
+  --radius:     10px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 15px;
+  line-height: 1.7;
+  -webkit-text-size-adjust: 100%;
+}
+
+a { color: var(--orange-600); }
+
+/* ── ヘッダー・ナビ ── */
+.app-header {
+  background: var(--orange-600);
+  color: #fff;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.app-header .logo { font-size: 17px; font-weight: 700; letter-spacing: .02em; }
+.app-header .user-info { font-size: 13px; display: flex; align-items: center; gap: 12px; }
+.app-header .user-info a { color: #ffe8d9; text-decoration: none; }
+.app-header .user-info a:hover { text-decoration: underline; }
+.badge-admin {
+  background: rgba(255,255,255,.22);
+  border-radius: 999px;
+  padding: 1px 9px;
+  font-size: 11px;
+}
+
+.app-nav {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  gap: 4px;
+  padding: 0 12px;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+.app-nav a {
+  padding: 12px 14px;
+  font-size: 14px;
+  color: var(--text-sub);
+  text-decoration: none;
+  border-bottom: 3px solid transparent;
+}
+.app-nav a:hover { color: var(--orange-600); }
+.app-nav a.active { color: var(--orange-600); font-weight: 700; border-bottom-color: var(--orange-500); }
+.app-nav .nav-sep { width: 1px; background: var(--border); margin: 8px 8px; flex: none; }
+
+.app-main { max-width: 1040px; margin: 0 auto; padding: 20px 16px 60px; }
+
+.page-title { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+.page-sub { color: var(--text-sub); font-size: 13px; margin-bottom: 16px; }
+
+/* ── カード ── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px;
+  margin-bottom: 16px;
+}
+.card > h3 {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-sub);
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+/* ── フラッシュ ── */
+.flash {
+  padding: 11px 14px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  font-size: 14px;
+  border: 1px solid transparent;
+}
+.flash-success { background: var(--green-50); color: var(--green-600); border-color: #bbf7d0; }
+.flash-error   { background: var(--red-50);   color: var(--red-600);   border-color: #fecaca; }
+.flash-info    { background: var(--blue-50);  color: var(--blue-600);  border-color: #bfdbfe; }
+
+/* ── フォーム ── */
+label { font-size: 13px; font-weight: 600; color: var(--text-sub); display: block; margin-bottom: 4px; }
+input[type="text"], input[type="password"], input[type="number"],
+input[type="date"], input[type="month"], input[type="time"], select, textarea {
+  width: 100%;
+  padding: 9px 11px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  font-size: 15px;
+  font-family: inherit;
+  background: #fff;
+  color: var(--text);
+}
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--orange-500);
+  box-shadow: 0 0 0 3px rgba(234,88,12,.12);
+}
+input[disabled], select[disabled] { background: #f3f4f6; color: var(--text-mute); }
+
+.field { margin-bottom: 14px; }
+.form-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; }
+.form-row > * { flex: 1 1 160px; }
+.check { display: flex; align-items: center; gap: 7px; font-size: 14px; color: var(--text-sub); }
+.check input { width: auto; }
+
+.btn {
+  display: inline-block;
+  padding: 9px 18px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  font-size: 14px;
+  font-family: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  background: #fff;
+  color: var(--text-sub);
+  border-color: var(--border);
+  white-space: nowrap;
+}
+.btn:hover { background: #f9fafb; }
+.btn-primary { background: var(--orange-600); color: #fff; border-color: var(--orange-600); }
+.btn-primary:hover { background: var(--orange-500); }
+.btn-danger { color: var(--red-600); border-color: #fecaca; background: #fff; }
+.btn-danger:hover { background: var(--red-50); }
+.btn-sm { padding: 5px 11px; font-size: 13px; }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.btn-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+/* ── テーブル ── */
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th, td { padding: 9px 12px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: middle; }
+th { background: #fafaf9; color: var(--text-sub); font-size: 12px; font-weight: 700; white-space: nowrap; }
+tbody tr:hover { background: #fffaf5; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+tfoot td { font-weight: 700; background: var(--orange-50); border-top: 2px solid var(--orange-500); }
+.muted { color: var(--text-mute); }
+.empty { padding: 28px; text-align: center; color: var(--text-mute); font-size: 14px; }
+
+/* ── 日付ナビ ── */
+.date-nav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.date-nav .current { font-size: 18px; font-weight: 700; }
+.date-nav form { display: flex; gap: 6px; align-items: center; }
+.date-nav input[type="date"], .date-nav input[type="month"] { width: auto; }
+
+.quick-dates { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
+.quick-dates a {
+  font-size: 13px;
+  padding: 5px 11px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: #fff;
+  text-decoration: none;
+  color: var(--text-sub);
+}
+.quick-dates a.active { background: var(--orange-600); color: #fff; border-color: var(--orange-600); }
+
+/* ── 締切バナー ── */
+.status-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 14px;
+  border-radius: 8px;
+  font-size: 14px;
+  margin-bottom: 16px;
+  font-weight: 600;
+}
+.status-open   { background: var(--green-50); color: var(--green-600); border: 1px solid #bbf7d0; }
+.status-closed { background: var(--red-50);   color: var(--red-600);   border: 1px solid #fecaca; }
+
+/* ── メニューカード（注文画面） ── */
+.menu-list { display: grid; gap: 10px; }
+.menu-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  flex-wrap: wrap;
+}
+.menu-row.ordered { border-color: var(--orange-500); background: var(--orange-50); }
+.menu-row .info { flex: 1 1 220px; min-width: 0; }
+.menu-row .name { font-size: 16px; font-weight: 700; }
+.menu-row .desc { font-size: 13px; color: var(--text-sub); }
+.menu-row .price { font-size: 15px; font-weight: 700; color: var(--orange-600); white-space: nowrap; }
+.menu-row .stock { font-size: 12px; color: var(--text-mute); }
+.menu-row .stock.low { color: var(--red-600); font-weight: 700; }
+
+.qty-picker { display: flex; align-items: center; gap: 6px; }
+.qty-picker button {
+  width: 38px; height: 38px;
+  border: 1px solid var(--border);
+  background: #fff;
+  border-radius: 8px;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--text-sub);
+}
+.qty-picker button:hover { background: #f9fafb; border-color: var(--orange-500); color: var(--orange-600); }
+.qty-picker input {
+  width: 58px;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 700;
+  padding: 8px 4px;
+}
+
+.total-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+  padding: 14px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.total-bar .amount { font-size: 20px; font-weight: 700; color: var(--orange-600); }
+
+/* ── 集計カード ── */
+.stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 16px; }
+.stat {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+}
+.stat .label { font-size: 12px; color: var(--text-sub); }
+.stat .value { font-size: 24px; font-weight: 700; color: var(--orange-600); font-variant-numeric: tabular-nums; }
+
+/* ── モーダル ── */
+.modal-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,.45); z-index: 100;
+  align-items: center; justify-content: center;
+  padding: 16px;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: #fff; border-radius: var(--radius); padding: 22px;
+  width: 100%; max-width: 460px;
+  max-height: 90vh; overflow-y: auto;
+  box-shadow: 0 12px 40px rgba(0,0,0,.24);
+}
+.modal h3 { font-size: 15px; font-weight: 700; margin-bottom: 16px; }
+.modal-actions { display: flex; gap: 8px; margin-top: 6px; }
+
+/* ── ログイン ── */
+.login-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+.login-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 32px 28px;
+  width: 100%;
+  max-width: 380px;
+  box-shadow: 0 4px 24px rgba(0,0,0,.06);
+}
+.login-card h1 { font-size: 19px; text-align: center; margin-bottom: 4px; }
+.login-card .sub { font-size: 13px; color: var(--text-sub); text-align: center; margin-bottom: 22px; }
+.login-card .btn { width: 100%; margin-top: 6px; }
+
+/* ── 印刷 ── */
+.print-only { display: none; }
+@media print {
+  .app-header, .app-nav, .no-print, .flash { display: none !important; }
+  .print-only { display: block; }
+  body { background: #fff; font-size: 12pt; }
+  .app-main { max-width: none; padding: 0; }
+  .card { border: none; padding: 0; margin-bottom: 14px; }
+  table { font-size: 11pt; }
+  th { background: #eee !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  tfoot td { background: #f5f5f5 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+
+@media (max-width: 640px) {
+  .app-main { padding: 14px 12px 48px; }
+  .menu-row { gap: 10px; }
+  .menu-row .qty-picker { margin-left: auto; }
+  .page-title { font-size: 18px; }
+  th, td { padding: 8px 9px; }
+}
