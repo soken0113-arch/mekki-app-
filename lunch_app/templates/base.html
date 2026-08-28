@@ -28,6 +28,7 @@
     <a href="{{ url_for('reports.monthly') }}" class="{{ 'active' if request.endpoint == 'reports.monthly' }}">月次集計</a>
     <a href="{{ url_for('admin.menus') }}" class="{{ 'active' if request.endpoint == 'admin.menus' }}">献立編成</a>
     <a href="{{ url_for('admin.users') }}" class="{{ 'active' if request.endpoint == 'admin.users' }}">社員</a>
+    <a href="{{ url_for('admin.access') }}" class="{{ 'active' if request.endpoint == 'admin.access' }}">接続案内</a>
     <a href="{{ url_for('admin.settings') }}" class="{{ 'active' if request.endpoint == 'admin.settings' }}">設定</a>
   {% endif %}
 </nav>

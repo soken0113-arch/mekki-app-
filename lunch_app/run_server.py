@@ -4,25 +4,13 @@ Windows でも動くよう、開発用サーバーではなく waitress を使�
 同じ社内ネットワークの端末からアクセスするための URL も表示する。
 """
 import os
-import socket
 
 from waitress import serve
 
 from app import create_app
+from netinfo import lan_ip
 
 PORT = int(os.environ.get("PORT", "5002"))
-
-
-def lan_ip() -> str:
-    """社内 LAN で他の端末から見えるこの PC の IP アドレス。"""
-    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    try:
-        sock.connect(("8.8.8.8", 80))  # 実際には送信しない。経路から自分の IP を得るだけ
-        return sock.getsockname()[0]
-    except OSError:
-        return "127.0.0.1"
-    finally:
-        sock.close()
 
 
 def main() -> None:

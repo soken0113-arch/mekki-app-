@@ -1,6 +1,8 @@
 from datetime import timedelta
 
+import segno
 from flask import Blueprint, flash, redirect, render_template, request, url_for
+from markupsafe import Markup
 
 from extensions import db
 from models import (
@@ -14,6 +16,7 @@ from models import (
     get_setting_int,
     set_setting,
 )
+from netinfo import access_url
 from timeutil import clamp_start_day, parse_date, parse_time, week_monday, weekdays_of
 from utils import admin_required, cutoff_rule_text, current_user
 
@@ -401,3 +404,34 @@ def edit_meal_type(type_id):
     db.session.commit()
     flash(f"区分「{name}」を更新しました。", "success")
     return redirect(url_for("admin.settings"))
+
+
+# ── 接続案内（QRコード） ────────────────────────────────────
+
+@bp.route("/access", methods=["GET", "POST"])
+@admin_required
+def access():
+    """社員に配る接続先 URL と QR コード。印刷して掲示できる。"""
+    if request.method == "POST":
+        url = request.form.get("access_url", "").strip()[:200]
+        if url and not url.startswith(("http://", "https://")):
+            flash("URL は http:// または https:// から入力してください。", "error")
+        else:
+            set_setting("access_url", url)
+            db.session.commit()
+            flash("接続先を保存しました。" if url else "自動判定に戻しました。", "success")
+        return redirect(url_for("admin.access"))
+
+    port = request.host.partition(":")[2] or "80"
+    detected = access_url(port)
+    saved = get_setting("access_url")
+    url = saved or detected
+
+    return render_template(
+        "admin_access.html",
+        url=url,
+        detected=detected,
+        saved=saved,
+        qr=Markup(segno.make(url, error="m").svg_inline(scale=1, omitsize=True)),
+        looks_local="127.0.0.1" in detected or "localhost" in detected,
+    )

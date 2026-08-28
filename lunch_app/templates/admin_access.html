@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block title %}接続案内{% endblock %}
+
+{% block content %}
+<h1 class="page-title no-print">接続案内（社員へのお知らせ用）</h1>
+<p class="page-sub no-print">
+  下の紙を印刷して休憩室などに貼っておくと、社員の方はスマートフォンのカメラで
+  QR コードを読み取るだけでアクセスできます。
+</p>
+
+{% if looks_local %}
+<div class="flash flash-error no-print">
+  このパソコンの社内 IP アドレスを取得できませんでした（{{ detected }}）。
+  ネットワークにつながっているか確認するか、下の「接続先を手動で指定する」で
+  正しい URL を入力してください。
+</div>
+{% endif %}
+
+<div class="card no-print">
+  <h3>接続先</h3>
+  <div class="access-url-row">
+    <code class="access-url" id="access-url">{{ url }}</code>
+    <button type="button" class="btn btn-sm" onclick="copyUrl()">URLをコピー</button>
+    <button type="button" class="btn btn-sm btn-primary" onclick="window.print()">この案内を印刷する</button>
+  </div>
+  <p class="muted-note">
+    社員のスマートフォンは、このパソコンと<strong>同じ社内ネットワーク</strong>に
+    つながっている必要があります（モバイル通信では開けません）。
+  </p>
+</div>
+
+<!-- 印刷して掲示する紙 -->
+<div class="poster">
+  <div class="poster-eyebrow">社内昼食注文システム</div>
+  <h2 class="poster-title">昼食の注文は<br>スマホからできます</h2>
+
+  <div class="poster-qr">{{ qr }}</div>
+
+  <div class="poster-url">{{ url }}</div>
+
+  <ol class="poster-steps">
+    <li><strong>社内の Wi-Fi</strong> につなぐ</li>
+    <li>カメラで QR コードを読み取る<br><span class="poster-sub">（読み取れないときは、上の URL を直接入力）</span></li>
+    <li>ログイン ID とパスワードでログイン</li>
+  </ol>
+
+  <p class="poster-note">
+    iPhone は 共有ボタン（□に↑）→「ホーム画面に追加」をしておくと、<br>
+    次からアイコンをタップするだけで開けます。<br>
+    ログイン ID がわからない方は担当者までお問い合わせください。
+  </p>
+</div>
+
+<div class="card no-print">
+  <h3>接続先を手動で指定する</h3>
+  <form method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="form-row">
+      <div style="flex:1 1 260px;">
+        <label for="access_url">接続先 URL</label>
+        <input type="text" id="access_url" name="access_url" value="{{ saved }}"
+               placeholder="{{ detected }}">
+      </div>
+      <div style="flex:0 0 auto;">
+        <button type="submit" class="btn btn-primary">保存</button>
+      </div>
+    </div>
+    <p class="muted-note">
+      空欄にすると自動判定（現在：{{ detected }}）を使います。
+      パソコンに固定 IP やホスト名を割り当てている場合は、ここに入力してください。
+    </p>
+  </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  function copyUrl() {
+    const text = document.getElementById('access-url').textContent.trim();
+    navigator.clipboard?.writeText(text).then(
+      () => alert('URLをコピーしました：\n' + text),
+      () => alert('コピーできませんでした。次のURLを手で控えてください：\n' + text)
+    );
+  }
+</script>
+{% endblock %}

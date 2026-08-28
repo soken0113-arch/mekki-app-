@@ -305,10 +305,30 @@ def test_settings_update_cutoff_and_period(app, admin_client):
 def test_all_pages_render(app, admin_client):
     urls = [
         "/", "/change-password", "/admin/menus", "/admin/users",
-        "/admin/settings", "/reports/daily", "/reports/monthly",
+        "/admin/settings", "/admin/access", "/reports/daily", "/reports/monthly",
     ]
     for url in urls:
         assert admin_client.get(url).status_code == 200, url
+
+
+def test_access_page_shows_a_qr_code(admin_client):
+    body = admin_client.get("/admin/access").get_data(as_text=True)
+    assert "<svg" in body          # QR コードが埋め込まれている
+    assert "http://" in body       # 接続先 URL が出ている
+
+
+def test_access_url_can_be_overridden(app, admin_client):
+    admin_client.post(
+        "/admin/access", data={"access_url": "http://lunch.local:5002"}, follow_redirects=True
+    )
+    assert "http://lunch.local:5002" in admin_client.get("/admin/access").get_data(as_text=True)
+
+
+def test_access_url_must_be_a_url(admin_client):
+    res = admin_client.post(
+        "/admin/access", data={"access_url": "192.168.1.50:5002"}, follow_redirects=True
+    )
+    assert "http:// または https://" in res.get_data(as_text=True)
 
 
 def test_unknown_page_returns_404(staff_client):

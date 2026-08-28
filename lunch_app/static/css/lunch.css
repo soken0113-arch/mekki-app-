@@ -302,6 +302,78 @@ tfoot td { font-weight: 700; background: var(--brand-wash); border-top: 2px soli
 .login-card .sub { font-size: 13px; color: var(--text-sub); text-align: center; margin-bottom: 22px; }
 .login-card .btn { width: 100%; margin-top: 6px; }
 
+/* ── 接続案内・掲示用ポスター ── */
+.access-url-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.access-url {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--brand);
+  background: var(--brand-wash);
+  border: 1px solid #f6d4bd;
+  border-radius: 7px;
+  padding: 8px 14px;
+  word-break: break-all;
+}
+
+.poster {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 34px 28px 30px;
+  margin: 0 auto 16px;
+  max-width: 540px;
+  text-align: center;
+}
+.poster-eyebrow {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .18em;
+  color: var(--text-mute);
+}
+.poster-title {
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.45;
+  margin-top: 6px;
+  text-wrap: balance;
+}
+.poster-qr {
+  width: 260px;
+  margin: 22px auto 14px;
+  padding: 12px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.poster-qr svg { width: 100%; height: auto; display: block; }
+.poster-url {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--brand);
+  word-break: break-all;
+  margin-bottom: 20px;
+}
+.poster-steps {
+  display: grid;
+  gap: 8px;
+  margin: 0 auto 18px;
+  max-width: 380px;
+  padding-left: 1.4em;
+  text-align: left;
+  font-size: 15px;
+}
+.poster-steps .poster-sub { color: var(--text-mute); font-size: 13px; }
+.poster-note {
+  border-top: 1px solid var(--border);
+  color: var(--text-sub);
+  font-size: 13px;
+  line-height: 1.8;
+  padding-top: 14px;
+}
+
 /* ── 印刷 ── */
 .print-only { display: none; }
 @media print {
@@ -310,6 +382,15 @@ tfoot td { font-weight: 700; background: var(--brand-wash); border-top: 2px soli
   body { background: #fff; font-size: 12pt; }
   .app-main { max-width: none; padding: 0; }
   .card { border: none; box-shadow: none; padding: 0; margin-bottom: 14px; }
+  .poster {
+    border: none; box-shadow: none; max-width: none;
+    padding: 0; margin: 0; page-break-inside: avoid;
+  }
+  .poster-title { font-size: 30pt; }
+  .poster-qr { width: 78mm; border: none; padding: 0; margin: 10mm auto 6mm; }
+  .poster-url { font-size: 17pt; }
+  .poster-steps { font-size: 13pt; max-width: none; }
+  .poster-note { font-size: 11pt; }
   table { font-size: 11pt; }
   th { background: #eee !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   tfoot td { background: #f5f5f5 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }

@@ -135,6 +135,7 @@ DEFAULT_SETTINGS = {
     "cutoff_days_before": "1",    # 提供日の何日前で締め切るか（0 = 当日）
     "period_start_day": "21",     # 月次集計の開始日（21 なら 21 日〜翌月 20 日）
     "shop_name": "",              # 発注書に出す仕出し屋名
+    "access_url": "",             # 社員に案内する接続先 URL（空なら自動判定）
 }
 
 
