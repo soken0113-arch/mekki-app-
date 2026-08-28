@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}献立編成{% endblock %}
+
+{% block content %}
+<h1 class="page-title">献立編成</h1>
+<p class="page-sub">仕出し屋さんの週間メニューを、そのまま 1 週間分入力します。空欄にした区分はその日は注文できません。</p>
+
+<div class="date-nav">
+  <a class="btn btn-sm" href="{{ url_for('admin.menus', week=prev_week.isoformat()) }}">← 前の週</a>
+  <span class="current">{{ monday | date_ja_short }} 〜 {{ days[-1] | date_ja_short }}</span>
+  <a class="btn btn-sm" href="{{ url_for('admin.menus', week=next_week.isoformat()) }}">次の週 →</a>
+  <form method="get" action="{{ url_for('admin.menus') }}">
+    <input type="date" name="week" value="{{ monday.isoformat() }}">
+    <button type="submit" class="btn btn-sm">その週を表示</button>
+  </form>
+</div>
+
+<div class="card">
+  <h3>他の週からコピー</h3>
+  <form method="post" action="{{ url_for('admin.copy_menus') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="week" value="{{ monday.isoformat() }}">
+    <div class="form-row">
+      <div style="flex:0 1 220px;">
+        <label for="copy_from">コピー元の週（その週の日付）</label>
+        <input type="date" id="copy_from" name="copy_from" required>
+      </div>
+      <div style="flex:0 0 auto;">
+        <button type="submit" class="btn">この週にコピー</button>
+      </div>
+    </div>
+    <p class="muted-note">既に入力済みの区分は上書きされません。</p>
+  </form>
+</div>
+
+<form method="post" action="{{ url_for('admin.save_menus') }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <input type="hidden" name="week" value="{{ monday.isoformat() }}">
+
+  <div class="day-list">
+    {% for day in days %}
+      {% set entry = current[day] %}
+      {% set key = day.isoformat() %}
+      <section class="day-card">
+        <div class="day-head"><span class="day-date">{{ day | date_ja }}</span></div>
+        <div class="menu-fields">
+          <div>
+            <label for="teishoku_{{ key }}">定食・丼</label>
+            <input type="text" id="teishoku_{{ key }}" name="teishoku_{{ key }}"
+                   value="{{ entry.teishoku }}" placeholder="例：ハンバーグ アジフライ">
+          </div>
+          <div>
+            <label for="noodle_{{ key }}">麺</label>
+            <input type="text" id="noodle_{{ key }}" name="noodle_{{ key }}"
+                   value="{{ entry.noodle }}" placeholder="例：冷やし豚しゃぶおろしうどん・そば">
+          </div>
+          <div>
+            <label for="form_{{ key }}">麺の種類</label>
+            <select id="form_{{ key }}" name="form_{{ key }}">
+              {% for value, (label, _codes) in noodle_forms.items() %}
+                <option value="{{ value }}" {{ 'selected' if entry.form == value }}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        {% if entry.locked %}
+          <p class="muted-note">この日は既に注文が入っています（{{ entry.locked | join('・') }}）。区分を減らす場合は先に注文を取り消してください。</p>
+        {% endif %}
+      </section>
+    {% endfor %}
+  </div>
+
+  <div class="save-bar">
+    <span class="save-hint">締切は{{ rule_text }}です</span>
+    <button type="submit" class="btn btn-primary">この週の献立を保存</button>
+  </div>
+</form>
+{% endblock %}

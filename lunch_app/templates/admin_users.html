@@ -3,14 +3,18 @@
 
 {% block content %}
 <h1 class="page-title">社員マスタ</h1>
-<p class="page-sub">昼食を注文する社員を登録します。初期パスワードは初回ログイン時に本人が変更します。</p>
+<p class="page-sub">昼食を注文する社員を登録します。並び順は注文用紙の名簿順に合わせられます。</p>
 
 <div class="card">
   <h3>社員を追加</h3>
   <form method="post" action="{{ url_for('admin.add_user') }}">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <div class="form-row">
-      <div style="flex:0 1 130px;">
+      <div style="flex:0 1 100px;">
+        <label for="sort_order">並び順</label>
+        <input type="number" id="sort_order" name="sort_order" value="0">
+      </div>
+      <div style="flex:0 1 120px;">
         <label for="employee_no">社員番号</label>
         <input type="text" id="employee_no" name="employee_no">
       </div>
@@ -39,6 +43,7 @@
         <button type="submit" class="btn btn-primary">追加</button>
       </div>
     </div>
+    <p class="muted-note">人数が多い場合は CSV でまとめて登録できます（README の「社員をまとめて登録する」を参照）。</p>
   </form>
 </div>
 
@@ -48,20 +53,22 @@
     <table>
       <thead>
         <tr>
+          <th style="width:90px;">並び順</th>
           <th style="width:110px;">社員番号</th>
           <th style="min-width:130px;">氏名</th>
-          <th style="min-width:120px;">部署</th>
-          <th style="width:130px;">ログインID</th>
-          <th style="width:80px;">管理者</th>
-          <th style="width:80px;">利用可</th>
-          <th style="width:220px;">パスワード再設定</th>
-          <th style="width:150px;"></th>
+          <th style="min-width:110px;">部署</th>
+          <th style="width:120px;">ログインID</th>
+          <th style="width:70px;">管理者</th>
+          <th style="width:70px;">利用可</th>
+          <th style="width:210px;">パスワード再設定</th>
+          <th style="width:140px;"></th>
         </tr>
       </thead>
       <tbody>
         {% for user in users %}
         {% set f = 'user-edit-' ~ user.id %}
         <tr>
+          <td><input type="number" form="{{ f }}" name="sort_order" value="{{ user.sort_order }}"></td>
           <td><input type="text" form="{{ f }}" name="employee_no" value="{{ user.employee_no }}"></td>
           <td><input type="text" form="{{ f }}" name="name" value="{{ user.name }}" required></td>
           <td><input type="text" form="{{ f }}" name="department" value="{{ user.department }}"></td>
@@ -74,7 +81,7 @@
           <td>
             <div class="btn-row">
               <input type="password" form="user-pw-{{ user.id }}" name="password" minlength="8"
-                     placeholder="新パスワード" style="width:130px;">
+                     placeholder="新パスワード" style="width:125px;">
               <button type="submit" form="user-pw-{{ user.id }}" class="btn btn-sm">再設定</button>
             </div>
           </td>

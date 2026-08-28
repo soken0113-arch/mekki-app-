@@ -1,24 +1,36 @@
 import os
 import sys
-from datetime import timedelta
+from datetime import date, timedelta
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from extensions import db  # noqa: E402
-from models import DailyMenu, MenuItem, Order, User, set_setting  # noqa: E402
-from timeutil import today_jst  # noqa: E402
+from models import DailyMenu, GuestOrder, MealType, Order, User, set_setting  # noqa: E402
+from timeutil import period_of, period_range, today_jst, week_monday  # noqa: E402
 from tests.conftest import login  # noqa: E402
 
 
-def menu_ids(app):
+def type_ids(app):
     with app.app_context():
-        rows = (
-            DailyMenu.query.join(MenuItem)
-            .filter(DailyMenu.serve_date == today_jst())
-            .order_by(MenuItem.sort_order)
-            .all()
-        )
-        return [dm.id for dm in rows]
+        return {t.code: t.id for t in MealType.query.all()}
+
+
+def this_month(app):
+    with app.app_context():
+        return period_of(today_jst(), 21).strftime("%Y-%m")
+
+
+# ── 締め期間の計算（21日〜翌月20日） ──
+
+def test_period_runs_from_21st_to_20th():
+    assert period_range(date(2026, 9, 1), 21) == (date(2026, 8, 21), date(2026, 9, 21))
+    assert period_of(date(2026, 8, 20), 21) == date(2026, 8, 1)   # 8月分の最終日
+    assert period_of(date(2026, 8, 21), 21) == date(2026, 9, 1)   # 9月分の初日
+    assert period_of(date(2026, 9, 20), 21) == date(2026, 9, 1)
+
+
+def test_period_can_follow_the_calendar_month():
+    assert period_range(date(2026, 9, 1), 1) == (date(2026, 9, 1), date(2026, 10, 1))
 
 
 # ── 認証 ──
@@ -31,7 +43,6 @@ def test_top_requires_login(client):
 
 def test_login_and_logout(client):
     res = login(client, "taro", "taro12345")
-    assert res.status_code == 200
     assert "昼食を注文" in res.get_data(as_text=True)
     assert client.get("/logout").status_code == 302
 
@@ -46,24 +57,35 @@ def test_staff_cannot_open_admin_pages(staff_client):
     assert "管理者のみ" in res.get_data(as_text=True)
 
 
-# ── 注文 ──
+# ── 社員の注文（1日1食・まとめて入力） ──
 
-def test_staff_can_place_and_update_order(app, staff_client):
-    first, _ = menu_ids(app)
+def test_staff_picks_one_meal_type_per_day(app, staff_client):
+    ids = type_ids(app)
+    today = today_jst().isoformat()
+
     staff_client.post(
         "/orders/save",
-        data={"date": today_jst().isoformat(), f"qty_{first}": "2"},
+        data={"month": this_month(app), f"choice_{today}": str(ids["udon"])},
         follow_redirects=True,
     )
     with app.app_context():
-        order = Order.query.filter_by(daily_menu_id=first).one()
-        assert order.quantity == 2
-        assert order.subtotal == 1100
+        order = Order.query.one()
+        assert order.meal_type_id == ids["udon"]
 
-    # 数量を 0 にすると取り消される
+    # 選び直すと上書きされる（1 日 1 食）
     staff_client.post(
         "/orders/save",
-        data={"date": today_jst().isoformat(), f"qty_{first}": "0"},
+        data={"month": this_month(app), f"choice_{today}": str(ids["teishoku"])},
+        follow_redirects=True,
+    )
+    with app.app_context():
+        assert Order.query.count() == 1
+        assert Order.query.one().meal_type_id == ids["teishoku"]
+
+    # 「なし」で取り消し
+    staff_client.post(
+        "/orders/save",
+        data={"month": this_month(app), f"choice_{today}": ""},
         follow_redirects=True,
     )
     with app.app_context():
@@ -71,113 +93,129 @@ def test_staff_can_place_and_update_order(app, staff_client):
 
 
 def test_order_rejected_after_cutoff(app, staff_client):
-    first, _ = menu_ids(app)
+    ids = type_ids(app)
     with app.app_context():
         set_setting("cutoff_time", "00:00")  # 本日分は締切済み
         db.session.commit()
 
     res = staff_client.post(
         "/orders/save",
-        data={"date": today_jst().isoformat(), f"qty_{first}": "1"},
+        data={"month": this_month(app), f"choice_{today_jst().isoformat()}": str(ids["udon"])},
         follow_redirects=True,
     )
-    assert "締め切られています" in res.get_data(as_text=True)
+    assert "締切済み" in res.get_data(as_text=True)
     with app.app_context():
         assert Order.query.count() == 0
 
 
-def test_order_respects_quantity_limit(app, staff_client):
-    _, limited = menu_ids(app)
+def test_cutoff_can_be_set_to_the_previous_day(app, staff_client):
+    ids = type_ids(app)
+    with app.app_context():
+        set_setting("cutoff_days_before", "1")  # 前日締切 → 本日分はもう変更できない
+        db.session.commit()
+
     res = staff_client.post(
         "/orders/save",
-        data={"date": today_jst().isoformat(), f"qty_{limited}": "3"},  # 上限 2
+        data={"month": this_month(app), f"choice_{today_jst().isoformat()}": str(ids["udon"])},
         follow_redirects=True,
     )
-    assert "残り" in res.get_data(as_text=True)
+    assert "締切済み" in res.get_data(as_text=True)
     with app.app_context():
         assert Order.query.count() == 0
 
 
-def test_order_rejects_out_of_range_quantity(app, staff_client):
-    first, _ = menu_ids(app)
-    res = staff_client.post(
-        "/orders/save",
-        data={"date": today_jst().isoformat(), f"qty_{first}": "99"},
-        follow_redirects=True,
-    )
-    assert "0〜20" in res.get_data(as_text=True)
-    with app.app_context():
-        assert Order.query.count() == 0
-
-
-def test_history_shows_monthly_total(app, staff_client):
-    first, _ = menu_ids(app)
+def test_order_rejects_meal_type_not_served_that_day(app, staff_client):
+    ids = type_ids(app)  # ラーメンは本日の献立に無い
     staff_client.post(
         "/orders/save",
-        data={"date": today_jst().isoformat(), f"qty_{first}": "2"},
+        data={"month": this_month(app), f"choice_{today_jst().isoformat()}": str(ids["ramen"])},
         follow_redirects=True,
     )
-    res = staff_client.get(f"/history?month={today_jst():%Y-%m}")
-    body = res.get_data(as_text=True)
-    assert "1,100" in body
-    assert "2 食" in body
+    with app.app_context():
+        assert Order.query.count() == 0
+
+
+# ── 献立編成（週まとめ） ──
+
+def test_admin_saves_a_week_of_menus(app, admin_client):
+    monday = week_monday(today_jst() + timedelta(days=7))
+    key = monday.isoformat()
+    admin_client.post(
+        "/admin/menus/save",
+        data={
+            "week": key,
+            f"teishoku_{key}": "鶏肉の黒酢炒め",
+            f"noodle_{key}": "冷やし肉味噌豆乳ラーメン",
+            f"form_{key}": "ramen",
+        },
+        follow_redirects=True,
+    )
+    with app.app_context():
+        rows = DailyMenu.query.filter_by(serve_date=monday).all()
+        assert {r.meal_type.code for r in rows} == {"teishoku", "ramen"}
+        assert {r.dish_name for r in rows} == {"鶏肉の黒酢炒め", "冷やし肉味噌豆乳ラーメン"}
+
+
+def test_udon_soba_creates_both_meal_types(app, admin_client):
+    monday = week_monday(today_jst() + timedelta(days=14))
+    key = monday.isoformat()
+    admin_client.post(
+        "/admin/menus/save",
+        data={"week": key, f"noodle_{key}": "冷やし豚しゃぶおろし", f"form_{key}": "udon_soba"},
+        follow_redirects=True,
+    )
+    with app.app_context():
+        rows = DailyMenu.query.filter_by(serve_date=monday).all()
+        assert {r.meal_type.code for r in rows} == {"udon", "soba"}
+
+
+def test_menu_with_orders_cannot_be_removed(app, staff_client, admin_client):
+    ids = type_ids(app)
+    today = today_jst()
+    staff_client.post(
+        "/orders/save",
+        data={"month": this_month(app), f"choice_{today.isoformat()}": str(ids["udon"])},
+        follow_redirects=True,
+    )
+
+    monday = week_monday(today)
+    key = today.isoformat()
+    res = admin_client.post(
+        "/admin/menus/save",
+        data={"week": monday.isoformat(), f"teishoku_{key}": "ハンバーグ", f"form_{key}": "none"},
+        follow_redirects=True,
+    )
+    assert "外せませんでした" in res.get_data(as_text=True)
+    with app.app_context():
+        assert DailyMenu.query.filter_by(serve_date=today, meal_type_id=ids["udon"]).first() is not None
 
 
 # ── 集計 ──
 
-def test_daily_report_aggregates_orders(app, staff_client, admin_client):
-    first, _ = menu_ids(app)
+def test_daily_report_counts_staff_and_guests(app, staff_client, admin_client):
+    ids = type_ids(app)
+    today = today_jst().isoformat()
     staff_client.post(
         "/orders/save",
-        data={"date": today_jst().isoformat(), f"qty_{first}": "3"},
+        data={"month": this_month(app), f"choice_{today}": str(ids["udon"])},
         follow_redirects=True,
     )
-    res = admin_client.get(f"/reports/daily?date={today_jst().isoformat()}")
+    admin_client.post(
+        "/admin/orders/guests",
+        data={"date": today, f"guest_{ids['teishoku']}": "3"},
+        follow_redirects=True,
+    )
+
+    res = admin_client.get(f"/reports/daily?date={today}")
     body = res.get_data(as_text=True)
-    assert "1,650" in body       # 550 円 × 3
-    assert "山田太郎" in body
-
-
-def test_daily_and_monthly_exports_return_xlsx(app, admin_client):
-    for url in (
-        f"/reports/daily/export.xlsx?date={today_jst().isoformat()}",
-        f"/reports/monthly/export.xlsx?month={today_jst():%Y-%m}",
-    ):
-        res = admin_client.get(url)
-        assert res.status_code == 200
-        assert res.data[:2] == b"PK"  # xlsx は zip
-
-
-def test_monthly_report_lists_each_employee(app, admin_client):
-    res = admin_client.get(f"/reports/monthly?month={today_jst():%Y-%m}")
-    assert "山田太郎" in res.get_data(as_text=True)
-
-
-# ── 管理機能 ──
-
-def test_admin_can_manage_menu_and_daily_menu(app, admin_client):
-    admin_client.post(
-        "/admin/menu-items/add",
-        data={"name": "そぼろ丼", "price": "500", "sort_order": "3"},
-        follow_redirects=True,
-    )
+    assert "山田 太郎" in body
+    assert "鈴木 花子" in body  # 注文なしの一覧に出る
     with app.app_context():
-        item = MenuItem.query.filter_by(name="そぼろ丼").one()
-        item_id = item.id
-
-    tomorrow = today_jst() + timedelta(days=1)
-    admin_client.post(
-        "/admin/daily-menus/save",
-        data={"date": tomorrow.isoformat(), f"use_{item_id}": "on", f"price_{item_id}": "480"},
-        follow_redirects=True,
-    )
-    with app.app_context():
-        daily = DailyMenu.query.filter_by(menu_item_id=item_id, serve_date=tomorrow).one()
-        assert daily.price == 480
+        assert GuestOrder.query.one().count == 3
 
 
 def test_admin_proxy_order_works_after_cutoff(app, admin_client):
-    first, _ = menu_ids(app)
+    ids = type_ids(app)
     with app.app_context():
         set_setting("cutoff_time", "00:00")
         db.session.commit()
@@ -185,34 +223,56 @@ def test_admin_proxy_order_works_after_cutoff(app, admin_client):
 
     admin_client.post(
         "/admin/orders/proxy",
-        data={
-            "date": today_jst().isoformat(),
-            "user_id": str(staff_id),
-            "daily_menu_id": str(first),
-            "quantity": "1",
-        },
+        data={"date": today_jst().isoformat(), "user_id": str(staff_id), "meal_type_id": str(ids["soba"])},
         follow_redirects=True,
     )
     with app.app_context():
-        assert Order.query.filter_by(user_id=staff_id).one().quantity == 1
+        assert Order.query.filter_by(user_id=staff_id).one().meal_type_id == ids["soba"]
 
+
+def test_monthly_report_uses_the_21st_to_20th_period(app, admin_client):
+    ids = type_ids(app)
+    with app.app_context():
+        staff_id = User.query.filter_by(username="taro").one().id
+        # 8/20 は 8 月分、8/21 と 9/20 は 9 月分に入る
+        for day in (date(2026, 8, 20), date(2026, 8, 21), date(2026, 9, 20)):
+            db.session.add(Order(user_id=staff_id, serve_date=day, meal_type_id=ids["teishoku"]))
+        db.session.commit()
+
+    res = admin_client.get("/reports/monthly?month=2026-09")
+    body = res.get_data(as_text=True)
+    assert "2026年9月分（8/21〜9/20）" in body
+    assert "山田 太郎" in body
+
+    res_aug = admin_client.get("/reports/monthly?month=2026-08")
+    assert "2026年8月分（7/21〜8/20）" in res_aug.get_data(as_text=True)
+
+
+def test_exports_return_xlsx(app, admin_client):
+    for url in (
+        f"/reports/daily/export.xlsx?date={today_jst().isoformat()}",
+        "/reports/monthly/export.xlsx?month=2026-09",
+    ):
+        res = admin_client.get(url)
+        assert res.status_code == 200
+        assert res.data[:2] == b"PK"  # xlsx は zip
+
+
+# ── 管理機能 ──
 
 def test_admin_can_add_employee(app, admin_client):
     admin_client.post(
         "/admin/users/add",
         data={
-            "username": "hanako",
-            "name": "鈴木花子",
-            "employee_no": "A002",
-            "department": "総務部",
-            "password": "hanako12345",
+            "username": "jiro", "name": "佐藤 次郎", "employee_no": "A003",
+            "department": "品質保証部", "sort_order": "3", "password": "jiro123456",
         },
         follow_redirects=True,
     )
     with app.app_context():
-        user = User.query.filter_by(username="hanako").one()
+        user = User.query.filter_by(username="jiro").one()
         assert user.must_change_password is True
-        assert user.check_password("hanako12345")
+        assert user.check_password("jiro123456")
 
 
 def test_last_admin_cannot_be_demoted(app, admin_client):
@@ -228,28 +288,24 @@ def test_last_admin_cannot_be_demoted(app, admin_client):
         assert User.query.filter_by(id=admin_id).one().is_admin is True
 
 
-def test_settings_update_changes_cutoff(app, admin_client):
+def test_settings_update_cutoff_and_period(app, admin_client):
     admin_client.post(
         "/admin/settings",
-        data={"cutoff_time": "09:30", "shop_name": "○○弁当店"},
+        data={"cutoff_time": "09:30", "cutoff_days_before": "1",
+              "period_start_day": "21", "shop_name": "ハーベスト"},
         follow_redirects=True,
     )
     res = admin_client.get("/admin/settings")
-    assert "09:30" in res.get_data(as_text=True)
+    body = res.get_data(as_text=True)
+    assert "09:30" in body
+    assert "ハーベスト" in body
+    assert "前日 09:30 まで" in body
 
 
-def test_all_admin_pages_render(app, admin_client):
-    """管理者向けの全画面が 200 で表示されること（テンプレートの取りこぼし検知）。"""
+def test_all_pages_render(app, admin_client):
     urls = [
-        "/",
-        "/history",
-        "/change-password",
-        "/admin/menu-items",
-        "/admin/daily-menus",
-        "/admin/users",
-        "/admin/settings",
-        "/reports/daily",
-        "/reports/monthly",
+        "/", "/change-password", "/admin/menus", "/admin/users",
+        "/admin/settings", "/reports/daily", "/reports/monthly",
     ]
     for url in urls:
         assert admin_client.get(url).status_code == 200, url

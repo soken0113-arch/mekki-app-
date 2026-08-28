@@ -9,7 +9,7 @@
 </head>
 <body>
 <header class="app-header">
-  <div class="logo">🍱 社内昼食注文システム</div>
+  <div class="logo">🍱 昼食注文</div>
   <div class="user-info">
     {% if current_user %}
       <span>{{ current_user.name }} さん{% if current_user.is_admin %} <span class="badge-admin">管理者</span>{% endif %}</span>
@@ -22,13 +22,11 @@
 {% if current_user %}
 <nav class="app-nav">
   <a href="{{ url_for('orders.index') }}" class="{{ 'active' if request.endpoint == 'orders.index' }}">昼食を注文</a>
-  <a href="{{ url_for('orders.history') }}" class="{{ 'active' if request.endpoint == 'orders.history' }}">私の注文履歴</a>
   {% if current_user.is_admin %}
     <span class="nav-sep"></span>
     <a href="{{ url_for('reports.daily') }}" class="{{ 'active' if request.endpoint == 'reports.daily' }}">発注集計</a>
     <a href="{{ url_for('reports.monthly') }}" class="{{ 'active' if request.endpoint == 'reports.monthly' }}">月次集計</a>
-    <a href="{{ url_for('admin.daily_menus') }}" class="{{ 'active' if request.endpoint == 'admin.daily_menus' }}">献立編成</a>
-    <a href="{{ url_for('admin.menu_items') }}" class="{{ 'active' if request.endpoint == 'admin.menu_items' }}">メニュー</a>
+    <a href="{{ url_for('admin.menus') }}" class="{{ 'active' if request.endpoint == 'admin.menus' }}">献立編成</a>
     <a href="{{ url_for('admin.users') }}" class="{{ 'active' if request.endpoint == 'admin.users' }}">社員</a>
     <a href="{{ url_for('admin.settings') }}" class="{{ 'active' if request.endpoint == 'admin.settings' }}">設定</a>
   {% endif %}

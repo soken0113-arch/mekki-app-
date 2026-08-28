@@ -2,62 +2,75 @@ from flask import Blueprint, flash, redirect, render_template, request, url_for
 from sqlalchemy import select
 
 from extensions import db
-from models import DailyMenu, MenuItem, Order
-from timeutil import add_months, month_range, parse_date, parse_month, today_jst
+from models import DailyMenu, MealType, Order, get_setting_int
+from timeutil import add_months, parse_month, period_label, period_of, period_range, today_jst
 from utils import current_user, is_open, login_required, order_status
 
 bp = Blueprint("orders", __name__)
 
-MAX_QTY_PER_ITEM = 20
 
-
-def _menus_for(serve_date):
-    return (
+def menus_by_date(start, end_exclusive) -> dict:
+    """期間内の献立を {日付: [DailyMenu, ...]} にまとめる。"""
+    rows = (
         db.session.execute(
             select(DailyMenu)
-            .join(MenuItem)
-            .where(DailyMenu.serve_date == serve_date)
-            .order_by(MenuItem.sort_order, MenuItem.name)
+            .join(MealType)
+            .where(DailyMenu.serve_date >= start, DailyMenu.serve_date < end_exclusive)
+            .order_by(DailyMenu.serve_date, MealType.sort_order)
         )
         .scalars()
         .all()
     )
+    grouped: dict = {}
+    for menu in rows:
+        grouped.setdefault(menu.serve_date, []).append(menu)
+    return grouped
 
 
-def _upcoming_dates(limit: int = 7):
-    return (
-        db.session.execute(
-            select(DailyMenu.serve_date)
-            .where(DailyMenu.serve_date >= today_jst())
-            .group_by(DailyMenu.serve_date)
-            .order_by(DailyMenu.serve_date)
-            .limit(limit)
-        )
-        .scalars()
-        .all()
-    )
+def current_period(month_arg: str):
+    """表示する集計期間を (月初日, 開始日, 終了日の翌日, 締め開始日) で返す。"""
+    start_day = get_setting_int("period_start_day", 21)
+    month = parse_month(month_arg, default=period_of(today_jst(), start_day))
+    start, end = period_range(month, start_day)
+    return month, start, end, start_day
 
 
 @bp.route("/")
 @login_required
 def index():
-    serve_date = parse_date(request.args.get("date", ""))
-    menus = _menus_for(serve_date)
+    month, start, end, start_day = current_period(request.args.get("month", ""))
+    grouped = menus_by_date(start, end)
+
     my_orders = {
-        o.daily_menu_id: o
-        for o in Order.query.filter_by(user_id=current_user().id, serve_date=serve_date).all()
+        o.serve_date: o
+        for o in Order.query.filter(
+            Order.user_id == current_user().id,
+            Order.serve_date >= start,
+            Order.serve_date < end,
+        ).all()
     }
-    my_total = sum(o.quantity * o.daily_menu.price for o in my_orders.values())
+
+    days = []
+    for serve_date in sorted(grouped):
+        days.append(
+            {
+                "date": serve_date,
+                "menus": grouped[serve_date],
+                "order": my_orders.get(serve_date),
+                "open": is_open(serve_date),
+            }
+        )
 
     return render_template(
         "index.html",
-        serve_date=serve_date,
-        menus=menus,
-        my_orders=my_orders,
-        my_total=my_total,
-        status=order_status(serve_date),
-        upcoming=_upcoming_dates(),
-        max_qty=MAX_QTY_PER_ITEM,
+        month=month,
+        days=days,
+        period_text=period_label(month, start_day),
+        prev_month=add_months(month, -1),
+        next_month=add_months(month, 1),
+        my_count=len(my_orders),
+        today=today_jst(),
+        rule_text=order_status(today_jst())["rule_text"],
     )
 
 
@@ -65,96 +78,58 @@ def index():
 @login_required
 def save():
     user = current_user()
-    serve_date = parse_date(request.form.get("date", ""))
-    redirect_to = redirect(url_for("orders.index", date=serve_date.isoformat()))
+    month, start, end, _ = current_period(request.form.get("month", ""))
+    back = redirect(url_for("orders.index", month=month.strftime("%Y-%m")))
 
-    if not is_open(serve_date):
-        flash("この日の注文は締め切られています。変更が必要な場合は担当者にご連絡ください。", "error")
-        return redirect_to
-
-    menus = _menus_for(serve_date)
+    grouped = menus_by_date(start, end)
     existing = {
-        o.daily_menu_id: o
-        for o in Order.query.filter_by(user_id=user.id, serve_date=serve_date).all()
+        o.serve_date: o
+        for o in Order.query.filter(
+            Order.user_id == user.id, Order.serve_date >= start, Order.serve_date < end
+        ).all()
     }
 
-    errors = []
-    for menu in menus:
-        raw = request.form.get(f"qty_{menu.id}", "0").strip()
-        note = request.form.get(f"note_{menu.id}", "").strip()[:200]
-        try:
-            qty = int(raw or 0)
-        except ValueError:
-            errors.append(f"「{menu.menu_item.name}」の数量が数値ではありません。")
-            continue
-        if qty < 0 or qty > MAX_QTY_PER_ITEM:
-            errors.append(f"「{menu.menu_item.name}」の数量は 0〜{MAX_QTY_PER_ITEM} で入力してください。")
+    changed = 0
+    skipped = []
+    for serve_date, menus in grouped.items():
+        field = request.form.get(f"choice_{serve_date.isoformat()}")
+        if field is None:
+            continue  # 画面に出ていない日は触らない
+
+        order = existing.get(serve_date)
+        chosen = field.strip()
+        current_id = str(order.meal_type_id) if order else ""
+        if chosen == current_id:
             continue
 
-        order = existing.get(menu.id)
-        if menu.limit_count is not None:
-            others = menu.ordered_count - (order.quantity if order else 0)
-            if others + qty > menu.limit_count:
-                errors.append(
-                    f"「{menu.menu_item.name}」は残り {max(menu.limit_count - others, 0)} 個です。"
-                )
-                continue
+        if not is_open(serve_date):
+            skipped.append(serve_date)
+            continue
 
-        if qty == 0:
+        if chosen == "":
             if order:
                 db.session.delete(order)
-        elif order:
-            order.quantity = qty
-            order.note = note
+                changed += 1
+            continue
+
+        offered = {str(m.meal_type_id) for m in menus}
+        if chosen not in offered:
+            skipped.append(serve_date)
+            continue
+
+        if order:
+            order.meal_type_id = int(chosen)
         else:
             db.session.add(
-                Order(
-                    user_id=user.id,
-                    daily_menu_id=menu.id,
-                    serve_date=serve_date,
-                    quantity=qty,
-                    note=note,
-                )
+                Order(user_id=user.id, serve_date=serve_date, meal_type_id=int(chosen))
             )
+        changed += 1
 
-    if errors:
-        db.session.rollback()
-        for message in errors:
-            flash(message, "error")
-    else:
-        db.session.commit()
-        flash("注文を保存しました。", "success")
-    return redirect_to
+    db.session.commit()
 
-
-@bp.route("/history")
-@login_required
-def history():
-    month = parse_month(request.args.get("month", ""))
-    start, end = month_range(month)
-    orders = (
-        Order.query.filter(
-            Order.user_id == current_user().id,
-            Order.serve_date >= start,
-            Order.serve_date < end,
-        )
-        .order_by(Order.serve_date)
-        .all()
-    )
-
-    by_date: dict = {}
-    for order in orders:
-        by_date.setdefault(order.serve_date, []).append(order)
-
-    total_amount = sum(o.subtotal for o in orders)
-    total_count = sum(o.quantity for o in orders)
-
-    return render_template(
-        "history.html",
-        month=month,
-        by_date=by_date,
-        total_amount=total_amount,
-        total_count=total_count,
-        prev_month=add_months(month, -1),
-        next_month=add_months(month, 1),
-    )
+    if skipped:
+        dates = "、".join(f"{d.month}/{d.day}" for d in sorted(skipped))
+        flash(f"締切済みのため変更できなかった日があります：{dates}", "error")
+    flash(f"注文を保存しました。（{changed} 日分を変更）" if changed else "変更はありませんでした。",
+          "success" if changed else "info")
+    return back

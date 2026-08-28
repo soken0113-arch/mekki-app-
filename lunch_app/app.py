@@ -6,8 +6,8 @@ from flask import Flask, flash, redirect, render_template, request, session, url
 
 from config import Config
 from extensions import csrf, db
-from timeutil import fmt_date, fmt_date_full, fmt_month, now_jst, today_jst
-from utils import current_user, yen
+from timeutil import fmt_date, fmt_date_full, fmt_date_short, fmt_month, now_jst, today_jst, weekday_ja
+from utils import current_user
 
 
 def create_app(config_object=Config) -> Flask:
@@ -33,6 +33,7 @@ def create_app(config_object=Config) -> Flask:
 
     with app.app_context():
         db.create_all()
+        _ensure_meal_types()
         _ensure_admin(app)
 
     return app
@@ -63,10 +64,11 @@ def _register_hooks(app: Flask) -> None:
 
 
 def _register_template_helpers(app: Flask) -> None:
-    app.jinja_env.filters["yen"] = yen
     app.jinja_env.filters["date_ja"] = fmt_date
+    app.jinja_env.filters["date_ja_short"] = fmt_date_short
     app.jinja_env.filters["date_ja_full"] = fmt_date_full
     app.jinja_env.filters["month_ja"] = fmt_month
+    app.jinja_env.filters["weekday_ja"] = weekday_ja
 
     @app.context_processor
     def inject_globals():
@@ -80,6 +82,18 @@ def _register_template_helpers(app: Flask) -> None:
     def server_error(_e):  # pragma: no cover - 例外時のみ
         db.session.rollback()
         return render_template("error.html", code=500, message="サーバーエラーが発生しました。"), 500
+
+
+def _ensure_meal_types() -> None:
+    """注文区分（定食・丼／うどん／そば／ラーメン／パスタ）を初回に投入する。"""
+    from models import DEFAULT_MEAL_TYPES, MealType
+
+    for code, name, is_noodle, order in DEFAULT_MEAL_TYPES:
+        if MealType.query.filter_by(code=code).first() is None:
+            db.session.add(
+                MealType(code=code, name=name, is_noodle=is_noodle, sort_order=order)
+            )
+    db.session.commit()
 
 
 def _ensure_admin(app: Flask) -> None:
@@ -104,7 +118,7 @@ def _ensure_admin(app: Flask) -> None:
 
 
 def _register_cli(app: Flask) -> None:
-    from models import MenuItem, User
+    from models import User
 
     @app.cli.command("create-admin")
     @click.argument("username")
@@ -120,24 +134,39 @@ def _register_cli(app: Flask) -> None:
         db.session.commit()
         click.echo(f"管理者 {username} を作成しました。")
 
-    @app.cli.command("seed-menu")
-    def seed_menu():
-        """サンプルのメニューマスタを登録する。"""
-        samples = [
-            ("から揚げ弁当", 550, "定番の唐揚げ 5 個入り"),
-            ("焼き魚弁当", 600, "日替わりの焼き魚"),
-            ("幕の内弁当", 650, "おかず多めのバランス弁当"),
-            ("そぼろ丼", 500, "温泉卵つき"),
-            ("サラダ（単品）", 200, "追加用の小鉢"),
-        ]
-        added = 0
-        for i, (name, price, desc) in enumerate(samples):
-            if MenuItem.query.filter_by(name=name).first():
-                continue
-            db.session.add(MenuItem(name=name, price=price, description=desc, sort_order=i))
-            added += 1
+    @app.cli.command("add-users")
+    @click.argument("csv_path", type=click.Path(exists=True))
+    def add_users(csv_path):
+        """CSV（社員番号,氏名,部署,ログインID,初期パスワード）から社員をまとめて登録する。"""
+        import csv
+
+        added = skipped = 0
+        with open(csv_path, encoding="utf-8-sig", newline="") as fp:
+            for i, row in enumerate(csv.reader(fp)):
+                if not row or (i == 0 and "氏名" in "".join(row)):
+                    continue
+                employee_no, name, department, username, password = (list(row) + [""] * 5)[:5]
+                username = username.strip()
+                name = name.strip()
+                if not username or not name or len(password.strip()) < 8:
+                    skipped += 1
+                    continue
+                if User.query.filter_by(username=username).first():
+                    skipped += 1
+                    continue
+                user = User(
+                    username=username,
+                    name=name,
+                    employee_no=employee_no.strip(),
+                    department=department.strip(),
+                    sort_order=i,
+                    must_change_password=True,
+                )
+                user.set_password(password.strip())
+                db.session.add(user)
+                added += 1
         db.session.commit()
-        click.echo(f"{added} 件のメニューを登録しました。")
+        click.echo(f"{added} 名を登録しました。（{skipped} 行はスキップ）")
 
 
 app = create_app()

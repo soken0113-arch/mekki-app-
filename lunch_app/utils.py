@@ -1,11 +1,11 @@
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from functools import wraps
 
 from flask import flash, g, redirect, session, url_for
 
 from extensions import db
-from models import User, get_setting
-from timeutil import now_jst, parse_time
+from models import User, get_setting, get_setting_int
+from timeutil import fmt_date_short, now_jst, parse_time
 
 
 def current_user() -> User | None:
@@ -40,9 +40,12 @@ def admin_required(f):
     return decorated
 
 
+# ── 締切 ────────────────────────────────────────────────────
+
 def cutoff_at(serve_date: date) -> datetime:
-    """その日の注文締切時刻（例: 提供日の 10:00）。"""
-    return datetime.combine(serve_date, parse_time(get_setting("cutoff_time")))
+    """その日の注文締切。提供日の n 日前の指定時刻（n=0 なら当日）。"""
+    days_before = max(get_setting_int("cutoff_days_before", 1), 0)
+    return datetime.combine(serve_date - timedelta(days=days_before), parse_time(get_setting("cutoff_time")))
 
 
 def is_open(serve_date: date, now: datetime | None = None) -> bool:
@@ -50,20 +53,19 @@ def is_open(serve_date: date, now: datetime | None = None) -> bool:
     return (now or now_jst()) < cutoff_at(serve_date)
 
 
+def cutoff_rule_text() -> str:
+    """「前日 10:00 まで」のような、締切ルールの説明文。"""
+    days_before = max(get_setting_int("cutoff_days_before", 1), 0)
+    when = {0: "当日", 1: "前日", 2: "2日前"}.get(days_before, f"{days_before}日前")
+    return f"{when} {get_setting('cutoff_time')} まで"
+
+
 def order_status(serve_date: date) -> dict:
     """画面表示用の締切ステータス。"""
     deadline = cutoff_at(serve_date)
-    open_ = now_jst() < deadline
     return {
-        "open": open_,
+        "open": now_jst() < deadline,
         "deadline": deadline,
-        "deadline_text": deadline.strftime("%m/%d %H:%M"),
-        "cutoff_text": deadline.strftime("%H:%M"),
+        "deadline_text": f"{fmt_date_short(deadline.date())} {deadline:%H:%M}",
+        "rule_text": cutoff_rule_text(),
     }
-
-
-def yen(value) -> str:
-    try:
-        return f"{int(value):,}"
-    except (TypeError, ValueError):
-        return "0"
